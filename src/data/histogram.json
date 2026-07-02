@@ -1,0 +1,475 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "config": {
+    "view": {
+      "continuousWidth": 300,
+      "continuousHeight": 300
+    }
+  },
+  "layer": [
+    {
+      "data": {
+        "values": [
+          {
+            "Experiment": "Control",
+            "Measurement": -0.14
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 1.66
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": -0.11
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 2.36
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": -0.13
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 0.6
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 0.33
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 1.59
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": -0.22
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 1.89
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 0.23
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 2.73
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 0.66
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 1.89
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": -0.74
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 0.99
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 0.25
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 2.85
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 0.04
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 1.71
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 0.53
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 0.64
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": -0.31
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 2.19
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 0.87
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 1.61
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 0.38
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 2.0
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 0.78
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 0.91
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 0.57
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 0.59
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": -2.62
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 1.31
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": -0.92
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 2.5
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 0.66
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 0.82
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 0.85
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 1.0
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": -0.09
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 1.56
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 0.11
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 2.45
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 0.64
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 2.08
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 0.65
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 2.18
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": -0.63
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 1.23
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": -0.47
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 2.2
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": -0.25
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 3.67
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": -0.82
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 0.92
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 0.77
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 2.94
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 0.51
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 2.47
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 1.43
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 1.72
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": -1.42
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 1.37
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 0.95
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 0.65
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 0.03
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 2.0
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": -0.32
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 2.38
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 0.58
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 3.66
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 0.62
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 1.31
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": -0.56
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 1.13
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 0.95
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 1.35
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": -0.07
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 2.4
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": -0.72
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 1.57
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": -1.84
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 0.93
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": -0.57
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 2.13
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 1.19
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 1.79
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 0.26
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 1.93
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 1.08
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 2.51
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 0.27
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 0.99
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 0.9
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 2.1
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 1.23
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 1.78
+          },
+          {
+            "Experiment": "Control",
+            "Measurement": 1.95
+          },
+          {
+            "Experiment": "Treatment",
+            "Measurement": 1.51
+          }
+        ]
+      },
+      "mark": {
+        "type": "bar",
+        "binSpacing": 0,
+        "opacity": 1
+      },
+      "encoding": {
+        "color": {
+          "field": "Experiment",
+          "type": "nominal"
+        },
+        "x": {
+          "bin": {
+            "maxbins": 30
+          },
+          "field": "Measurement",
+          "type": "quantitative"
+        },
+        "y": {
+          "aggregate": "count",
+          "stack": null,
+          "type": "quantitative"
+        }
+      }
+    },
+    {
+      "data": {
+        "values": [
+          {
+            "x": 1.8
+          }
+        ]
+      },
+      "mark": {
+        "type": "rule",
+        "strokeDash": [
+          4,
+          4
+        ],
+        "color": "#555",
+        "strokeWidth": 1.2
+      },
+      "encoding": {
+        "x": {
+          "field": "x",
+          "type": "quantitative"
+        }
+      }
+    },
+    {
+      "mark": {
+        "type": "text",
+        "align": "left",
+        "dx": -50,
+        "dy": -160,
+        "fontSize": 11,
+        "fontStyle": "italic",
+        "color": "#555"
+      }
+    }
+  ]
+}

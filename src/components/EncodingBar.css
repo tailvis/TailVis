@@ -1,0 +1,255 @@
+.encoding-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 6px 16px;
+  background: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
+  min-height: 40px;
+}
+
+/* Chart-type section: left-aligned, grows to push the NL input to the right,
+   and scrolls horizontally (with a visible scrollbar) when the window narrows. */
+.encoding-bar-center {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 2px;
+  flex: 1 1 auto;
+  /* Keep at least a couple of buttons + the scrollbar visible; never fully collapse */
+  min-width: 120px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #ccc transparent;
+}
+
+.encoding-bar-center::-webkit-scrollbar {
+  height: 6px;
+}
+
+.encoding-bar-center::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.encoding-bar-center::-webkit-scrollbar-thumb:hover {
+  background: #b0b0b0;
+}
+
+.encoding-bar-center::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chart-type-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 3px 8px;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  min-width: 44px;
+  transition: all 0.15s;
+}
+
+.chart-type-btn:hover {
+  background: #f5f5f5;
+  border-color: #e0e0e0;
+}
+
+.chart-type-btn.active {
+  background: #e8f4ff;
+  border-color: #4a9eff;
+}
+
+.chart-type-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.chart-type-label {
+  font-size: 9px;
+  color: #888;
+  white-space: nowrap;
+}
+
+.chart-type-btn.active .chart-type-label {
+  color: #2b7de9;
+  font-weight: 600;
+}
+
+/* ─── Natural-language encoding input ───────────────────────── */
+.encoding-bar-nl {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 12px;
+  padding-left: 12px;
+  border-left: 1px solid #e0e0e0;
+  /* Allow the NL input to shrink (down to its min-width) when space is tight */
+  flex: 0 1 auto;
+  min-width: 150px;
+}
+
+.encoding-nl-input {
+  /* Shrinks when space is tight so the chart-type buttons keep room */
+  flex: 1 1 300px;
+  min-width: 110px;
+  max-width: 420px;
+  height: 28px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 0 10px;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.encoding-nl-input:focus {
+  border-color: #4a9eff;
+}
+
+.encoding-nl-input:disabled {
+  background: #f5f5f5;
+  color: #aaa;
+}
+
+.encoding-nl-submit {
+  height: 28px;
+  min-width: 34px;
+  border: none;
+  border-radius: 6px;
+  background: #4a9eff;
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.encoding-nl-submit:hover:not(:disabled) {
+  background: #2b7de9;
+}
+
+.encoding-nl-submit:disabled {
+  background: #c4dcff;
+  cursor: default;
+}
+
+/* Processing spinner shown in the submit button while a chart is generating */
+.encoding-nl-spinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: encoding-nl-spin 0.6s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes encoding-nl-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Subtle pulse on the input's placeholder while generating */
+.encoding-nl-input:disabled {
+  animation: encoding-nl-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes encoding-nl-pulse {
+  0%, 100% { background: #f5f5f5; }
+  50% { background: #eef4ff; }
+}
+
+/* ─── Encoding channels ─────────────────────────────────────── */
+.encoding-channels {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 12px;
+  padding-left: 12px;
+  border-left: 1px solid #e0e0e0;
+  flex-wrap: wrap;
+}
+
+.channel-slot {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  font-size: 11px;
+  min-width: 80px;
+  height: 28px;
+}
+
+.channel-slot--empty {
+  background: #fafafa;
+  color: #bbb;
+}
+
+.channel-slot--filled {
+  background: #f0f7ff;
+  border-color: #90c4ff;
+}
+
+.channel-slot-label {
+  font-size: 9px;
+  color: #888;
+  font-weight: 600;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.channel-slot-placeholder {
+  font-size: 11px;
+  color: #ccc;
+}
+
+.channel-slot-name {
+  font-size: 11px;
+  color: #333;
+  font-weight: 500;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.channel-slot-type-badge {
+  background: #4a9eff;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.channel-slot-type-badge:hover {
+  background: #2b7de9;
+}
+
+.channel-slot-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #aaa;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0 2px;
+  flex-shrink: 0;
+}
+
+.channel-slot-remove:hover {
+  color: #e55;
+}

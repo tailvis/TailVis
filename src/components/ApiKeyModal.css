@@ -1,0 +1,45 @@
+.apikey-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex; align-items: center; justify-content: center;
+}
+.apikey-dialog {
+  width: 460px; max-width: calc(100vw - 40px);
+  background: #fff; border-radius: 12px; padding: 22px 24px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.22);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+.apikey-dialog h2 { margin: 0 0 8px; font-size: 18px; }
+.apikey-desc { margin: 0 0 16px; font-size: 13px; line-height: 1.55; color: #555; }
+.apikey-input-row { display: flex; gap: 8px; align-items: center; }
+.apikey-input {
+  flex: 1; border: 1px solid #d0d5dd; border-radius: 8px;
+  padding: 9px 12px; font-size: 14px; font-family: ui-monospace, monospace;
+}
+.apikey-input:focus { outline: none; border-color: #0d99ff; box-shadow: 0 0 0 3px rgba(13,153,255,.15); }
+.apikey-eye { border: 1px solid #d0d5dd; background: #fff; border-radius: 8px; padding: 8px 10px; cursor: pointer; }
+.apikey-warn { margin-top: 8px; font-size: 12px; color: #92400e; }
+.apikey-warn code, .apikey-desc code { background: #f1f3f5; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+.apikey-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 20px; }
+.apikey-link { font-size: 13px; color: #0d99ff; text-decoration: none; }
+.apikey-link:hover { text-decoration: underline; }
+.apikey-buttons { display: flex; gap: 8px; }
+.apikey-btn { border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid transparent; }
+.apikey-cancel { background: #fff; border-color: #d0d5dd; color: #333; }
+.apikey-cancel:hover { background: #f1f3f5; }
+.apikey-clear { background: #fff5f5; border-color: #f3c9c9; color: #b91c1c; }
+.apikey-clear:hover { background: #fee2e2; }
+.apikey-save { background: #0d99ff; color: #fff; }
+.apikey-save:hover { background: #0b87e0; }
+.apikey-save:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Header buttons (Gallery + API Key) */
+.header-btns { display: flex; align-items: center; gap: 8px; }
+.header-btn {
+  border: 1px solid #d0d5dd; background: #fff; border-radius: 8px;
+  padding: 6px 12px; font-size: 13px; font-weight: 600; color: #1f2328; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.header-btn:hover { background: #f1f3f5; }
+.header-btn .key-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; }
+.header-btn .key-dot.off { background: #f59e0b; }

@@ -1,0 +1,569 @@
+/* Modification Panel - Binding-Aware Scope Selection */
+.mod-panel {
+  background: #FFF9E6;
+  border: 1px solid #F0E0A0;
+  border-radius: 8px;
+  padding: 12px;
+  width: 100%;
+  min-width: 350px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  box-sizing: border-box;
+}
+
+.mod-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mod-panel-header:hover {
+  opacity: 0.8;
+}
+
+.mod-panel-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #B8960C;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mod-toggle-arrow {
+  font-size: 10px;
+  color: #B8960C;
+}
+
+.mod-count {
+  font-size: 11px;
+  color: #B8960C;
+  background: #F5E9B0;
+  border-radius: 10px;
+  padding: 2px 8px;
+}
+
+/* Wrapper: holds the target tag + the white card */
+.mod-row-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+
+.mod-row-wrapper:last-child {
+  margin-bottom: 0;
+}
+
+/* Target tag: sits above the white card */
+.mod-target-type {
+  font-size: 9px;
+  font-weight: 700;
+  color: #555;
+  background: #e8e8e8;
+  border-radius: 3px 3px 0 0;
+  padding: 2px 7px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+
+/* Row: CSS Grid — prop-name | change (orig→new) | scope | tag | delete */
+.mod-row {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) minmax(0, 1fr) max-content 24px;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: #fff;
+  border-radius: 0 6px 6px 6px;
+  border: 1px solid #eee;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* When no target type, round all corners */
+.mod-row-wrapper-compact .mod-row,
+.mod-row-wrapper:not(:has(.mod-target-type)) .mod-row {
+  border-radius: 6px;
+}
+
+.mod-row:hover {
+  border-color: #c0c0c0;
+  background: #fafafa;
+}
+
+.mod-row-active {
+  border-color: #2563EB;
+  background: #EEF4FF;
+}
+
+.mod-change {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.mod-prop-name {
+  font-size: 11px;
+  font-weight: 500;
+  color: #555;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* width is fixed by the 64px grid column */
+}
+
+.mod-change-sep {
+  font-size: 10px;
+  color: #bbb;
+}
+
+.mod-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.mod-swatch-orig {
+  opacity: 0.55;
+}
+
+.mod-orig-val {
+  font-size: 11px;
+  color: #999;
+}
+
+.mod-new-val {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.mod-new-val:hover .mod-swatch {
+  border-color: #2563EB;
+  box-shadow: 0 0 0 1px #2563EB;
+}
+
+.mod-arrow {
+  color: #bbb;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+/* Custom scope dropdown */
+.scope-dropdown {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.scope-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 4px 7px;
+  background: #fff;
+  border: 1px solid #d8d8d8;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  color: #333;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  min-width: 0;
+  text-align: left;
+  font-family: inherit;
+}
+
+.scope-dropdown-trigger:hover {
+  border-color: #aaa;
+  background: #fafafa;
+}
+
+.scope-dropdown-trigger-open {
+  border-color: #2563EB;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+  background: #fff;
+}
+
+.scope-dropdown-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  font-size: 8px;
+}
+
+.scope-dropdown-arrow {
+  flex-shrink: 0;
+  color: #999;
+  transition: transform 0.2s ease, color 0.15s;
+}
+
+.scope-dropdown-trigger:hover .scope-dropdown-arrow {
+  color: #666;
+}
+
+.scope-dropdown-trigger-open .scope-dropdown-arrow {
+  transform: rotate(180deg);
+  color: #2563EB;
+}
+
+.scope-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.06);
+  z-index: 9999;
+  overflow: hidden;
+  min-width: 160px;
+  animation: scopeDropdownIn 0.15s ease;
+}
+
+@keyframes scopeDropdownIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)  scale(1); }
+}
+
+.scope-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 10px;
+  text-align: left;
+  font-size: 8px;
+  font-weight: 400;
+  color: #333;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.1s;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.scope-dropdown-item:hover {
+  background: #f0f5ff;
+  color: #2563EB;
+}
+
+.scope-dropdown-item-active {
+  background: #EEF4FF;
+  color: #2563EB;
+  font-weight: 600;
+}
+
+.scope-dropdown-item-active:hover {
+  background: #deeaff;
+}
+
+.scope-dropdown-check {
+  font-size: 10px;
+  color: #2563EB;
+  width: 12px;
+  flex-shrink: 0;
+}
+
+.mod-scope-tag {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.tag-bound {
+  background: #E3F2FD;
+  color: #1565C0;
+}
+
+.tag-aware {
+  background: #FFF3E0;
+  color: #E65100;
+}
+
+.tag-unbound {
+  background: #FFEBEE;
+  color: #C62828;
+  font-weight: 600;
+}
+
+.mod-delete {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #bbb;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: end;
+}
+
+.mod-delete:hover {
+  background: #fee;
+  color: #e55;
+}
+
+/* Inline editing */
+.mod-inline-input {
+  font-size: 12px;
+  font-weight: 500;
+  color: #1a1a1a;
+  background: #fff;
+  border: 1px solid #2563EB;
+  padding: 3px 6px;
+  border-radius: 4px;
+  width: 60px;
+  text-align: center;
+  outline: none;
+}
+
+.mod-inline-color {
+  width: 28px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid #2563EB;
+  border-radius: 4px;
+  cursor: pointer;
+  background: none;
+}
+
+/* Grouped modifications */
+.mod-group {
+  margin-bottom: 6px;
+}
+
+.mod-group:last-child {
+  margin-bottom: 0;
+}
+
+.mod-group-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 5px 5px 0 0;
+  background: #f5f0e0;
+  border: 1px solid #e8dfc0;
+  border-bottom: none;
+}
+
+.mod-group-header:hover {
+  background: #efe8d0;
+}
+
+.mod-group-toggle {
+  font-size: 9px;
+  color: #999;
+}
+
+.mod-group-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.mod-group-count {
+  font-size: 10px;
+  color: #999;
+  margin-left: auto;
+}
+
+.mod-batch-delete {
+  font-size: 9px;
+  color: #c53030;
+  background: none;
+  border: 1px solid #e0c0c0;
+  border-radius: 3px;
+  padding: 1px 6px;
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+.mod-batch-delete:hover {
+  background: #fee;
+}
+
+.mod-group-scope-label {
+  font-size: 10px;
+  color: #888;
+  font-weight: 500;
+  padding: 2px 6px;
+  background: #f0ead0;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* Compact rows inside groups: no target type column, same prop-name fixed width */
+.mod-row-compact {
+  grid-template-columns: 64px minmax(0, 1fr) minmax(0, 1fr) max-content 24px;
+  border-radius: 6px;
+  margin-left: 8px;
+  border-left: 2px solid #e0dac0;
+}
+
+.mod-row-compact:first-child,
+.mod-group-header + .mod-row-compact {
+  border-radius: 0 6px 0 0;
+}
+
+.mod-row-compact:last-child {
+  border-radius: 0 0 6px 6px;
+}
+
+/* Unbind confirmation overlay */
+.unbind-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.unbind-dialog {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px 28px;
+  max-width: 340px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.unbind-icon {
+  font-size: 32px;
+  color: #E65100;
+  margin-bottom: 8px;
+}
+
+.unbind-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+}
+
+.unbind-message {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.unbind-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.unbind-btn {
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s;
+}
+
+.unbind-btn-cancel {
+  background: #f0f0f0;
+  color: #555;
+}
+
+.unbind-btn-cancel:hover {
+  background: #e0e0e0;
+}
+
+.unbind-btn-confirm {
+  background: #E65100;
+  color: #fff;
+}
+
+.unbind-btn-confirm:hover {
+  background: #BF360C;
+}
+
+/* Tags group: binding tag + integrity badge side by side */
+.mod-tags-group {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+/* Binding integrity badges */
+.integrity-badge {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.integrity-preserved {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.integrity-overridden {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.integrity-annotation {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+/* Rebind notice (appears briefly after restoring binding) */
+.rebind-notice {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 9px;
+  font-weight: 600;
+  color: #2E7D32;
+  animation: rebindFadeIn 0.3s ease;
+}
+
+@keyframes rebindFadeIn {
+  from { opacity: 0; transform: translateX(-4px); }
+  to { opacity: 1; transform: translateX(0); }
+}

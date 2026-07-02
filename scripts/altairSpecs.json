@@ -1,0 +1,1240 @@
+[
+  {
+    "id": "waterfall_chart",
+    "category": "basic",
+    "keywords": [
+      "waterfall",
+      "워터폴",
+      "폭포",
+      "워터폴차트",
+      "cumulative",
+      "누적",
+      "running total",
+      "런닝토탈",
+      "bridge",
+      "increase",
+      "decrease",
+      "증감"
+    ],
+    "intent": "Waterfall chart: a running cumulative total drawn as floating bars. The X axis is the CATEGORY/PERIOD field — one bar per category, sort:null to keep input order. X is NEVER the numeric measure. Each bar spans from the previous cumulative total (_prev) up to the new total (_sum); a window sum over __FIELD__ builds the totals and bars are colored by increase/decrease. Substitute __FIELD__ with the numeric measure column and 'category' with the category/period field (the axis of progression, e.g. month).",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "width": 400,
+      "height": 250,
+      "transform": [
+        {
+          "window": [
+            {
+              "op": "sum",
+              "field": "__FIELD__",
+              "as": "_sum"
+            }
+          ],
+          "frame": [
+            null,
+            0
+          ]
+        },
+        {
+          "calculate": "datum._sum - datum['__FIELD__']",
+          "as": "_prev"
+        },
+        {
+          "calculate": "datum['__FIELD__'] >= 0 ? 'Increase' : 'Decrease'",
+          "as": "_dir"
+        }
+      ],
+      "encoding": {
+        "x": {
+          "field": "category",
+          "type": "nominal",
+          "sort": null,
+          "axis": {
+            "labelAngle": 0
+          }
+        }
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "bar",
+            "size": 28
+          },
+          "encoding": {
+            "y": {
+              "field": "_prev",
+              "type": "quantitative",
+              "title": "__FIELD__"
+            },
+            "y2": {
+              "field": "_sum"
+            },
+            "color": {
+              "field": "_dir",
+              "type": "nominal",
+              "scale": {
+                "domain": [
+                  "Increase",
+                  "Decrease"
+                ],
+                "range": [
+                  "#4c78a8",
+                  "#e45756"
+                ]
+              },
+              "legend": {
+                "title": null
+              }
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "dy": -4,
+            "fontSize": 10,
+            "color": "#333"
+          },
+          "encoding": {
+            "y": {
+              "field": "_sum",
+              "type": "quantitative"
+            },
+            "text": {
+              "field": "_sum",
+              "type": "quantitative",
+              "format": ".0f"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "heatmap_annual_weather",
+    "category": "color",
+    "keywords": [
+      "heatmap",
+      "rect",
+      "히트맵",
+      "열지도",
+      "열지도",
+      "calendar",
+      "month",
+      "day",
+      "temperature",
+      "weather",
+      "색상",
+      "표"
+    ],
+    "intent": "Heatmap of an aggregated value over two categorical/time axes (rect mark with aggregated color)",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "title": "Daily Max Temperatures (heatmap)",
+      "data": {
+        "values": []
+      },
+      "mark": "rect",
+      "encoding": {
+        "x": {
+          "field": "date",
+          "type": "ordinal",
+          "timeUnit": "date",
+          "title": "Day",
+          "axis": {
+            "format": "%e",
+            "labelAngle": 0
+          }
+        },
+        "y": {
+          "field": "date",
+          "type": "ordinal",
+          "timeUnit": "month",
+          "title": "Month"
+        },
+        "color": {
+          "aggregate": "max",
+          "field": "temp_max",
+          "type": "quantitative",
+          "title": null
+        }
+      }
+    }
+  },
+  {
+    "id": "heatmap_text_labels",
+    "category": "annotation",
+    "keywords": [
+      "heatmap",
+      "rect",
+      "text",
+      "label",
+      "히트맵",
+      "열지도",
+      "라벨",
+      "텍스트",
+      "table",
+      "표",
+      "주석"
+    ],
+    "intent": "Heatmap with numeric text labels overlaid (layered rect + text sharing one aggregate transform, conditional text color)",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "transform": [
+        {
+          "aggregate": [
+            {
+              "op": "mean",
+              "field": "Horsepower",
+              "as": "mean_horsepower"
+            }
+          ],
+          "groupby": [
+            "Origin",
+            "Cylinders"
+          ]
+        }
+      ],
+      "layer": [
+        {
+          "mark": "rect",
+          "encoding": {
+            "x": {
+              "field": "Cylinders",
+              "type": "ordinal"
+            },
+            "y": {
+              "field": "Origin",
+              "type": "ordinal"
+            },
+            "color": {
+              "field": "mean_horsepower",
+              "type": "quantitative",
+              "scale": {
+                "scheme": "viridis"
+              },
+              "title": "Mean of Horsepower"
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "baseline": "middle"
+          },
+          "encoding": {
+            "x": {
+              "field": "Cylinders",
+              "type": "ordinal"
+            },
+            "y": {
+              "field": "Origin",
+              "type": "ordinal"
+            },
+            "text": {
+              "field": "mean_horsepower",
+              "type": "quantitative",
+              "format": ".0f"
+            },
+            "color": {
+              "condition": {
+                "test": "datum.mean_horsepower > 150",
+                "value": "black"
+              },
+              "value": "white"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "bump_chart",
+    "category": "basic",
+    "keywords": [
+      "bump",
+      "rank",
+      "ranking",
+      "window",
+      "line",
+      "순위",
+      "랭킹",
+      "범프",
+      "추이",
+      "선"
+    ],
+    "intent": "Bump chart: ranking over time computed with a window rank transform (line with points, color per series)",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "title": "Bump Chart",
+      "data": {
+        "values": []
+      },
+      "transform": [
+        {
+          "window": [
+            {
+              "op": "rank",
+              "as": "rank"
+            }
+          ],
+          "sort": [
+            {
+              "field": "price",
+              "order": "descending"
+            }
+          ],
+          "groupby": [
+            "date"
+          ]
+        }
+      ],
+      "mark": {
+        "type": "line",
+        "point": true
+      },
+      "encoding": {
+        "x": {
+          "field": "date",
+          "type": "ordinal",
+          "timeUnit": "yearmonth",
+          "title": "date"
+        },
+        "y": {
+          "field": "rank",
+          "type": "ordinal"
+        },
+        "color": {
+          "field": "symbol",
+          "type": "nominal"
+        }
+      }
+    }
+  },
+  {
+    "id": "candlestick_ohlc",
+    "category": "annotation",
+    "keywords": [
+      "candlestick",
+      "ohlc",
+      "stock",
+      "finance",
+      "rule",
+      "bar",
+      "캔들",
+      "캔들스틱",
+      "주가",
+      "금융",
+      "봉차트"
+    ],
+    "intent": "Candlestick (OHLC) chart: layered rule (low–high) + bar (open–close) with an up/down conditional color",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "encoding": {
+        "x": {
+          "field": "date",
+          "type": "temporal",
+          "axis": {
+            "format": "%m/%d",
+            "labelAngle": -45
+          },
+          "title": "Date"
+        },
+        "color": {
+          "condition": {
+            "test": "datum.open <= datum.close",
+            "value": "#06982d"
+          },
+          "value": "#ae1325"
+        }
+      },
+      "layer": [
+        {
+          "mark": "rule",
+          "encoding": {
+            "y": {
+              "field": "low",
+              "type": "quantitative",
+              "title": "Price",
+              "scale": {
+                "zero": false
+              }
+            },
+            "y2": {
+              "field": "high"
+            }
+          }
+        },
+        {
+          "mark": "bar",
+          "encoding": {
+            "y": {
+              "field": "open",
+              "type": "quantitative"
+            },
+            "y2": {
+              "field": "close"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "streamgraph",
+    "category": "multiseries",
+    "keywords": [
+      "streamgraph",
+      "stream",
+      "area",
+      "stacked",
+      "center",
+      "스트림",
+      "스트림그래프",
+      "면적",
+      "누적",
+      "다중"
+    ],
+    "intent": "Streamgraph: stacked area with a centered baseline (stack:'center'), color per series",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "mark": "area",
+      "encoding": {
+        "x": {
+          "field": "date",
+          "type": "temporal",
+          "timeUnit": "yearmonth",
+          "axis": {
+            "format": "%Y",
+            "domain": false,
+            "tickSize": 0
+          }
+        },
+        "y": {
+          "aggregate": "sum",
+          "field": "count",
+          "type": "quantitative",
+          "stack": "center",
+          "axis": null
+        },
+        "color": {
+          "field": "series",
+          "type": "nominal",
+          "scale": {
+            "scheme": "category20b"
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "ranged_dot_plot",
+    "category": "annotation",
+    "keywords": [
+      "dumbbell",
+      "ranged",
+      "dot",
+      "comparison",
+      "line",
+      "point",
+      "덤벨",
+      "비교",
+      "범위",
+      "점",
+      "변화"
+    ],
+    "intent": "Ranged dot / dumbbell plot: a connecting line plus two colored points per category to show change between two states",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "encoding": {
+        "x": {
+          "field": "life_expect",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "country",
+          "type": "nominal"
+        }
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "line",
+            "color": "#db646f"
+          },
+          "encoding": {
+            "detail": {
+              "field": "country",
+              "type": "nominal"
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "point",
+            "size": 100,
+            "opacity": 1,
+            "filled": true
+          },
+          "encoding": {
+            "color": {
+              "field": "year",
+              "type": "ordinal",
+              "scale": {
+                "domain": [
+                  1955,
+                  2000
+                ],
+                "range": [
+                  "#e6959c",
+                  "#911a24"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "parallel_coordinates",
+    "category": "multiseries",
+    "keywords": [
+      "parallel",
+      "coordinates",
+      "fold",
+      "window",
+      "multidimensional",
+      "평행좌표",
+      "다차원",
+      "평행",
+      "다변량"
+    ],
+    "intent": "Parallel coordinates: fold several numeric fields into key/value and draw one line per record (detail groups each line)",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "width": 500,
+      "transform": [
+        {
+          "window": [
+            {
+              "op": "count",
+              "as": "index"
+            }
+          ]
+        },
+        {
+          "fold": [
+            "Beak Length (mm)",
+            "Beak Depth (mm)",
+            "Flipper Length (mm)"
+          ]
+        }
+      ],
+      "mark": "line",
+      "encoding": {
+        "x": {
+          "field": "key",
+          "type": "nominal"
+        },
+        "y": {
+          "field": "value",
+          "type": "quantitative"
+        },
+        "color": {
+          "field": "Species",
+          "type": "nominal"
+        },
+        "detail": {
+          "field": "index",
+          "type": "nominal"
+        },
+        "opacity": {
+          "value": 0.5
+        }
+      }
+    }
+  },
+  {
+    "id": "line_with_ci_band",
+    "category": "distribution",
+    "keywords": [
+      "confidence",
+      "interval",
+      "errorband",
+      "band",
+      "uncertainty",
+      "line",
+      "ci",
+      "신뢰구간",
+      "오차",
+      "밴드",
+      "불확실성"
+    ],
+    "intent": "Line with a confidence-interval band (errorband + mean line layered)",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "errorband",
+            "extent": "ci"
+          },
+          "encoding": {
+            "x": {
+              "field": "Year",
+              "type": "temporal"
+            },
+            "y": {
+              "field": "Miles_per_Gallon",
+              "type": "quantitative",
+              "title": "Miles/Gallon"
+            }
+          }
+        },
+        {
+          "mark": "line",
+          "encoding": {
+            "x": {
+              "field": "Year",
+              "type": "temporal"
+            },
+            "y": {
+              "aggregate": "mean",
+              "field": "Miles_per_Gallon",
+              "type": "quantitative"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "scatter_rolling_mean",
+    "category": "trendline",
+    "keywords": [
+      "rolling",
+      "moving",
+      "average",
+      "window",
+      "scatter",
+      "smoothing",
+      "이동평균",
+      "이동",
+      "평균",
+      "추세",
+      "스무딩"
+    ],
+    "intent": "Scatter plot with a rolling-mean overlay (windowed moving average line over points)",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "point",
+          "encoding": {
+            "x": {
+              "field": "date",
+              "type": "temporal"
+            },
+            "y": {
+              "field": "temp_max",
+              "type": "quantitative",
+              "title": "Max Temp"
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "line",
+            "color": "red",
+            "size": 3
+          },
+          "transform": [
+            {
+              "window": [
+                {
+                  "op": "mean",
+                  "field": "temp_max",
+                  "as": "rolling_mean"
+                }
+              ],
+              "frame": [
+                -15,
+                15
+              ]
+            }
+          ],
+          "encoding": {
+            "x": {
+              "field": "date",
+              "type": "temporal"
+            },
+            "y": {
+              "field": "rolling_mean",
+              "type": "quantitative"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "line_last_value_label",
+    "category": "annotation",
+    "keywords": [
+      "label",
+      "annotation",
+      "last",
+      "value",
+      "argmax",
+      "text",
+      "line",
+      "라벨",
+      "끝점",
+      "마지막",
+      "주석",
+      "레이블"
+    ],
+    "intent": "Line chart with the final value labeled (argmax aggregate locates the last point; circle + text layers annotate it)",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "encoding": {
+        "color": {
+          "field": "symbol",
+          "type": "nominal",
+          "legend": null
+        }
+      },
+      "layer": [
+        {
+          "mark": "line",
+          "encoding": {
+            "x": {
+              "field": "date",
+              "type": "temporal"
+            },
+            "y": {
+              "field": "price",
+              "type": "quantitative"
+            }
+          }
+        },
+        {
+          "mark": "circle",
+          "encoding": {
+            "x": {
+              "aggregate": "max",
+              "field": "date",
+              "type": "temporal"
+            },
+            "y": {
+              "field": "price",
+              "type": "quantitative",
+              "aggregate": {
+                "argmax": "date"
+              }
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "align": "left",
+            "dx": 4
+          },
+          "encoding": {
+            "x": {
+              "aggregate": "max",
+              "field": "date",
+              "type": "temporal"
+            },
+            "y": {
+              "field": "price",
+              "type": "quantitative",
+              "aggregate": {
+                "argmax": "date"
+              }
+            },
+            "text": {
+              "field": "symbol",
+              "type": "nominal"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "normalized_stacked_bar",
+    "category": "multiseries",
+    "keywords": [
+      "normalized",
+      "percent",
+      "proportion",
+      "stacked",
+      "bar",
+      "정규화",
+      "비율",
+      "백분율",
+      "누적",
+      "막대",
+      "100%"
+    ],
+    "intent": "Normalized (100%) stacked bar chart using stack:'normalize'",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "mark": "bar",
+      "encoding": {
+        "x": {
+          "aggregate": "sum",
+          "field": "yield",
+          "type": "quantitative",
+          "stack": "normalize"
+        },
+        "y": {
+          "field": "variety",
+          "type": "nominal"
+        },
+        "color": {
+          "field": "site",
+          "type": "nominal"
+        }
+      }
+    }
+  },
+  {
+    "id": "strip_plot_jitter",
+    "category": "distribution",
+    "keywords": [
+      "strip",
+      "jitter",
+      "yoffset",
+      "random",
+      "distribution",
+      "beeswarm",
+      "지터",
+      "분포",
+      "흩뿌리기",
+      "스트립",
+      "산포"
+    ],
+    "intent": "Strip plot with random jitter: a calculate transform produces a random offset bound to yOffset to reduce overplotting",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "transform": [
+        {
+          "calculate": "sqrt(-2*log(random()))*cos(2*PI*random())",
+          "as": "jitter"
+        }
+      ],
+      "mark": {
+        "type": "circle",
+        "size": 8
+      },
+      "encoding": {
+        "y": {
+          "field": "Major Genre",
+          "type": "nominal"
+        },
+        "x": {
+          "field": "IMDB Rating",
+          "type": "quantitative"
+        },
+        "yOffset": {
+          "field": "jitter",
+          "type": "quantitative"
+        },
+        "color": {
+          "field": "Major Genre",
+          "type": "nominal",
+          "legend": null
+        }
+      }
+    }
+  },
+  {
+    "id": "violin_plot",
+    "category": "distribution",
+    "keywords": [
+      "violin",
+      "바이올린",
+      "바이올린플롯",
+      "distribution",
+      "분포",
+      "density",
+      "밀도",
+      "kde",
+      "mirror",
+      "미러"
+    ],
+    "intent": "Violin plot: a mirrored density curve per group (density transform + horizontal area with x stack:'center'), one column facet per group. Where __FIELD__ appears, substitute a real numeric column",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "width": 100,
+      "transform": [
+        {
+          "density": "__FIELD__",
+          "groupby": [
+            "group"
+          ]
+        }
+      ],
+      "mark": {
+        "type": "area",
+        "orient": "horizontal"
+      },
+      "encoding": {
+        "x": {
+          "field": "density",
+          "type": "quantitative",
+          "stack": "center",
+          "impute": null,
+          "title": null,
+          "axis": {
+            "labels": false,
+            "values": [
+              0
+            ],
+            "grid": false,
+            "ticks": true
+          }
+        },
+        "y": {
+          "field": "value",
+          "type": "quantitative"
+        },
+        "color": {
+          "field": "group",
+          "type": "nominal"
+        },
+        "column": {
+          "field": "group",
+          "type": "nominal",
+          "spacing": 0,
+          "header": {
+            "titleOrient": "bottom",
+            "labelOrient": "bottom",
+            "labelPadding": 0
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "violin_with_jittered_points",
+    "category": "distribution",
+    "keywords": [
+      "violin",
+      "points",
+      "data points",
+      "jitter",
+      "strip",
+      "sina",
+      "raincloud",
+      "dot",
+      "raw",
+      "overlay",
+      "distribution",
+      "scatter",
+      "facet",
+      "바이올린",
+      "점",
+      "데이터 점",
+      "데이터 포인트",
+      "지터",
+      "흩뿌리기",
+      "산점",
+      "분포",
+      "원시 데이터",
+      "오버레이"
+    ],
+    "intent": "Faceted violin (density area per group) with raw data points overlaid as a centered jittered strip. KEY STRUCTURE: to facet a LAYERED chart you MUST use the 'facet' operator wrapping the layer spec ({facet, spec:{layer:[...]}}) — putting row/column in a layered spec's shared encoding silently fails to facet (all groups collapse into one cell). The density transform is scoped INSIDE the violin layer so the points are not aggregated. Points share the violin's density x-axis and are centered with x:{value:<half of width>} and jittered per-point via mark.xOffset {expr:'(random()-0.5)*N'}. Where __FIELD__ appears, substitute a real numeric column; 'group' is the grouping category",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "facet": {
+        "column": {
+          "field": "group",
+          "type": "nominal",
+          "spacing": 0,
+          "header": {
+            "titleOrient": "bottom",
+            "labelOrient": "bottom",
+            "labelPadding": 0
+          }
+        }
+      },
+      "spec": {
+        "width": 100,
+        "layer": [
+          {
+            "transform": [
+              {
+                "density": "__FIELD__",
+                "groupby": [
+                  "group"
+                ]
+              }
+            ],
+            "mark": {
+              "type": "area",
+              "orient": "horizontal",
+              "opacity": 0.5
+            },
+            "encoding": {
+              "x": {
+                "field": "density",
+                "type": "quantitative",
+                "stack": "center",
+                "impute": null,
+                "title": null,
+                "axis": {
+                  "labels": false,
+                  "values": [
+                    0
+                  ],
+                  "grid": false,
+                  "ticks": false,
+                  "domain": true
+                },
+                "scale": {
+                  "zero": false
+                }
+              },
+              "y": {
+                "field": "value",
+                "type": "quantitative",
+                "title": "__FIELD__",
+                "scale": {
+                  "zero": false
+                }
+              },
+              "color": {
+                "field": "group",
+                "type": "nominal",
+                "legend": null
+              }
+            }
+          },
+          {
+            "transform": [
+              {
+                "calculate": "random()",
+                "as": "_jitter"
+              }
+            ],
+            "mark": {
+              "type": "point",
+              "size": 12,
+              "opacity": 0.4,
+              "filled": true,
+              "color": "black"
+            },
+            "encoding": {
+              "x": {
+                "datum": "points"
+              },
+              "xOffset": {
+                "field": "_jitter",
+                "type": "quantitative",
+                "scale": {
+                  "domain": [
+                    0,
+                    1
+                  ]
+                },
+                "legend": null
+              },
+              "y": {
+                "field": "__FIELD__",
+                "type": "quantitative",
+                "scale": {
+                  "zero": false
+                }
+              }
+            }
+          }
+        ],
+        "resolve": {
+          "scale": {
+            "x": "independent"
+          }
+        }
+      },
+      "config": {
+        "view": {
+          "stroke": "#ffffff"
+        }
+      }
+    }
+  },
+  {
+    "id": "line_with_arrow_annotation",
+    "category": "annotation",
+    "keywords": [
+      "arrow",
+      "annotation",
+      "increasing",
+      "decreasing",
+      "triangle",
+      "arrowhead",
+      "pointer",
+      "callout",
+      "label",
+      "note",
+      "화살표",
+      "주석",
+      "표시",
+      "가리키기",
+      "라벨",
+      "방향",
+      "화살",
+      "화살표그리기",
+      "증가",
+      "감소",
+      "위로",
+      "방향표시"
+    ],
+    "intent": "Line chart with an arrow annotation — a rule segment for the shaft, a rotated filled triangle point as the arrowhead, and a text label",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "line",
+            "point": true
+          },
+          "encoding": {
+            "x": {
+              "field": "x",
+              "type": "quantitative"
+            },
+            "y": {
+              "field": "y",
+              "type": "quantitative"
+            }
+          }
+        },
+        {
+          "data": {
+            "values": [
+              {}
+            ]
+          },
+          "mark": {
+            "type": "rule",
+            "size": 2,
+            "color": "#000000"
+          },
+          "encoding": {
+            "x": {
+              "datum": 5.4
+            },
+            "x2": {
+              "datum": 5.9
+            },
+            "y": {
+              "datum": -0.4
+            },
+            "y2": {
+              "datum": 0
+            }
+          }
+        },
+        {
+          "data": {
+            "values": [
+              {}
+            ]
+          },
+          "mark": {
+            "type": "point",
+            "shape": "triangle",
+            "filled": true,
+            "fillOpacity": 1,
+            "size": 100
+          },
+          "encoding": {
+            "angle": {
+              "value": 23
+            },
+            "color": {
+              "value": "#000000"
+            },
+            "x": {
+              "datum": 5.9
+            },
+            "y": {
+              "datum": 0
+            }
+          }
+        },
+        {
+          "data": {
+            "values": [
+              {}
+            ]
+          },
+          "mark": {
+            "type": "text",
+            "align": "center",
+            "baseline": "bottom",
+            "fontSize": 14
+          },
+          "encoding": {
+            "text": {
+              "datum": "increasing"
+            },
+            "x": {
+              "datum": 4.7
+            },
+            "y": {
+              "datum": -0.3
+            }
+          }
+        }
+      ]
+    }
+  }
+]

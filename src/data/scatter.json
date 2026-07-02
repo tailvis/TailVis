@@ -1,0 +1,575 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "width": 480,
+  "height": 380,
+  "padding": {
+    "left": 12,
+    "right": 20,
+    "top": 8,
+    "bottom": 12
+  },
+  "title": {
+    "text": "Penguin size by species",
+    "fontSize": 17,
+    "fontWeight": 600,
+    "anchor": "middle",
+    "offset": 12
+  },
+  "config": {
+    "font": "Helvetica Neue, sans-serif",
+    "view": {
+      "stroke": null
+    },
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "titleFontWeight": 500,
+      "titleColor": "#888",
+      "labelColor": "#777",
+      "gridColor": "#eee",
+      "gridDash": [
+        3,
+        3
+      ],
+      "domainColor": "#ccc",
+      "tickColor": "#ccc"
+    }
+  },
+  "layer": [
+    {
+      "data": {
+        "name": "penguins"
+      },
+      "mark": {
+        "type": "point",
+        "filled": true,
+        "size": 45,
+        "opacity": 0.8,
+        "stroke": "white",
+        "strokeWidth": 0.8
+      },
+      "encoding": {
+        "x": {
+          "field": "Flipper Length (mm)",
+          "type": "quantitative",
+          "scale": {
+            "zero": false
+          },
+          "title": "Flipper length (mm)"
+        },
+        "y": {
+          "field": "Body Mass (g)",
+          "type": "quantitative",
+          "scale": {
+            "zero": false
+          },
+          "title": "Body mass (g)"
+        },
+        "color": {
+          "field": "Species",
+          "type": "nominal",
+          "title": null,
+          "scale": {
+            "domain": [
+              "Adelie",
+              "Chinstrap",
+              "Gentoo"
+            ],
+            "range": [
+              "#FF0000",
+              "#0000FF",
+              "#00FF00"
+            ]
+          },
+          "legend": {
+          "orient": "top",
+          "direction": "horizontal",
+          "title": null,
+          "labelFontSize": 13,
+          "labelFontWeight": 500,
+          "symbolSize": 60,
+          "symbolStrokeWidth": 0,
+          "labelColor": "#555",
+          "offset": 4
+        }
+        },
+        "tooltip": [
+          {
+            "field": "Species",
+            "type": "nominal"
+          },
+          {
+            "field": "Island",
+            "type": "nominal"
+          },
+          {
+            "field": "Flipper Length (mm)",
+            "type": "quantitative"
+          },
+          {
+            "field": "Body Mass (g)",
+            "type": "quantitative"
+          },
+          {
+            "field": "Sex",
+            "type": "nominal"
+          }
+        ]
+      }
+    }
+  ],
+  "datasets": {
+    "penguins": [
+      {
+        "Species": "Adelie",
+        "Island": "Torgersen",
+        "Beak Length (mm)": 39.1,
+        "Beak Depth (mm)": 18.7,
+        "Flipper Length (mm)": 181,
+        "Body Mass (g)": 3750,
+        "Sex": "MALE"
+      },
+      {
+        "Species": "Adelie",
+        "Island": "Torgersen",
+        "Beak Length (mm)": 46.0,
+        "Beak Depth (mm)": 21.5,
+        "Flipper Length (mm)": 194,
+        "Body Mass (g)": 4200,
+        "Sex": "MALE"
+      },
+      {
+        "Species": "Adelie",
+        "Island": "Dream",
+        "Beak Length (mm)": 37.2,
+        "Beak Depth (mm)": 18.1,
+        "Flipper Length (mm)": 178,
+        "Body Mass (g)": 3900,
+        "Sex": "MALE"
+      },
+      {
+        "Species": "Adelie",
+        "Island": "Dream",
+        "Beak Length (mm)": 39.8,
+        "Beak Depth (mm)": 19.1,
+        "Flipper Length (mm)": 184,
+        "Body Mass (g)": 4650,
+        "Sex": "MALE"
+      },
+      {
+        "Species": "Adelie",
+        "Island": "Dream",
+        "Beak Length (mm)": 44.1,
+        "Beak Depth (mm)": 19.7,
+        "Flipper Length (mm)": 196,
+        "Body Mass (g)": 4400,
+        "Sex": "MALE"
+      },
+      {
+        "Species": "Adelie",
+        "Island": "Biscoe",
+        "Beak Length (mm)": 39.6,
+        "Beak Depth (mm)": 17.7,
+        "Flipper Length (mm)": 186,
+        "Body Mass (g)": 3500,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Adelie",
+        "Island": "Biscoe",
+        "Beak Length (mm)": 35.5,
+        "Beak Depth (mm)": 16.2,
+        "Flipper Length (mm)": 195,
+        "Body Mass (g)": 3350,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Adelie",
+        "Island": "Torgersen",
+        "Beak Length (mm)": 35.9,
+        "Beak Depth (mm)": 16.6,
+        "Flipper Length (mm)": 190,
+        "Body Mass (g)": 3050,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Adelie",
+        "Island": "Torgersen",
+        "Beak Length (mm)": 33.5,
+        "Beak Depth (mm)": 19.0,
+        "Flipper Length (mm)": 190,
+        "Body Mass (g)": 3600,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Adelie",
+        "Island": "Dream",
+        "Beak Length (mm)": 38.9,
+        "Beak Depth (mm)": 18.8,
+        "Flipper Length (mm)": 190,
+        "Body Mass (g)": 3600,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Adelie",
+        "Island": "Dream",
+        "Beak Length (mm)": 43.2,
+        "Beak Depth (mm)": 18.5,
+        "Flipper Length (mm)": 192,
+        "Body Mass (g)": 4100,
+        "Sex": "MALE"
+      },
+      {
+        "Species": "Adelie",
+        "Island": "Biscoe",
+        "Beak Length (mm)": 37.7,
+        "Beak Depth (mm)": 16.0,
+        "Flipper Length (mm)": 183,
+        "Body Mass (g)": 3075,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Adelie",
+        "Island": "Biscoe",
+        "Beak Length (mm)": 39.7,
+        "Beak Depth (mm)": 17.7,
+        "Flipper Length (mm)": 193,
+        "Body Mass (g)": 3200,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Adelie",
+        "Island": "Biscoe",
+        "Beak Length (mm)": 42.2,
+        "Beak Depth (mm)": 19.5,
+        "Flipper Length (mm)": 197,
+        "Body Mass (g)": 4275,
+        "Sex": "MALE"
+      },
+      {
+        "Species": "Adelie",
+        "Island": "Torgersen",
+        "Beak Length (mm)": 35.7,
+        "Beak Depth (mm)": 17.0,
+        "Flipper Length (mm)": 189,
+        "Body Mass (g)": 3350,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Adelie",
+        "Island": "Dream",
+        "Beak Length (mm)": 41.1,
+        "Beak Depth (mm)": 17.5,
+        "Flipper Length (mm)": 190,
+        "Body Mass (g)": 3900,
+        "Sex": "MALE"
+      },
+      {
+        "Species": "Adelie",
+        "Island": "Dream",
+        "Beak Length (mm)": 40.7,
+        "Beak Depth (mm)": 17.0,
+        "Flipper Length (mm)": 190,
+        "Body Mass (g)": 3725,
+        "Sex": "MALE"
+      },
+      {
+        "Species": "Chinstrap",
+        "Island": "Dream",
+        "Beak Length (mm)": 51.3,
+        "Beak Depth (mm)": 19.2,
+        "Flipper Length (mm)": 193,
+        "Body Mass (g)": 3650,
+        "Sex": "MALE"
+      },
+      {
+        "Species": "Chinstrap",
+        "Island": "Dream",
+        "Beak Length (mm)": 45.9,
+        "Beak Depth (mm)": 17.1,
+        "Flipper Length (mm)": 190,
+        "Body Mass (g)": 3575,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Chinstrap",
+        "Island": "Dream",
+        "Beak Length (mm)": 46.4,
+        "Beak Depth (mm)": 18.6,
+        "Flipper Length (mm)": 190,
+        "Body Mass (g)": 3450,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Chinstrap",
+        "Island": "Dream",
+        "Beak Length (mm)": 46.7,
+        "Beak Depth (mm)": 17.9,
+        "Flipper Length (mm)": 195,
+        "Body Mass (g)": 3300,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Chinstrap",
+        "Island": "Dream",
+        "Beak Length (mm)": 52.0,
+        "Beak Depth (mm)": 19.0,
+        "Flipper Length (mm)": 197,
+        "Body Mass (g)": 4150,
+        "Sex": "MALE"
+      },
+      {
+        "Species": "Chinstrap",
+        "Island": "Dream",
+        "Beak Length (mm)": 50.5,
+        "Beak Depth (mm)": 18.4,
+        "Flipper Length (mm)": 200,
+        "Body Mass (g)": 3400,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Chinstrap",
+        "Island": "Dream",
+        "Beak Length (mm)": 46.4,
+        "Beak Depth (mm)": 17.8,
+        "Flipper Length (mm)": 191,
+        "Body Mass (g)": 3700,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Chinstrap",
+        "Island": "Dream",
+        "Beak Length (mm)": 40.9,
+        "Beak Depth (mm)": 16.6,
+        "Flipper Length (mm)": 187,
+        "Body Mass (g)": 3200,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Chinstrap",
+        "Island": "Dream",
+        "Beak Length (mm)": 46.2,
+        "Beak Depth (mm)": 17.5,
+        "Flipper Length (mm)": 187,
+        "Body Mass (g)": 3650,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Chinstrap",
+        "Island": "Dream",
+        "Beak Length (mm)": 50.9,
+        "Beak Depth (mm)": 19.1,
+        "Flipper Length (mm)": 196,
+        "Body Mass (g)": 3550,
+        "Sex": "MALE"
+      },
+      {
+        "Species": "Chinstrap",
+        "Island": "Dream",
+        "Beak Length (mm)": 45.5,
+        "Beak Depth (mm)": 17.0,
+        "Flipper Length (mm)": 196,
+        "Body Mass (g)": 3500,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Chinstrap",
+        "Island": "Dream",
+        "Beak Length (mm)": 50.8,
+        "Beak Depth (mm)": 18.5,
+        "Flipper Length (mm)": 201,
+        "Body Mass (g)": 4450,
+        "Sex": "MALE"
+      },
+      {
+        "Species": "Chinstrap",
+        "Island": "Dream",
+        "Beak Length (mm)": 50.1,
+        "Beak Depth (mm)": 17.9,
+        "Flipper Length (mm)": 190,
+        "Body Mass (g)": 3400,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Chinstrap",
+        "Island": "Dream",
+        "Beak Length (mm)": 49.0,
+        "Beak Depth (mm)": 19.6,
+        "Flipper Length (mm)": 212,
+        "Body Mass (g)": 4300,
+        "Sex": "MALE"
+      },
+      {
+        "Species": "Chinstrap",
+        "Island": "Dream",
+        "Beak Length (mm)": 51.4,
+        "Beak Depth (mm)": 19.0,
+        "Flipper Length (mm)": 201,
+        "Body Mass (g)": 3950,
+        "Sex": "MALE"
+      },
+      {
+        "Species": "Chinstrap",
+        "Island": "Dream",
+        "Beak Length (mm)": 49.6,
+        "Beak Depth (mm)": 18.2,
+        "Flipper Length (mm)": 193,
+        "Body Mass (g)": 3775,
+        "Sex": "MALE"
+      },
+      {
+        "Species": "Gentoo",
+        "Island": "Biscoe",
+        "Beak Length (mm)": 49.0,
+        "Beak Depth (mm)": 16.1,
+        "Flipper Length (mm)": 216,
+        "Body Mass (g)": 5550,
+        "Sex": "MALE"
+      },
+      {
+        "Species": "Gentoo",
+        "Island": "Biscoe",
+        "Beak Length (mm)": 45.8,
+        "Beak Depth (mm)": 14.6,
+        "Flipper Length (mm)": 210,
+        "Body Mass (g)": 4200,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Gentoo",
+        "Island": "Biscoe",
+        "Beak Length (mm)": 45.1,
+        "Beak Depth (mm)": 14.5,
+        "Flipper Length (mm)": 215,
+        "Body Mass (g)": 5000,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Gentoo",
+        "Island": "Biscoe",
+        "Beak Length (mm)": 48.2,
+        "Beak Depth (mm)": 14.3,
+        "Flipper Length (mm)": 210,
+        "Body Mass (g)": 4600,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Gentoo",
+        "Island": "Biscoe",
+        "Beak Length (mm)": 42.6,
+        "Beak Depth (mm)": 13.7,
+        "Flipper Length (mm)": 213,
+        "Body Mass (g)": 4950,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Gentoo",
+        "Island": "Biscoe",
+        "Beak Length (mm)": 44.0,
+        "Beak Depth (mm)": 13.6,
+        "Flipper Length (mm)": 208,
+        "Body Mass (g)": 4350,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Gentoo",
+        "Island": "Biscoe",
+        "Beak Length (mm)": 48.7,
+        "Beak Depth (mm)": 15.7,
+        "Flipper Length (mm)": 208,
+        "Body Mass (g)": 5350,
+        "Sex": "MALE"
+      },
+      {
+        "Species": "Gentoo",
+        "Island": "Biscoe",
+        "Beak Length (mm)": 42.7,
+        "Beak Depth (mm)": 13.7,
+        "Flipper Length (mm)": 208,
+        "Body Mass (g)": 3950,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Gentoo",
+        "Island": "Biscoe",
+        "Beak Length (mm)": 50.5,
+        "Beak Depth (mm)": 15.9,
+        "Flipper Length (mm)": 222,
+        "Body Mass (g)": 5550,
+        "Sex": "MALE"
+      },
+      {
+        "Species": "Gentoo",
+        "Island": "Biscoe",
+        "Beak Length (mm)": 45.5,
+        "Beak Depth (mm)": 13.9,
+        "Flipper Length (mm)": 210,
+        "Body Mass (g)": 4200,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Gentoo",
+        "Island": "Biscoe",
+        "Beak Length (mm)": 50.5,
+        "Beak Depth (mm)": 15.9,
+        "Flipper Length (mm)": 225,
+        "Body Mass (g)": 5400,
+        "Sex": "MALE"
+      },
+      {
+        "Species": "Gentoo",
+        "Island": "Biscoe",
+        "Beak Length (mm)": 45.2,
+        "Beak Depth (mm)": 15.8,
+        "Flipper Length (mm)": 215,
+        "Body Mass (g)": 5300,
+        "Sex": "MALE"
+      },
+      {
+        "Species": "Gentoo",
+        "Island": "Biscoe",
+        "Beak Length (mm)": 45.8,
+        "Beak Depth (mm)": 14.2,
+        "Flipper Length (mm)": 219,
+        "Body Mass (g)": 4700,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Gentoo",
+        "Island": "Biscoe",
+        "Beak Length (mm)": 46.4,
+        "Beak Depth (mm)": 15.6,
+        "Flipper Length (mm)": 221,
+        "Body Mass (g)": 5000,
+        "Sex": "MALE"
+      },
+      {
+        "Species": "Gentoo",
+        "Island": "Biscoe",
+        "Beak Length (mm)": 48.5,
+        "Beak Depth (mm)": 15.0,
+        "Flipper Length (mm)": 219,
+        "Body Mass (g)": 4850,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Gentoo",
+        "Island": "Biscoe",
+        "Beak Length (mm)": 46.2,
+        "Beak Depth (mm)": 14.1,
+        "Flipper Length (mm)": 217,
+        "Body Mass (g)": 4375,
+        "Sex": "FEMALE"
+      },
+      {
+        "Species": "Gentoo",
+        "Island": "Biscoe",
+        "Beak Length (mm)": 44.5,
+        "Beak Depth (mm)": 15.7,
+        "Flipper Length (mm)": 217,
+        "Body Mass (g)": 4875,
+        "Sex": "."
+      }
+    ]
+  }
+}

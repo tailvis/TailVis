@@ -1,0 +1,708 @@
+.property-panel {
+  width: 100%;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  color: #333;
+  min-width: 0;
+  flex: 1;          /* fill .right-panel-content so the content area can scroll */
+  min-height: 0;
+}
+
+.property-panel.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 13px;
+  text-align: center;
+  padding: 20px;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.element-type {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #4a9eff;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.close-btn:hover {
+  color: #333;
+}
+
+.panel-content {
+  flex: 1;             /* take remaining height below the header... */
+  min-height: 0;
+  overflow-y: auto;    /* ...and scroll when there are many rows (e.g. encoding) */
+  overflow-x: hidden;
+  padding: 15px 15px;
+  min-width: 0;
+}
+
+.property-group {
+  margin-bottom: 14px;
+}
+
+.property-group h3 {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #383838;
+  margin: 0 0 8px 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.property-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+/* Two sub-fields side by side: 굵기 [  ] | 크기 [  ] */
+.property-row-pair {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.property-pair-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+}
+
+.property-pair-item label {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: #666;
+  white-space: nowrap;
+}
+
+.property-pair-item input[type="number"],
+.property-pair-item select {
+  flex: 1;
+  min-width: 0;
+  background: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 6px 6px;
+  color: #333;
+  font-size: 12px;
+}
+
+.property-pair-item input[type="number"]:focus,
+.property-pair-item select:focus {
+  border-color: #4A9EFF;
+  outline: none;
+}
+
+.property-pair-divider {
+  width: 1px;
+  height: 20px;
+  background: #e0e0e0;
+  flex-shrink: 0;
+}
+
+.property-row label {
+  flex-shrink: 0;
+  width: 46px;
+  font-size: 10px;
+  color: #666;
+  line-height: 1.3;
+}
+
+.property-row input[type="text"],
+.property-row input[type="number"] {
+  flex: 1;
+  min-width: 0;
+  background: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 5px 7px;
+  color: #333;
+  font-size: 11px;
+}
+
+/* Standalone number inputs (Angle, Padding, …) stay compact instead of stretching full
+   width. Number inputs inside .slider-combo / .transform-field keep their own sizes. */
+.property-row input[type="number"] {
+  flex: 0 0 68px;
+  width: 68px;
+}
+
+.property-row input[type="text"]:focus,
+.property-row input[type="number"]:focus {
+  outline: none;
+  border-color: #4a9eff;
+}
+
+.property-row input[type="color"] {
+  width: 32px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  background: transparent;
+}
+
+.property-row input[type="range"] {
+  flex: 1;
+  min-width: 0;
+  height: 4px;
+  -webkit-appearance: none;
+  background: #ddd;
+  border-radius: 2px;
+}
+
+.property-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  background: #4a9eff;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.property-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #4a9eff;
+  cursor: pointer;
+}
+
+.property-row select {
+  flex: 1;
+  min-width: 0;
+  background: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 5px 7px;
+  color: #333;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.property-row select:focus {
+  outline: none;
+  border-color: #4a9eff;
+}
+
+.value-display {
+  font-size: 11px;
+  color: #4a9eff;
+  min-width: 30px;
+  text-align: right;
+}
+
+.color-value {
+  font-size: 10px;
+  color: #888;
+  font-family: monospace;
+}
+
+/* Color input with hex text */
+.color-input-combo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.color-input-combo input[type="color"] {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.color-input-combo .hex-input {
+  flex: 1;
+  padding: 4px 6px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 12px;
+  color: #333;
+  background: #fff;
+  min-width: 0;
+}
+
+.color-input-combo .hex-input:focus {
+  outline: none;
+  border-color: #4a9eff;
+}
+
+/* No-color swatch (Figma/Illustrator style) */
+.no-color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.no-color-swatch::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -2px;
+  width: 140%;
+  height: 2px;
+  background: #e53935;
+  transform: rotate(-45deg);
+  transform-origin: center;
+}
+
+/* Remove color button (small slash icon next to hex input) */
+.no-color-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  border: 1px solid #ddd;
+  background: white;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  align-self: center;
+}
+.no-color-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -2px;
+  width: 140%;
+  height: 1.5px;
+  background: #e53935;
+  transform: rotate(-45deg);
+  transform-origin: center;
+}
+.no-color-btn:hover {
+  border-color: #e53935;
+}
+
+/* Transform inputs - horizontal layout */
+.transform-inputs {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+}
+
+.transform-field {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.transform-label {
+  font-size: 10px;
+  color: #888;
+  min-width: 12px;
+}
+
+.transform-field input[type="number"],
+.transform-field select {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 5px 7px;
+  color: #333;
+  font-size: 11px;
+}
+
+.transform-field input[type="number"]:focus,
+.transform-field select:focus {
+  outline: none;
+  border-color: #4a9eff;
+}
+
+/* Slider with number input combo */
+.slider-combo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.slider-combo input[type="number"] {
+  width: 46px;
+  min-width: 34px;
+  flex: 0 0 auto;
+  background: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 4px 6px;
+  color: #333;
+  font-size: 11px;
+  text-align: center;
+}
+
+.slider-combo input[type="number"]:focus {
+  outline: none;
+  border-color: #4a9eff;
+}
+
+.slider-combo input[type="range"] {
+  flex: 1;
+  min-width: 0;
+  height: 4px;
+  -webkit-appearance: none;
+  background: #ddd;
+  border-radius: 2px;
+}
+
+.slider-combo input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  background: #4a9eff;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* Transpose button */
+.transpose-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f4f6f8;
+  border: 1px solid #d0d7de;
+  border-radius: 7px;
+  padding: 5px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #444b52;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, color 0.15s;
+}
+
+.transpose-btn:hover {
+  background: #fff;
+  border-color: #4a9eff;
+  color: #2b7de9;
+  box-shadow: 0 1px 3px rgba(74, 158, 255, 0.18);
+}
+
+/* Mark option toggle (On/Off pill) */
+.mark-option-toggle {
+  min-width: 56px;
+  background: #f4f6f8;
+  border: 1px solid #d0d7de;
+  border-radius: 7px;
+  padding: 5px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #8a929b;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.mark-option-toggle:hover {
+  border-color: #4a9eff;
+}
+
+.mark-option-toggle.on {
+  background: #2b7de9;
+  border-color: #2b7de9;
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(74, 158, 255, 0.25);
+}
+
+/* Multi-select mixed value indicator */
+.mixed-value-indicator {
+  font-size: 11px;
+  color: #999;
+  font-style: italic;
+}
+
+/* ─── Encoding panel (in property panel) ─── */
+
+/* Scoped with .property-row to outrank the same-named (but unrelated) .enc-panel-*
+   rules in Canvas.css, which otherwise leak in and force align-items: center. */
+.property-row.enc-panel-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.property-row.enc-panel-row .enc-panel-channel {
+  width: 54px;
+  flex-shrink: 0;
+  /* align with the field control on line 1 (it has 5px padding + 1px border) */
+  padding-top: 6px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #666;
+}
+
+/* Controls column beside the channel. Field + data type sit on line 1; the
+   agg/bin/stack modifiers wrap to line 2, aligned to this column's left edge
+   (i.e. under the field, not under the channel label). */
+.enc-panel-controls {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  row-gap: 5px;
+}
+
+.property-row select.enc-panel-field {
+  /* Fill line 1 except for the data-type select (38px + 4px gap) beside it. */
+  flex: 1 1 calc(100% - 42px);
+  min-width: 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 5px 7px;
+  font-size: 11px;
+  background: #fff;
+  color: #333;
+}
+
+.property-row select.enc-panel-type {
+  flex: 0 0 38px;
+  width: 38px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 5px 2px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #fff;
+  color: #555;
+  text-align: center;
+}
+
+.property-row select.enc-panel-agg,
+.property-row select.enc-panel-timeunit {
+  flex: 0 0 auto;      /* compact — keep it to the left instead of stretching */
+  min-width: 64px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 5px 4px;
+  font-size: 11px;
+  background: #fff;
+  color: #555;
+}
+
+/* Bin-size control: number + slider on their own full-width line */
+.enc-panel-binsize {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 100%;
+  min-width: 0;
+}
+.enc-panel-binsize .enc-binsize-num {
+  flex: 0 0 44px;
+  width: 44px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 4px;
+  font-size: 11px;
+  color: #333;
+}
+.enc-panel-binsize .enc-binsize-range {
+  flex: 1;
+  min-width: 0;
+}
+
+.property-row select.enc-panel-stack {
+  min-width: 64px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 5px 4px;
+  font-size: 11px;
+  background: #fff;
+  color: #555;
+}
+
+.enc-panel-bin {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: #555;
+  white-space: nowrap;
+}
+
+.enc-panel-bin input {
+  margin: 0;
+}
+
+/* ─── Binding status tags (mapped / fixed) ─── */
+
+.binding-tag {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-left: 4px;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.binding-tag.mapped {
+  background: #e8f4fd;
+  color: #1a73e8;
+}
+
+.binding-tag.fixed {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+/* Delete element button */
+.delete-element-btn {
+  width: 100%;
+  padding: 4px 10px;
+  margin-top: 6px;
+  font-size: 11px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: #fff;
+  color: #d32f2f;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.delete-element-btn:hover {
+  background: #ffebee;
+  border-color: #d32f2f;
+}
+
+/* Small delete button — right-aligned at bottom */
+.delete-btn-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.delete-element-btn-small {
+  background: #fff;
+  border: 1px solid #e57373;
+  border-radius: 3px;
+  color: #d32f2f;
+  font-size: 10px;
+  cursor: pointer;
+  padding: 3px 8px;
+  transition: all 0.15s;
+}
+
+.delete-element-btn-small:hover {
+  background: #ffebee;
+  border-color: #d32f2f;
+}
+
+/* ─── Multi-type selection list ─── */
+
+.multi-type-list {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.multi-type-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border-bottom: 1px solid #e0e0e0;
+  cursor: pointer;
+}
+
+.multi-type-item:hover {
+  background: #eaeaea;
+}
+
+.multi-type-item.active {
+  background: #fff;
+  border-bottom: none;
+}
+
+.multi-type-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #4a9eff;
+  text-transform: uppercase;
+}
+
+.multi-type-remove-btn {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.multi-type-remove-btn:hover {
+  background: #fee;
+  color: #d32f2f;
+}
+
+.multi-type-back-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-right: 6px;
+}
+
+.multi-type-back-btn:hover {
+  background: #f0f0f0;
+  border-color: #bbb;
+}
