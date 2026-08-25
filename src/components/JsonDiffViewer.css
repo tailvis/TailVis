@@ -1,0 +1,71 @@
+.json-diff-viewer {
+  background: #eaeaea;
+  border-radius: 8px;
+  overflow: visible;
+}
+
+.diff-legend {
+  padding: 8px 12px;
+  background: #1a1a2e;
+  border-bottom: 1px solid #2d2d44;
+  font-size: 11px;
+  color: #888;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.legend-color.changed {
+  background: rgba(255, 193, 7, 0.3);
+  border: 1px solid #ffc107;
+}
+
+.json-content {
+  padding: 12px;
+  font-family: Menlo, Monaco, "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #333333;
+  overflow: auto;
+  margin: 0;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
+}
+
+.json-key {
+  color: #0989ce;
+}
+
+.json-string {
+  color: #b63f11;
+}
+
+.json-number {
+  color: #4abc0d;
+}
+
+.json-boolean {
+  color: #17609b;
+}
+
+.json-null {
+  color: #2975b4;
+}
+
+.json-changed {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-weight: 500;
+}

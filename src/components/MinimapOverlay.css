@@ -1,0 +1,18 @@
+.minimap-overlay {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #d0d0d0;
+  border-radius: 2px;
+  box-shadow: 0 2px 8px rgba(151, 151, 151, 0.15);
+  cursor: crosshair;
+  overflow: hidden;
+  z-index: 100;
+  user-select: none;
+}
+
+.minimap-overlay:hover {
+  border-color: #4a90d9;
+  box-shadow: 0 2px 12px rgba(74,144,217,0.25);
+}

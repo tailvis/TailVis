@@ -1,0 +1,978 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #ffffff;
+  color: #333;
+  overflow: hidden;
+}
+
+.app-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.app-header {
+  background: #ffffff;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.app-header h1 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.app-header p {
+  color: #888;
+  font-size: 13px;
+}
+
+/* Main Content */
+.main-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Panels */
+.panel {
+  background: #ffffff;
+  padding: 20px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.panel h2 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.section {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.section:last-child {
+  border-bottom: none;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.section-header h2 {
+  margin-bottom: 0;
+}
+
+.copy-btn {
+  padding: 6px 12px;
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  color: #666;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copy-btn:hover {
+  background: #4a9eff;
+  border-color: #4a9eff;
+  color: #fff;
+}
+
+.add-chart-section {
+  padding: 12px;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 0;
+}
+
+/* Left panel split view (Data Table / Layer Panel) */
+.split-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.split-top {
+  overflow: hidden;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+}
+
+.split-bottom {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 80px;
+}
+
+.split-handle {
+  height: 8px;
+  background: #f5f5f5;
+  cursor: ns-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-top: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.split-handle:hover,
+.split-handle.dragging {
+  background: #e8e8e8;
+}
+
+.split-handle-bar {
+  width: 40px;
+  height: 3px;
+  background: #ccc;
+  border-radius: 2px;
+}
+
+.split-handle:hover .split-handle-bar,
+.split-handle.dragging .split-handle-bar {
+  background: #4a9eff;
+}
+
+/* Right panel tab view */
+.right-panel-tabs {
+  display: flex;
+  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.right-panel-tab {
+  flex: 1;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+  background: #f8f9fa;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.right-panel-tab:hover {
+  color: #555;
+  background: #f0f0f0;
+}
+
+.right-panel-tab.active {
+  color: #333;
+  background: #fff;
+  border-bottom-color: #4c78a8;
+}
+
+.right-panel-content {
+  flex: 1;
+  overflow: hidden;    /* ← 부모는 스크롤 안 함 */
+  min-height: 0;
+  height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Properties tab: PropertyPanel + AncestorWidgetPanel scroll together as one column.
+   Without this the ancestor widgets overflow a fixed-height flex parent and get clipped
+   (covering the property panel with no way to scroll). Scoped to the top-level panel so
+   nested/inline PropertyPanels (multi-select accordion) keep their own layout. */
+.properties-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.properties-scroll > .property-panel {
+  flex: none;          /* size to content; the wrapper does the scrolling */
+}
+.properties-scroll > .property-panel > .panel-content {
+  overflow: visible;   /* no nested scroll — single outer scrollbar */
+  min-height: 0;
+  height: auto;
+}
+
+.spec-tab-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  height: 0;
+}
+
+.spec-tab-toolbar {
+  display: flex;
+  overflow: hidden;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #eee;
+  background: #f8f9fa;
+  flex-shrink: 0;
+}
+
+.spec-copy-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.spec-copy-btn:hover {
+  background: #4c78a8;
+  border-color: #4c78a8;
+  color: #fff;
+}
+
+.spec-content {
+  flex: 1;
+  overflow: auto;
+  user-select: text;
+  -webkit-user-select: text;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 0;
+}
+
+.add-chart-btn {
+  width: 100%;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #4a9eff 0%, #3d8bdb 100%);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-chart-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(74, 158, 255, 0.3);
+}
+
+.add-chart-label {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.chart-template-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.template-btn {
+  width: 100%;
+  padding: 10px 12px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  color: #555;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.template-btn:hover {
+  background: #e8f4ff;
+  border-color: #4a9eff;
+  color: #333;
+}
+
+/* Code View */
+.code-view {
+  background: #f8f8f8;
+  border-radius: 8px;
+  padding: 12px;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #333;
+  overflow: auto;
+  max-height: 500px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  border: 1px solid #e0e0e0;
+}
+
+.empty-hint {
+  color: #999;
+  font-size: 13px;
+  text-align: center;
+  padding: 20px;
+}
+
+/* Canvas Area (encoding bar + canvas) */
+.canvas-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* Canvas Wrapper */
+.canvas-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Instruction i-button */
+.instruction-btn-wrapper {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1010;
+}
+
+.instruction-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1.5px solid #bbb;
+  background: white;
+  color: #666;
+  font-size: 16px;
+  font-weight: 700;
+  font-style: italic;
+  font-family: Georgia, serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.instruction-btn:hover {
+  border-color: #4a9eff;
+  color: #4a9eff;
+  background: #f0f7ff;
+}
+
+.instruction-popup {
+  display: none;
+  position: absolute;
+  top: 38px;
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  z-index: 1003;
+  width: 700px;
+}
+
+.instruction-popup img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 4px;
+  z-index: 1003;
+}
+
+.instruction-btn-wrapper:hover .instruction-popup,
+.instruction-btn-wrapper.pinned .instruction-popup {
+  display: block;
+}
+
+.instruction-btn-wrapper.pinned .instruction-btn {
+  border-color: #4a9eff;
+  color: #4a9eff;
+  background: #f0f7ff;
+}
+
+/* Reset button */
+.canvas-reset-btn {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  z-index: 20;
+  padding: 6px 16px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.canvas-reset-btn:hover {
+  color: #e53e3e;
+  border-color: #e53e3e;
+  background: #fff5f5;
+}
+
+/* Save-to-Gallery button (next to Reset) */
+.canvas-gallery-btn {
+  position: absolute;
+  bottom: 12px;
+  left: 96px;
+  z-index: 20;
+  padding: 6px 16px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.canvas-gallery-btn:hover { color: #0d99ff; border-color: #0d99ff; background: #f0f8ff; }
+
+/* ── Read-only gallery mode ─────────────────────────────────────────── */
+.readonly-header { display: flex; align-items: center; gap: 16px; }
+.readonly-back-btn {
+  border: 1px solid #d0d5dd; background: #fff; border-radius: 8px;
+  padding: 6px 14px; font-size: 13px; font-weight: 600; color: #1f2328; cursor: pointer;
+}
+.readonly-back-btn:hover { background: #f1f3f5; }
+.readonly-title-wrap { display: flex; align-items: center; }
+.readonly-title { font-size: 20px; font-weight: 600; color: #333; margin: 0; }
+
+/* Disable edit controls in read-only mode — display + scroll + canvas selection stay. */
+.readonly-mode .right-panel-content input,
+.readonly-mode .right-panel-content select,
+.readonly-mode .right-panel-content textarea,
+.readonly-mode .ancestor-widget-panel input,
+.readonly-mode .ancestor-widget-panel select,
+.readonly-mode .scope-dropdown,
+.readonly-mode .mod-inline-input,
+.readonly-mode .mod-inline-color,
+.readonly-mode .mod-new-val,
+.readonly-mode .mod-delete,
+.readonly-mode .transpose-btn { pointer-events: none !important; opacity: 0.9; }
+
+/* Read-only data table: viewable + scrollable, but cells not editable */
+.readonly-mode .datatable-overlay-panel input,
+.readonly-mode .datatable-overlay-panel [contenteditable] { pointer-events: none !important; }
+
+/* NL Input Popup */
+.nl-input-popup {
+  background: #ffffff;
+  border-top: 1px solid #e0e0e0;
+  padding: 16px 24px;
+  flex-shrink: 0;
+}
+
+.nl-popup-header {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4a9eff;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.prev-command {
+  font-size: 12px;
+  font-weight: 400;
+  color: #888;
+  font-style: italic;
+}
+
+/* NL Form */
+.nl-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.nl-input {
+  flex: 1;
+  padding: 12px 16px;
+  background: #ffffff;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  color: #333;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.nl-input:focus {
+  outline: none;
+  border-color: #4a9eff;
+}
+
+.nl-input::placeholder {
+  color: #aaa;
+}
+
+.nl-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.nl-submit {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #4a9eff 0%, #3d8bdb 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nl-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(74, 158, 255, 0.3);
+}
+
+.nl-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.nl-hints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.nl-hints span {
+  font-size: 12px;
+  color: #888;
+}
+
+.nl-hints button {
+  padding: 6px 12px;
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  color: #666;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nl-hints button:hover {
+  background: #e8f4ff;
+  border-color: #4a9eff;
+  color: #333;
+}
+
+/* Canvas Container */
+.canvas-container {
+  flex: 1;
+  position: relative;
+  background: #F5F5F5;
+  overflow: hidden;
+}
+
+.canvas-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.canvas-info {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(255, 255, 255, 0.8);
+  color: #666;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  display: flex;
+  gap: 14px;
+  pointer-events: none;
+  border: 1px solid #e0e0e0;
+  z-index: 1001;
+}
+
+.selected-indicator {
+  color: #4a9eff;
+  font-weight: 500;
+}
+
+/* Scrollbar */
+.panel::-webkit-scrollbar,
+.code-view::-webkit-scrollbar {
+  width: 6px;
+}
+
+.panel::-webkit-scrollbar-track,
+.code-view::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.panel::-webkit-scrollbar-thumb,
+.code-view::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+/* Panel horizontal resize handles */
+.panel-resize-handle {
+  width: 6px;
+  background: #f0f0f0;
+  cursor: ew-resize;
+  flex-shrink: 0;
+  transition: background 0.2s;
+  z-index: 1001;
+}
+
+.panel-resize-handle:hover,
+.panel-resize-handle.dragging {
+  background: #4a9eff;
+}
+
+/* Right panel wrapper */
+.right-panel-wrapper {
+  background: #ffffff;
+  border-left: 1px solid #e0e0e0;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 1001;
+}
+
+/* Reset confirm dialog */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.confirm-dialog {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px 28px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  max-width: 340px;
+}
+
+.confirm-dialog p {
+  font-size: 14px;
+  color: #333;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.confirm-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.confirm-btn {
+  padding: 7px 28px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.confirm-yes {
+  background: #e53935;
+  color: #fff;
+  border-color: #e53935;
+}
+
+.confirm-yes:hover {
+  background: #c62828;
+}
+
+.confirm-no {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.confirm-no:hover {
+  background: #eee;
+}
+
+/* Spec import modal */
+.spec-import-modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px 28px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  max-width: 600px;
+  width: 90%;
+}
+
+.spec-import-modal h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+  color: #333;
+}
+
+.spec-import-textarea {
+  width: 100%;
+  height: 300px;
+  font-family: monospace;
+  font-size: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 10px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.spec-import-textarea:focus {
+  outline: none;
+  border-color: #4a9eff;
+}
+
+/* Spec editor textarea */
+.spec-edit-textarea {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  font-family: Menlo, Monaco, "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  border: none;
+  padding: 12px;
+  resize: none;
+  box-sizing: border-box;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  tab-size: 2;
+}
+
+.spec-edit-textarea:focus {
+  outline: none;
+}
+
+/* Toast notification */
+.toast-notification {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 13px;
+  z-index: 10000;
+  pointer-events: none;
+  animation: toast-fade 3s ease-in-out;
+}
+
+@keyframes toast-fade {
+  0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  10% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  80% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+}
+
+
+/* ─── Icon Sidebar + Collapsible Panels ─── */
+
+.icon-sidebar {
+  width: 48px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: #f5f5f5;
+  border-right: 1px solid #e0e0e0;
+  z-index: 10;
+}
+
+.sidebar-icon-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 4px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #e0e0e0;
+  cursor: pointer;
+  color: #888;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sidebar-icon-btn:hover {
+  background: #e8f4ff;
+  color: #1a73e8;
+}
+
+.sidebar-icon-btn.active {
+  background: #e8f4ff;
+  color: #1a73e8;
+  border-left: 2px solid #4a9eff;
+}
+
+.sidebar-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.sidebar-label {
+  font-size: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* Layer overlay panel */
+.layer-overlay-panel {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  flex-shrink: 0;
+  background: #fff;
+  overflow: hidden;
+  z-index: 9;
+  min-width: 160px;
+  max-width: 500px;
+}
+
+.layer-overlay-panel > .layer-panel {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+.layer-overlay-panel.resizing {
+  user-select: none;
+}
+
+/* Generic overlay resize handle (reusable for layer/data) */
+.overlay-resize-handle {
+  width: 6px;
+  cursor: ew-resize;
+  background: transparent;
+  flex-shrink: 0;
+  position: relative;
+  transition: background 0.15s;
+}
+
+.overlay-resize-handle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 30px;
+  background: #ccc;
+  border-radius: 1px;
+}
+
+.overlay-resize-handle:hover,
+.overlay-resize-handle.dragging {
+  background: #e8f4ff;
+}
+
+.overlay-resize-handle:hover::after,
+.overlay-resize-handle.dragging::after {
+  background: #4a9eff;
+}
+
+/* DataTable overlay panel */
+.datatable-overlay-panel {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  flex-shrink: 0;
+  background: #fff;
+  border-right: 1px solid #e0e0e0;
+  overflow: hidden;
+  z-index: 9;
+  min-width: 220px;
+  max-width: 700px;
+}
+
+.datatable-overlay-panel > .data-table-panel {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+/* DataTable resize handle (right edge) */
+.datatable-resize-handle {
+  width: 6px;
+  cursor: ew-resize;
+  background: transparent;
+  flex-shrink: 0;
+  position: relative;
+  transition: background 0.15s;
+}
+
+.datatable-resize-handle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 30px;
+  background: #ccc;
+  border-radius: 1px;
+}
+
+.datatable-resize-handle:hover,
+.datatable-resize-handle.dragging {
+  background: #e8f4ff;
+}
+
+.datatable-resize-handle:hover::after,
+.datatable-resize-handle.dragging::after {
+  background: #4a9eff;
+}
+
+.datatable-overlay-panel.resizing {
+  user-select: none;
+}

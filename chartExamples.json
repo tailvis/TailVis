@@ -1,0 +1,5811 @@
+[
+  {
+    "id": "waterfall_chart",
+    "source": "altair",
+    "category": "basic",
+    "keywords": [
+      "waterfall",
+      "워터폴",
+      "폭포",
+      "워터폴차트",
+      "cumulative",
+      "누적",
+      "running total",
+      "런닝토탈",
+      "bridge",
+      "increase",
+      "decrease",
+      "증감"
+    ],
+    "intent": "Waterfall chart: a running cumulative total drawn as floating bars. The X axis is the CATEGORY/PERIOD field — one bar per category, sort:null to keep input order. X is NEVER the numeric measure. Each bar spans from the previous cumulative total (_prev) up to the new total (_sum); a window sum over __FIELD__ builds the totals and bars are colored by increase/decrease. Substitute __FIELD__ with the numeric measure column and \"category\" with the category/period field (the axis of progression, e.g. month).",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "width": 400,
+      "height": 250,
+      "transform": [
+        {
+          "window": [
+            {
+              "op": "sum",
+              "field": "__FIELD__",
+              "as": "_sum"
+            }
+          ],
+          "frame": [
+            null,
+            0
+          ]
+        },
+        {
+          "calculate": "datum._sum - datum[\"__FIELD__\"]",
+          "as": "_prev"
+        },
+        {
+          "calculate": "datum[\"__FIELD__\"] >= 0 ? \"Increase\" : \"Decrease\"",
+          "as": "_dir"
+        }
+      ],
+      "encoding": {
+        "x": {
+          "field": "category",
+          "type": "nominal",
+          "sort": null,
+          "axis": {
+            "labelAngle": 0
+          }
+        }
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "bar",
+            "size": 28
+          },
+          "encoding": {
+            "y": {
+              "field": "_prev",
+              "type": "quantitative",
+              "title": "__FIELD__"
+            },
+            "y2": {
+              "field": "_sum"
+            },
+            "color": {
+              "field": "_dir",
+              "type": "nominal",
+              "scale": {
+                "domain": [
+                  "Increase",
+                  "Decrease"
+                ],
+                "range": [
+                  "#4c78a8",
+                  "#e45756"
+                ]
+              },
+              "legend": {
+                "title": null
+              }
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "dy": -4,
+            "fontSize": 10,
+            "color": "#333"
+          },
+          "encoding": {
+            "y": {
+              "field": "_sum",
+              "type": "quantitative"
+            },
+            "text": {
+              "field": "_sum",
+              "type": "quantitative",
+              "format": ".0f"
+            }
+          }
+        }
+      ]
+    },
+    "_placeholderFields": [
+      "__FIELD__"
+    ]
+  },
+  {
+    "id": "arc_color_mappings",
+    "source": "vega-lite",
+    "category": "multiseries",
+    "keywords": [
+      "arc",
+      "color",
+      "mappings",
+      "theta",
+      "파이",
+      "pie",
+      "donut",
+      "도넛",
+      "여러",
+      "시리즈",
+      "다중",
+      "그룹"
+    ],
+    "intent": "A simple pie chart with embedded data.",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "A simple pie chart with embedded data.",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "arc",
+          "encoding": {
+            "theta": {
+              "field": "value",
+              "type": "quantitative"
+            },
+            "color": {
+              "field": "category",
+              "type": "nominal",
+              "scale": {
+                "range": [
+                  "purple",
+                  "green",
+                  "blue",
+                  "yellow",
+                  "magenta",
+                  "brown"
+                ],
+                "domain": {
+                  "unionWith": [
+                    5,
+                    6
+                  ]
+                }
+              },
+              "sort": null
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "arc_facet",
+    "source": "vega-lite",
+    "category": "layout",
+    "keywords": [
+      "arc",
+      "facet",
+      "column",
+      "theta",
+      "color",
+      "파이",
+      "pie",
+      "donut",
+      "도넛",
+      "패싯",
+      "격자",
+      "나누기",
+      "분할"
+    ],
+    "intent": "arc facet",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "mark": "arc",
+      "encoding": {
+        "column": {
+          "field": "year"
+        },
+        "theta": {
+          "field": "yield",
+          "type": "quantitative",
+          "aggregate": "sum"
+        },
+        "color": {
+          "field": "site",
+          "type": "nominal"
+        }
+      }
+    }
+  },
+  {
+    "id": "arc_ordinal_theta",
+    "source": "vega-lite",
+    "category": "multiseries",
+    "keywords": [
+      "arc",
+      "ordinal",
+      "theta",
+      "radius",
+      "color",
+      "파이",
+      "pie",
+      "donut",
+      "도넛",
+      "여러",
+      "시리즈",
+      "다중",
+      "그룹"
+    ],
+    "intent": "arc ordinal theta",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "arc"
+          },
+          "encoding": {
+            "theta": {
+              "field": "dir",
+              "type": "ordinal"
+            },
+            "radius": {
+              "field": "strength",
+              "type": "quantitative"
+            },
+            "color": {
+              "field": "dir",
+              "type": "nominal"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "arc_pie_pyramid",
+    "source": "vega-lite",
+    "category": "multiseries",
+    "keywords": [
+      "arc",
+      "pie",
+      "pyramid",
+      "theta",
+      "color",
+      "order",
+      "파이",
+      "donut",
+      "도넛",
+      "여러",
+      "시리즈",
+      "다중",
+      "그룹"
+    ],
+    "intent": "Reproducing http://robslink.com/SAS/democd91/pyramid_pie.htm",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "Reproducing http://robslink.com/SAS/democd91/pyramid_pie.htm",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "arc",
+            "outerRadius": 80
+          },
+          "encoding": {
+            "theta": {
+              "field": "value",
+              "type": "quantitative",
+              "scale": {
+                "range": [
+                  2.35619449,
+                  8.639379797
+                ]
+              },
+              "stack": true
+            },
+            "color": {
+              "field": "category",
+              "type": "nominal",
+              "scale": {
+                "domain": [
+                  "Sky",
+                  "Shady side of a pyramid",
+                  "Sunny side of a pyramid"
+                ],
+                "range": [
+                  "#416D9D",
+                  "#674028",
+                  "#DEAC58"
+                ]
+              },
+              "legend": {
+                "orient": "none",
+                "title": null,
+                "columns": 1,
+                "legendX": 200,
+                "legendY": 80
+              }
+            },
+            "order": {
+              "field": "order"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "arc_radial",
+    "source": "vega-lite",
+    "category": "annotation",
+    "keywords": [
+      "arc",
+      "radial",
+      "text",
+      "파이",
+      "pie",
+      "donut",
+      "도넛",
+      "강조",
+      "배경",
+      "영역",
+      "주석",
+      "표시",
+      "구간"
+    ],
+    "intent": "A simple radial chart with embedded data.",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "A simple radial chart with embedded data.",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "arc",
+            "innerRadius": 20,
+            "stroke": "#fff"
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "radiusOffset": 10
+          },
+          "encoding": {
+            "text": {
+              "field": "data",
+              "type": "quantitative"
+            }
+          }
+        }
+      ],
+      "encoding": {
+        "theta": {
+          "field": "data",
+          "type": "quantitative",
+          "stack": true
+        },
+        "radius": {
+          "field": "data",
+          "scale": {
+            "type": "sqrt",
+            "zero": true,
+            "rangeMin": 20
+          }
+        },
+        "color": {
+          "field": "data",
+          "type": "nominal",
+          "legend": null
+        }
+      }
+    }
+  },
+  {
+    "id": "arc_radial_histogram",
+    "source": "vega-lite",
+    "category": "distribution",
+    "keywords": [
+      "arc",
+      "radial",
+      "histogram",
+      "text",
+      "파이",
+      "pie",
+      "donut",
+      "도넛",
+      "분포",
+      "밀도",
+      "박스플롯",
+      "히스토그램",
+      "리지라인"
+    ],
+    "intent": "arc radial histogram",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "arc",
+            "stroke": "white",
+            "tooltip": true
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "radiusOffset": 15,
+            "align": "right"
+          },
+          "encoding": {
+            "text": {
+              "bin": true,
+              "field": "IMDB Rating"
+            },
+            "angle": {
+              "bin": true,
+              "field": "IMDB Rating",
+              "scale": {
+                "range": [
+                  90,
+                  450
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "encoding": {
+        "theta": {
+          "bin": true,
+          "field": "IMDB Rating"
+        },
+        "radius": {
+          "aggregate": "count",
+          "scale": {
+            "type": "sqrt"
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "area",
+    "source": "vega-lite",
+    "category": "basic",
+    "keywords": [
+      "area",
+      "x",
+      "y",
+      "면적",
+      "기본"
+    ],
+    "intent": "area",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "width": 300,
+      "height": 200,
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "area",
+          "encoding": {
+            "x": {
+              "timeUnit": "yearmonth",
+              "field": "date",
+              "axis": {
+                "format": "%Y"
+              }
+            },
+            "y": {
+              "aggregate": "sum",
+              "field": "count",
+              "title": "count"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "area_cumulative_freq",
+    "source": "vega-lite",
+    "category": "basic",
+    "keywords": [
+      "area",
+      "cumulative",
+      "freq",
+      "aggregate",
+      "groupby",
+      "sort",
+      "window",
+      "frame",
+      "x",
+      "y",
+      "면적",
+      "기본"
+    ],
+    "intent": "area cumulative freq",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "transform": [
+        {
+          "aggregate": [
+            {
+              "op": "count",
+              "field": "*",
+              "as": "count"
+            }
+          ],
+          "groupby": [
+            "IMDB Rating"
+          ]
+        },
+        {
+          "sort": [
+            {
+              "field": "IMDB Rating"
+            }
+          ],
+          "window": [
+            {
+              "op": "sum",
+              "field": "count",
+              "as": "Cumulative Count"
+            }
+          ],
+          "frame": [
+            null,
+            0
+          ]
+        }
+      ],
+      "layer": [
+        {
+          "mark": "area",
+          "encoding": {
+            "x": {
+              "field": "IMDB Rating",
+              "type": "quantitative"
+            },
+            "y": {
+              "field": "Cumulative Count",
+              "type": "quantitative"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "area_density",
+    "source": "vega-lite",
+    "category": "distribution",
+    "keywords": [
+      "area",
+      "density",
+      "bandwidth",
+      "x",
+      "y",
+      "distribution",
+      "ridgeline",
+      "면적",
+      "분포",
+      "밀도",
+      "박스플롯",
+      "히스토그램",
+      "리지라인"
+    ],
+    "intent": "area density",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "width": 400,
+      "height": 100,
+      "transform": [
+        {
+          "density": "__FIELD__",
+          "bandwidth": 0.3
+        }
+      ],
+      "layer": [
+        {
+          "mark": "area",
+          "encoding": {
+            "x": {
+              "field": "value",
+              "title": "IMDB Rating",
+              "type": "quantitative"
+            },
+            "y": {
+              "field": "density",
+              "type": "quantitative"
+            }
+          }
+        }
+      ]
+    },
+    "_placeholderFields": [
+      "__FIELD__"
+    ]
+  },
+  {
+    "id": "area_density_facet",
+    "source": "vega-lite",
+    "category": "distribution",
+    "keywords": [
+      "area",
+      "density",
+      "facet",
+      "groupby",
+      "extent",
+      "x",
+      "y",
+      "row",
+      "distribution",
+      "ridgeline",
+      "면적",
+      "분포",
+      "밀도",
+      "박스플롯",
+      "히스토그램",
+      "리지라인"
+    ],
+    "intent": "Distribution of Body Mass of Penguins",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "title": "Distribution of Body Mass of Penguins",
+      "width": 400,
+      "height": 80,
+      "data": {
+        "values": []
+      },
+      "mark": "area",
+      "transform": [
+        {
+          "density": "__FIELD__",
+          "groupby": [
+            "Species"
+          ],
+          "extent": [
+            2500,
+            6500
+          ]
+        }
+      ],
+      "encoding": {
+        "x": {
+          "field": "value",
+          "type": "quantitative",
+          "title": "Body Mass (g)"
+        },
+        "y": {
+          "field": "density",
+          "type": "quantitative",
+          "stack": "zero"
+        },
+        "row": {
+          "field": "Species"
+        }
+      }
+    },
+    "_placeholderFields": [
+      "__FIELD__"
+    ]
+  },
+  {
+    "id": "area_density_stacked",
+    "source": "vega-lite",
+    "category": "distribution",
+    "keywords": [
+      "area",
+      "density",
+      "stacked",
+      "groupby",
+      "extent",
+      "x",
+      "y",
+      "color",
+      "distribution",
+      "ridgeline",
+      "면적",
+      "분포",
+      "밀도",
+      "박스플롯",
+      "히스토그램",
+      "리지라인"
+    ],
+    "intent": "Distribution of Body Mass of Penguins",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "title": "Distribution of Body Mass of Penguins",
+      "width": 400,
+      "height": 80,
+      "data": {
+        "values": []
+      },
+      "transform": [
+        {
+          "density": "__FIELD__",
+          "groupby": [
+            "Species"
+          ],
+          "extent": [
+            2500,
+            6500
+          ]
+        }
+      ],
+      "layer": [
+        {
+          "mark": "area",
+          "encoding": {
+            "x": {
+              "field": "value",
+              "type": "quantitative",
+              "title": "Body Mass (g)"
+            },
+            "y": {
+              "field": "density",
+              "type": "quantitative",
+              "stack": "zero"
+            },
+            "color": {
+              "field": "Species",
+              "type": "nominal"
+            }
+          }
+        }
+      ]
+    },
+    "_placeholderFields": [
+      "__FIELD__"
+    ]
+  },
+  {
+    "id": "area_density_stacked_fold",
+    "source": "vega-lite",
+    "category": "distribution",
+    "keywords": [
+      "area",
+      "density",
+      "stacked",
+      "fold",
+      "as",
+      "bandwidth",
+      "groupby",
+      "extent",
+      "counts",
+      "steps",
+      "x",
+      "y",
+      "color",
+      "distribution",
+      "ridgeline",
+      "면적",
+      "분포",
+      "밀도",
+      "박스플롯",
+      "히스토그램",
+      "리지라인"
+    ],
+    "intent": "area density stacked fold",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "width": 400,
+      "height": 100,
+      "data": {
+        "values": []
+      },
+      "transform": [
+        {
+          "fold": [
+            "Displacement",
+            "Horsepower"
+          ],
+          "as": [
+            "Measurement",
+            "value"
+          ]
+        },
+        {
+          "density": "__FIELD__",
+          "bandwidth": 10,
+          "groupby": [
+            "Measurement"
+          ],
+          "extent": [
+            10,
+            500
+          ],
+          "counts": true,
+          "steps": 200
+        }
+      ],
+      "layer": [
+        {
+          "mark": "area",
+          "encoding": {
+            "x": {
+              "field": "value",
+              "type": "quantitative"
+            },
+            "y": {
+              "field": "density",
+              "type": "quantitative",
+              "stack": "zero"
+            },
+            "color": {
+              "field": "Measurement",
+              "type": "nominal"
+            }
+          }
+        }
+      ]
+    },
+    "_placeholderFields": [
+      "__FIELD__"
+    ]
+  },
+  {
+    "id": "area_gradient",
+    "source": "vega-lite",
+    "category": "color",
+    "keywords": [
+      "area",
+      "gradient",
+      "filter",
+      "x",
+      "y",
+      "면적",
+      "색",
+      "색상",
+      "범례",
+      "컬러"
+    ],
+    "intent": "Google's stock price over time.",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "Google's stock price over time.",
+      "data": {
+        "values": []
+      },
+      "transform": [
+        {
+          "filter": "datum.symbol==='GOOG'"
+        }
+      ],
+      "layer": [
+        {
+          "mark": {
+            "type": "area",
+            "line": {
+              "color": "darkgreen"
+            },
+            "color": {
+              "x1": 1,
+              "y1": 1,
+              "x2": 1,
+              "y2": 0,
+              "gradient": "linear",
+              "stops": [
+                {
+                  "offset": 0,
+                  "color": "white"
+                },
+                {
+                  "offset": 1,
+                  "color": "darkgreen"
+                }
+              ]
+            }
+          },
+          "encoding": {
+            "x": {
+              "field": "date",
+              "type": "temporal"
+            },
+            "y": {
+              "field": "price",
+              "type": "quantitative"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "area_horizon",
+    "source": "vega-lite",
+    "category": "basic",
+    "keywords": [
+      "area",
+      "horizon",
+      "면적",
+      "기본"
+    ],
+    "intent": "Horizon Graph with 2 layers. (See https://idl.cs.washington.edu/papers/horizon/ for more details on Horizon Graphs.)",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "Horizon Graph with 2 layers. (See https://idl.cs.washington.edu/papers/horizon/ for more details on Horizon Graphs.)",
+      "width": 300,
+      "height": 50,
+      "data": {
+        "values": []
+      },
+      "encoding": {
+        "x": {
+          "field": "x",
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": false
+          }
+        },
+        "y": {
+          "field": "y",
+          "type": "quantitative",
+          "scale": {
+            "domain": [
+              0,
+              50
+            ]
+          },
+          "axis": {
+            "title": "y"
+          }
+        }
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "area",
+            "clip": true,
+            "orient": "vertical",
+            "opacity": 0.6
+          }
+        },
+        {
+          "transform": [
+            {
+              "calculate": "datum.y - 50",
+              "as": "ny"
+            }
+          ],
+          "mark": {
+            "type": "area",
+            "clip": true,
+            "orient": "vertical"
+          },
+          "encoding": {
+            "y": {
+              "field": "ny",
+              "type": "quantitative",
+              "scale": {
+                "domain": [
+                  0,
+                  50
+                ]
+              }
+            },
+            "opacity": {
+              "value": 0.3
+            }
+          }
+        }
+      ],
+      "config": {
+        "area": {
+          "interpolate": "monotone"
+        }
+      }
+    }
+  },
+  {
+    "id": "area_overlay_with_y2",
+    "source": "vega-lite",
+    "category": "basic",
+    "keywords": [
+      "area",
+      "overlay",
+      "with",
+      "y2",
+      "filter",
+      "x",
+      "y",
+      "면적",
+      "기본"
+    ],
+    "intent": "Google's stock price over time.",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "Google's stock price over time.",
+      "data": {
+        "values": []
+      },
+      "transform": [
+        {
+          "filter": "datum.symbol==='GOOG'"
+        }
+      ],
+      "layer": [
+        {
+          "mark": {
+            "type": "area",
+            "line": true,
+            "point": true
+          },
+          "encoding": {
+            "x": {
+              "field": "date",
+              "type": "temporal"
+            },
+            "y": {
+              "field": "price",
+              "type": "quantitative"
+            },
+            "y2": {
+              "datum": 0,
+              "type": "quantitative"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "argmin_spaces",
+    "source": "vega-lite",
+    "category": "basic",
+    "keywords": [
+      "argmin",
+      "spaces",
+      "point",
+      "tooltip",
+      "x",
+      "y",
+      "기본"
+    ],
+    "intent": "An example showing how to use argmin in tooltips with fields with spaces",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "An example showing how to use argmin in tooltips with fields with spaces",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "point",
+          "encoding": {
+            "tooltip": [
+              {
+                "field": "Fighter Name"
+              },
+              {
+                "aggregate": "min",
+                "field": "Place Rank"
+              },
+              {
+                "aggregate": {
+                  "argmin": "Place Rank"
+                },
+                "field": "Fighting Style"
+              }
+            ],
+            "x": {
+              "aggregate": "min",
+              "field": "Place Rank"
+            },
+            "y": {
+              "field": "Fighter Name"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "bar",
+    "source": "vega-lite",
+    "category": "basic",
+    "keywords": [
+      "bar",
+      "x",
+      "y",
+      "막대",
+      "기본"
+    ],
+    "intent": "A simple bar chart with embedded data.",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "A simple bar chart with embedded data.",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "bar",
+          "encoding": {
+            "x": {
+              "field": "a",
+              "type": "nominal",
+              "axis": {
+                "labelAngle": 0
+              }
+            },
+            "y": {
+              "field": "b",
+              "type": "quantitative"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "bar_1d",
+    "source": "vega-lite",
+    "category": "basic",
+    "keywords": [
+      "bar",
+      "1d",
+      "filter",
+      "x",
+      "막대",
+      "기본"
+    ],
+    "intent": "bar 1d",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "transform": [
+        {
+          "filter": "datum.year == 2000"
+        }
+      ],
+      "layer": [
+        {
+          "mark": "bar",
+          "encoding": {
+            "x": {
+              "aggregate": "sum",
+              "field": "people",
+              "title": "population"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "bar_1d_binned",
+    "source": "vega-lite",
+    "category": "basic",
+    "keywords": [
+      "bar",
+      "1d",
+      "binned",
+      "x",
+      "막대",
+      "기본"
+    ],
+    "intent": "bar 1d binned",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "width": 300,
+      "height": 50,
+      "config": {
+        "view": {
+          "stroke": null
+        }
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "bar"
+          },
+          "encoding": {
+            "x": {
+              "field": "delay",
+              "type": "quantitative",
+              "bin": {
+                "maxbins": 100,
+                "minstep": 1
+              },
+              "axis": {
+                "title": "delay",
+                "titleAnchor": "start",
+                "format": "d"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "bar_1d_dimension_only",
+    "source": "vega-lite",
+    "category": "basic",
+    "keywords": [
+      "bar",
+      "1d",
+      "dimension",
+      "only",
+      "y",
+      "막대",
+      "기본"
+    ],
+    "intent": "A simple bar chart with embedded data.",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "A simple bar chart with embedded data.",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "bar",
+            "orient": "horizontal"
+          },
+          "encoding": {
+            "y": {
+              "field": "b",
+              "type": "quantitative"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "bar_aggregate_sort_by_encoding",
+    "source": "vega-lite",
+    "category": "axis",
+    "keywords": [
+      "bar",
+      "aggregate",
+      "sort",
+      "by",
+      "encoding",
+      "filter",
+      "y",
+      "x",
+      "막대",
+      "축",
+      "라벨",
+      "회전",
+      "눈금"
+    ],
+    "intent": "A bar chart that sorts the y-values by the x-values.",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "A bar chart that sorts the y-values by the x-values.",
+      "data": {
+        "values": []
+      },
+      "transform": [
+        {
+          "filter": "datum.year == 2000"
+        }
+      ],
+      "height": {
+        "step": 17
+      },
+      "layer": [
+        {
+          "mark": "bar",
+          "encoding": {
+            "y": {
+              "field": "age",
+              "type": "ordinal",
+              "sort": "-x"
+            },
+            "x": {
+              "aggregate": "sum",
+              "field": "people",
+              "title": "population"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "bar_binned_yearmonth_grouped",
+    "source": "vega-lite",
+    "category": "multiseries",
+    "keywords": [
+      "bar",
+      "binned",
+      "yearmonth",
+      "grouped",
+      "filter",
+      "x",
+      "xoffset",
+      "color",
+      "y",
+      "막대",
+      "여러",
+      "시리즈",
+      "다중",
+      "그룹"
+    ],
+    "intent": "Stock price over time.",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "Stock price over time.",
+      "data": {
+        "values": []
+      },
+      "transform": [
+        {
+          "filter": {
+            "timeUnit": "binnedyearmonth",
+            "field": "date",
+            "range": [
+              {
+                "year": 2005,
+                "month": 1
+              },
+              {
+                "year": 2005,
+                "month": 3
+              }
+            ]
+          }
+        }
+      ],
+      "layer": [
+        {
+          "mark": "bar",
+          "encoding": {
+            "x": {
+              "timeUnit": "binnedyearmonth",
+              "field": "date",
+              "type": "temporal"
+            },
+            "xOffset": {
+              "field": "symbol",
+              "type": "nominal"
+            },
+            "color": {
+              "field": "symbol",
+              "type": "nominal"
+            },
+            "y": {
+              "field": "price",
+              "type": "quantitative"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "bar_binned_yearmonth_label",
+    "source": "vega-lite",
+    "category": "annotation",
+    "keywords": [
+      "bar",
+      "binned",
+      "yearmonth",
+      "label",
+      "text",
+      "filter",
+      "막대",
+      "강조",
+      "배경",
+      "영역",
+      "주석",
+      "표시",
+      "구간"
+    ],
+    "intent": "Google's stock price over time.",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "Google's stock price over time.",
+      "data": {
+        "values": []
+      },
+      "transform": [
+        {
+          "filter": "datum.symbol==='GOOG'"
+        },
+        {
+          "filter": {
+            "timeUnit": "binnedyearmonth",
+            "field": "date",
+            "range": [
+              {
+                "year": 2005,
+                "month": 1
+              },
+              {
+                "year": 2005,
+                "month": 3
+              }
+            ]
+          }
+        }
+      ],
+      "encoding": {
+        "x": {
+          "timeUnit": "binnedyearmonth",
+          "field": "date",
+          "type": "temporal",
+          "bandPosition": 0.5
+        },
+        "y": {
+          "field": "price",
+          "type": "quantitative"
+        }
+      },
+      "layer": [
+        {
+          "mark": "bar"
+        },
+        {
+          "mark": {
+            "type": "text",
+            "baseline": "bottom"
+          },
+          "encoding": {
+            "text": {
+              "field": "price",
+              "type": "quantitative"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "bar_color_disabled_scale",
+    "source": "vega-lite",
+    "category": "multiseries",
+    "keywords": [
+      "bar",
+      "color",
+      "disabled",
+      "scale",
+      "x",
+      "y",
+      "막대",
+      "여러",
+      "시리즈",
+      "다중",
+      "그룹"
+    ],
+    "intent": "A bar chart that directly encodes color names in the data.",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "A bar chart that directly encodes color names in the data.",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "bar",
+          "encoding": {
+            "x": {
+              "field": "color",
+              "type": "nominal"
+            },
+            "y": {
+              "field": "b",
+              "type": "quantitative"
+            },
+            "color": {
+              "field": "color",
+              "type": "nominal",
+              "scale": null
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "bar_column_fold",
+    "source": "vega-lite",
+    "category": "layout",
+    "keywords": [
+      "bar",
+      "column",
+      "fold",
+      "x",
+      "y",
+      "color",
+      "막대",
+      "패싯",
+      "격자",
+      "나누기",
+      "분할"
+    ],
+    "intent": "bar column fold",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "transform": [
+        {
+          "fold": [
+            "gold",
+            "silver"
+          ]
+        }
+      ],
+      "mark": "bar",
+      "encoding": {
+        "column": {
+          "field": "key",
+          "type": "nominal"
+        },
+        "x": {
+          "field": "country",
+          "type": "nominal"
+        },
+        "y": {
+          "field": "value",
+          "type": "quantitative"
+        },
+        "color": {
+          "field": "country",
+          "type": "nominal"
+        }
+      }
+    }
+  },
+  {
+    "id": "bar_column_pivot",
+    "source": "vega-lite",
+    "category": "layout",
+    "keywords": [
+      "bar",
+      "column",
+      "pivot",
+      "value",
+      "groupby",
+      "x",
+      "y",
+      "막대",
+      "패싯",
+      "격자",
+      "나누기",
+      "분할"
+    ],
+    "intent": "bar column pivot",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "transform": [
+        {
+          "pivot": "type",
+          "value": "count",
+          "groupby": [
+            "country"
+          ]
+        }
+      ],
+      "layer": [
+        {
+          "mark": "bar",
+          "encoding": {
+            "x": {
+              "field": "country",
+              "type": "nominal"
+            },
+            "y": {
+              "field": "gold",
+              "type": "quantitative"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "bar_diverging_stack_transform",
+    "source": "vega-lite",
+    "category": "multiseries",
+    "keywords": [
+      "bar",
+      "diverging",
+      "stack",
+      "transform",
+      "calculate",
+      "as",
+      "groupby",
+      "joinaggregate",
+      "x",
+      "x2",
+      "y",
+      "color",
+      "막대",
+      "여러",
+      "시리즈",
+      "다중",
+      "그룹"
+    ],
+    "intent": "A diverging stacked bar chart for sentiments towards a set of eight questions, displayed as percentages with neutral responses straddling the 0% mark",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "A diverging stacked bar chart for sentiments towards a set of eight questions, displayed as percentages with neutral responses straddling the 0% mark",
+      "data": {
+        "values": []
+      },
+      "transform": [
+        {
+          "calculate": "if(datum.type === 'Strongly disagree',-2,0) + if(datum.type==='Disagree',-1,0) + if(datum.type =='Neither agree nor disagree',0,0) + if(datum.type ==='Agree',1,0) + if(datum.type ==='Strongly agree',2,0)",
+          "as": "q_order"
+        },
+        {
+          "calculate": "if(datum.type === 'Disagree' || datum.type === 'Strongly disagree', datum.percentage,0) + if(datum.type === 'Neither agree nor disagree', datum.percentage / 2,0)",
+          "as": "signed_percentage"
+        },
+        {
+          "stack": "percentage",
+          "as": [
+            "v1",
+            "v2"
+          ],
+          "groupby": [
+            "question"
+          ]
+        },
+        {
+          "joinaggregate": [
+            {
+              "field": "signed_percentage",
+              "op": "sum",
+              "as": "offset"
+            }
+          ],
+          "groupby": [
+            "question"
+          ]
+        },
+        {
+          "calculate": "datum.v1 - datum.offset",
+          "as": "nx"
+        },
+        {
+          "calculate": "datum.v2 - datum.offset",
+          "as": "nx2"
+        }
+      ],
+      "layer": [
+        {
+          "mark": "bar",
+          "encoding": {
+            "x": {
+              "field": "nx",
+              "type": "quantitative",
+              "title": "Percentage"
+            },
+            "x2": {
+              "field": "nx2"
+            },
+            "y": {
+              "field": "question",
+              "type": "nominal",
+              "title": "Question",
+              "axis": {
+                "offset": 5,
+                "ticks": false,
+                "minExtent": 60,
+                "domain": false
+              }
+            },
+            "color": {
+              "field": "type",
+              "type": "nominal",
+              "title": "Response",
+              "scale": {
+                "domain": [
+                  "Strongly disagree",
+                  "Disagree",
+                  "Neither agree nor disagree",
+                  "Agree",
+                  "Strongly agree"
+                ],
+                "range": [
+                  "#c30d24",
+                  "#f3a583",
+                  "#cccccc",
+                  "#94c6da",
+                  "#1770ab"
+                ],
+                "type": "ordinal"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "bar_grouped",
+    "source": "vega-lite",
+    "category": "multiseries",
+    "keywords": [
+      "bar",
+      "grouped",
+      "x",
+      "y",
+      "xoffset",
+      "color",
+      "막대",
+      "여러",
+      "시리즈",
+      "다중",
+      "그룹"
+    ],
+    "intent": "bar grouped",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "bar",
+          "encoding": {
+            "x": {
+              "field": "category"
+            },
+            "y": {
+              "field": "value",
+              "type": "quantitative"
+            },
+            "xOffset": {
+              "field": "group"
+            },
+            "color": {
+              "field": "group"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "bar_grouped_errorbar",
+    "source": "vega-lite",
+    "category": "distribution",
+    "keywords": [
+      "bar",
+      "grouped",
+      "errorbar",
+      "y",
+      "color",
+      "막대",
+      "분포",
+      "밀도",
+      "박스플롯",
+      "히스토그램",
+      "리지라인"
+    ],
+    "intent": "A vertical box plot showing median, min, and max body mass of penguins.",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "A vertical box plot showing median, min, and max body mass of penguins.",
+      "data": {
+        "values": []
+      },
+      "encoding": {
+        "x": {
+          "field": "Cylinders",
+          "type": "nominal"
+        },
+        "xOffset": {
+          "field": "Origin",
+          "type": "nominal"
+        }
+      },
+      "layer": [
+        {
+          "mark": "bar",
+          "encoding": {
+            "y": {
+              "aggregate": "mean",
+              "field": "Acceleration",
+              "type": "quantitative"
+            },
+            "color": {
+              "field": "Origin",
+              "type": "nominal"
+            }
+          }
+        },
+        {
+          "mark": "errorbar",
+          "encoding": {
+            "y": {
+              "field": "Acceleration",
+              "type": "quantitative"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "bar_grouped_facet",
+    "source": "vega-lite",
+    "category": "layout",
+    "keywords": [
+      "bar",
+      "grouped",
+      "facet",
+      "column",
+      "y",
+      "x",
+      "color",
+      "막대",
+      "패싯",
+      "격자",
+      "나누기",
+      "분할"
+    ],
+    "intent": "bar grouped facet",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "mark": "bar",
+      "encoding": {
+        "column": {
+          "field": "category",
+          "header": {
+            "orient": "bottom"
+          }
+        },
+        "y": {
+          "field": "value",
+          "type": "quantitative"
+        },
+        "x": {
+          "field": "group",
+          "axis": null
+        },
+        "color": {
+          "field": "group"
+        }
+      },
+      "config": {
+        "view": {
+          "stroke": "transparent"
+        }
+      }
+    }
+  },
+  {
+    "id": "bar_grouped_label",
+    "source": "vega-lite",
+    "category": "annotation",
+    "keywords": [
+      "bar",
+      "grouped",
+      "label",
+      "text",
+      "calculate",
+      "as",
+      "color",
+      "막대",
+      "강조",
+      "배경",
+      "영역",
+      "주석",
+      "표시",
+      "구간"
+    ],
+    "intent": "bar grouped label",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "transform": [
+        {
+          "calculate": "datum.value/2",
+          "as": "half"
+        }
+      ],
+      "encoding": {
+        "x": {
+          "field": "category"
+        },
+        "xOffset": {
+          "field": "group"
+        },
+        "y": {
+          "field": "value",
+          "type": "quantitative"
+        }
+      },
+      "layer": [
+        {
+          "mark": "bar",
+          "encoding": {
+            "color": {
+              "field": "group"
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "color": "black",
+            "dy": -8
+          },
+          "encoding": {
+            "text": {
+              "field": "value",
+              "type": "quantitative"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "bar_layered_weather",
+    "source": "vega-lite",
+    "category": "annotation",
+    "keywords": [
+      "bar",
+      "layered",
+      "weather",
+      "text",
+      "y",
+      "y2",
+      "막대",
+      "강조",
+      "배경",
+      "영역",
+      "주석",
+      "표시",
+      "구간"
+    ],
+    "intent": "Weekly Weather — Observations and Predictions",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "A layered bar chart with floating bars representing weekly weather data",
+      "config": {
+        "style": {
+          "hilo": {
+            "size": 20
+          }
+        }
+      },
+      "title": {
+        "text": [
+          "Weekly Weather",
+          "Observations and Predictions"
+        ],
+        "frame": "group"
+      },
+      "data": {
+        "values": []
+      },
+      "width": 250,
+      "height": 200,
+      "encoding": {
+        "x": {
+          "field": "id",
+          "type": "ordinal",
+          "axis": {
+            "domain": false,
+            "ticks": false,
+            "labels": false,
+            "title": null,
+            "titlePadding": 25,
+            "orient": "top"
+          }
+        },
+        "y": {
+          "type": "quantitative",
+          "scale": {
+            "domain": [
+              10,
+              70
+            ]
+          },
+          "axis": {
+            "title": "Temperature (F)"
+          }
+        }
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "bar",
+            "size": 20,
+            "color": "#ccc"
+          },
+          "encoding": {
+            "y": {
+              "field": "record.low"
+            },
+            "y2": {
+              "field": "record.high"
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "bar",
+            "size": 20,
+            "color": "#999"
+          },
+          "encoding": {
+            "y": {
+              "field": "normal.low"
+            },
+            "y2": {
+              "field": "normal.high"
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "bar",
+            "size": 12,
+            "color": "#000"
+          },
+          "encoding": {
+            "y": {
+              "field": "actual.low"
+            },
+            "y2": {
+              "field": "actual.high"
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "bar",
+            "size": 12,
+            "color": "#000"
+          },
+          "encoding": {
+            "y": {
+              "field": "forecast.low.low"
+            },
+            "y2": {
+              "field": "forecast.low.high"
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "bar",
+            "size": 3,
+            "color": "#000"
+          },
+          "encoding": {
+            "y": {
+              "field": "forecast.low.high"
+            },
+            "y2": {
+              "field": "forecast.high.low"
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "bar",
+            "size": 12,
+            "color": "#000"
+          },
+          "encoding": {
+            "y": {
+              "field": "forecast.high.low"
+            },
+            "y2": {
+              "field": "forecast.high.high"
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "align": "center",
+            "baseline": "bottom",
+            "y": -5
+          },
+          "encoding": {
+            "text": {
+              "field": "day"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "bar_negative_horizontal_label",
+    "source": "vega-lite",
+    "category": "annotation",
+    "keywords": [
+      "bar",
+      "negative",
+      "horizontal",
+      "label",
+      "text",
+      "막대",
+      "강조",
+      "배경",
+      "영역",
+      "주석",
+      "표시",
+      "구간"
+    ],
+    "intent": "A bar chart with negative values. We can hide the axis domain line, and instead use a conditional grid color to draw a zero baseline.",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "A bar chart with negative values. We can hide the axis domain line, and instead use a conditional grid color to draw a zero baseline.",
+      "data": {
+        "values": []
+      },
+      "encoding": {
+        "y": {
+          "field": "a",
+          "type": "nominal",
+          "axis": {
+            "domain": false,
+            "ticks": false,
+            "labelAngle": 0,
+            "labelPadding": 4
+          }
+        },
+        "x": {
+          "field": "b",
+          "type": "quantitative",
+          "scale": {
+            "padding": 20
+          },
+          "axis": {
+            "gridColor": {
+              "condition": {
+                "test": "datum.value === 0",
+                "value": "black"
+              },
+              "value": "#ddd"
+            }
+          }
+        }
+      },
+      "layer": [
+        {
+          "mark": "bar"
+        },
+        {
+          "mark": {
+            "type": "text",
+            "align": {
+              "expr": "datum.b < 0 ? 'right' : 'left'"
+            },
+            "dx": {
+              "expr": "datum.b < 0 ? -2 : 2"
+            }
+          },
+          "encoding": {
+            "text": {
+              "field": "b",
+              "type": "quantitative"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "bar_tooltip_aggregate",
+    "source": "vega-lite",
+    "category": "basic",
+    "keywords": [
+      "bar",
+      "tooltip",
+      "aggregate",
+      "tick",
+      "y",
+      "기본"
+    ],
+    "intent": "bar tooltip aggregate",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "tick",
+          "encoding": {
+            "y": {
+              "field": "data",
+              "aggregate": "mean"
+            },
+            "tooltip": {
+              "field": "data",
+              "aggregate": "mean"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "boxplot_1D_horizontal",
+    "source": "vega-lite",
+    "category": "distribution",
+    "keywords": [
+      "boxplot",
+      "1d",
+      "horizontal",
+      "x",
+      "분포",
+      "밀도",
+      "박스플롯",
+      "히스토그램",
+      "리지라인"
+    ],
+    "intent": "A horizontal box plot showing median and lower and upper quartiles of the distribution of body mass of penguins.",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "A horizontal box plot showing median and lower and upper quartiles of the distribution of body mass of penguins.",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "boxplot",
+          "encoding": {
+            "x": {
+              "field": "Body Mass (g)",
+              "type": "quantitative",
+              "scale": {
+                "zero": false
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "boxplot_1D_vertical",
+    "source": "vega-lite",
+    "category": "distribution",
+    "keywords": [
+      "boxplot",
+      "1d",
+      "vertical",
+      "y",
+      "분포",
+      "밀도",
+      "박스플롯",
+      "히스토그램",
+      "리지라인"
+    ],
+    "intent": "A vertical box plot showing median and lower and upper quartiles of the distribution of body mass of penguins.",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "A vertical box plot showing median and lower and upper quartiles of the distribution of body mass of penguins.",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "boxplot",
+          "encoding": {
+            "y": {
+              "field": "Body Mass (g)",
+              "type": "quantitative",
+              "scale": {
+                "zero": false
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "boxplot_2D_horizontal",
+    "source": "vega-lite",
+    "category": "distribution",
+    "keywords": [
+      "boxplot",
+      "2d",
+      "horizontal",
+      "y",
+      "x",
+      "분포",
+      "밀도",
+      "박스플롯",
+      "히스토그램",
+      "리지라인"
+    ],
+    "intent": "A horizontal box plot showing median and lower and upper quartiles of the distribution of body mass of penguins.",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "A horizontal box plot showing median and lower and upper quartiles of the distribution of body mass of penguins.",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "boxplot",
+          "encoding": {
+            "y": {
+              "field": "Species",
+              "type": "nominal"
+            },
+            "x": {
+              "field": "Body Mass (g)",
+              "type": "quantitative",
+              "scale": {
+                "zero": false
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "boxplot_2D_horizontal_color_size",
+    "source": "vega-lite",
+    "category": "distribution",
+    "keywords": [
+      "boxplot",
+      "2d",
+      "horizontal",
+      "color",
+      "size",
+      "y",
+      "x",
+      "분포",
+      "밀도",
+      "박스플롯",
+      "히스토그램",
+      "리지라인"
+    ],
+    "intent": "A horizontal box plot showing median and lower and upper quartiles of the distribution of body mass of penguins.",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "A horizontal box plot showing median and lower and upper quartiles of the distribution of body mass of penguins.",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "boxplot",
+          "encoding": {
+            "y": {
+              "field": "Species",
+              "type": "nominal"
+            },
+            "x": {
+              "field": "Body Mass (g)",
+              "type": "quantitative",
+              "scale": {
+                "zero": false
+              }
+            },
+            "size": {
+              "value": 10
+            },
+            "color": {
+              "value": "teal"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "boxplot_preaggregated",
+    "source": "vega-lite",
+    "category": "distribution",
+    "keywords": [
+      "boxplot",
+      "preaggregated",
+      "rule",
+      "bar",
+      "tick",
+      "point",
+      "x",
+      "x2",
+      "막대",
+      "분포",
+      "밀도",
+      "박스플롯",
+      "히스토그램",
+      "리지라인"
+    ],
+    "intent": "Body Mass of Penguin Species (g)",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "title": "Body Mass of Penguin Species (g)",
+      "data": {
+        "values": []
+      },
+      "encoding": {
+        "y": {
+          "field": "Species",
+          "type": "nominal",
+          "title": null
+        }
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "rule"
+          },
+          "encoding": {
+            "x": {
+              "field": "lower",
+              "type": "quantitative",
+              "scale": {
+                "zero": false
+              },
+              "title": null
+            },
+            "x2": {
+              "field": "upper"
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "bar",
+            "size": 14
+          },
+          "encoding": {
+            "x": {
+              "field": "q1",
+              "type": "quantitative"
+            },
+            "x2": {
+              "field": "q3"
+            },
+            "color": {
+              "field": "Species",
+              "type": "nominal",
+              "legend": null
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "tick",
+            "color": "white",
+            "size": 14
+          },
+          "encoding": {
+            "x": {
+              "field": "median",
+              "type": "quantitative"
+            }
+          }
+        },
+        {
+          "transform": [
+            {
+              "flatten": [
+                "outliers"
+              ]
+            }
+          ],
+          "mark": {
+            "type": "point",
+            "style": "boxplot-outliers"
+          },
+          "encoding": {
+            "x": {
+              "field": "outliers",
+              "type": "quantitative"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "circle",
+    "source": "vega-lite",
+    "category": "basic",
+    "keywords": [
+      "circle",
+      "x",
+      "y",
+      "scatter",
+      "scatterplot",
+      "산점도",
+      "점",
+      "기본"
+    ],
+    "intent": "circle",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "circle",
+          "encoding": {
+            "x": {
+              "field": "Horsepower",
+              "type": "quantitative"
+            },
+            "y": {
+              "field": "Miles_per_Gallon",
+              "type": "quantitative"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "circle_binned",
+    "source": "vega-lite",
+    "category": "basic",
+    "keywords": [
+      "circle",
+      "binned",
+      "x",
+      "y",
+      "size",
+      "기본"
+    ],
+    "intent": "circle binned",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "circle",
+          "encoding": {
+            "x": {
+              "bin": {
+                "maxbins": 10
+              },
+              "field": "IMDB Rating"
+            },
+            "y": {
+              "bin": {
+                "maxbins": 10
+              },
+              "field": "Rotten Tomatoes Rating"
+            },
+            "size": {
+              "aggregate": "count"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "circle_flatten",
+    "source": "vega-lite",
+    "category": "multiseries",
+    "keywords": [
+      "circle",
+      "flatten",
+      "x",
+      "y",
+      "color",
+      "여러",
+      "시리즈",
+      "다중",
+      "그룹"
+    ],
+    "intent": "circle flatten",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "transform": [
+        {
+          "flatten": [
+            "foo",
+            "bar"
+          ]
+        }
+      ],
+      "layer": [
+        {
+          "mark": "circle",
+          "encoding": {
+            "x": {
+              "field": "foo",
+              "type": "quantitative"
+            },
+            "y": {
+              "field": "bar",
+              "type": "nominal"
+            },
+            "color": {
+              "field": "key",
+              "type": "nominal"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "circle_natural_disasters",
+    "source": "vega-lite",
+    "category": "multiseries",
+    "keywords": [
+      "circle",
+      "natural",
+      "disasters",
+      "filter",
+      "x",
+      "y",
+      "size",
+      "color",
+      "여러",
+      "시리즈",
+      "다중",
+      "그룹"
+    ],
+    "intent": "circle natural disasters",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "width": 600,
+      "height": 400,
+      "transform": [
+        {
+          "filter": "datum.Entity !== 'All natural disasters'"
+        }
+      ],
+      "layer": [
+        {
+          "mark": {
+            "type": "circle",
+            "opacity": 0.8,
+            "stroke": "black",
+            "strokeWidth": 1
+          },
+          "encoding": {
+            "x": {
+              "field": "Year",
+              "type": "temporal",
+              "axis": {
+                "grid": false
+              }
+            },
+            "y": {
+              "field": "Entity",
+              "type": "nominal",
+              "axis": {
+                "title": ""
+              }
+            },
+            "size": {
+              "field": "Deaths",
+              "type": "quantitative",
+              "title": "Annual Global Deaths",
+              "legend": {
+                "clipHeight": 30
+              },
+              "scale": {
+                "rangeMax": 5000
+              }
+            },
+            "color": {
+              "field": "Entity",
+              "type": "nominal",
+              "legend": null
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "circle_scale_quantile",
+    "source": "vega-lite",
+    "category": "distribution",
+    "keywords": [
+      "circle",
+      "scale",
+      "quantile",
+      "y",
+      "size",
+      "color",
+      "분포",
+      "밀도",
+      "박스플롯",
+      "히스토그램",
+      "리지라인"
+    ],
+    "intent": "circle scale quantile",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "circle",
+          "encoding": {
+            "y": {
+              "field": "b",
+              "type": "nominal",
+              "sort": null,
+              "axis": {
+                "ticks": false,
+                "domain": false,
+                "title": null
+              }
+            },
+            "size": {
+              "field": "b",
+              "type": "quantitative",
+              "scale": {
+                "type": "quantile"
+              }
+            },
+            "color": {
+              "field": "b",
+              "type": "quantitative",
+              "scale": {
+                "type": "quantile"
+              },
+              "legend": {
+                "title": "Quantile"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "circle_wilkinson_dotplot_stacked",
+    "source": "vega-lite",
+    "category": "multiseries",
+    "keywords": [
+      "circle",
+      "wilkinson",
+      "dotplot",
+      "stacked",
+      "window",
+      "x",
+      "y",
+      "detail",
+      "여러",
+      "시리즈",
+      "다중",
+      "그룹"
+    ],
+    "intent": "A Wilkinson Dot Plot created by generating an id and stacking data points",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "A Wilkinson Dot Plot created by generating an id and stacking data points",
+      "height": 100,
+      "data": {
+        "values": []
+      },
+      "transform": [
+        {
+          "window": [
+            {
+              "op": "rank",
+              "as": "id"
+            }
+          ]
+        }
+      ],
+      "layer": [
+        {
+          "mark": "circle",
+          "encoding": {
+            "x": {
+              "field": "data",
+              "type": "ordinal"
+            },
+            "y": {
+              "aggregate": "count",
+              "stack": true,
+              "bandPosition": 0.5
+            },
+            "detail": {
+              "field": "id"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "facet_custom",
+    "source": "vega-lite",
+    "category": "layout",
+    "keywords": [
+      "facet",
+      "custom",
+      "bar",
+      "filter",
+      "calculate",
+      "as",
+      "column",
+      "y",
+      "x",
+      "color",
+      "막대",
+      "패싯",
+      "격자",
+      "나누기",
+      "분할"
+    ],
+    "intent": "A trellis bar chart showing the US population distribution of age groups and gender in 2000.",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "A trellis bar chart showing the US population distribution of age groups and gender in 2000.",
+      "data": {
+        "values": []
+      },
+      "transform": [
+        {
+          "filter": "datum.year == 2000"
+        },
+        {
+          "calculate": "datum.sex == 2 ? 'Female' : 'Male'",
+          "as": "gender"
+        }
+      ],
+      "width": {
+        "step": 17
+      },
+      "mark": "bar",
+      "encoding": {
+        "column": {
+          "field": "gender",
+          "header": {
+            "titleFontSize": 20,
+            "labelFontSize": 15
+          }
+        },
+        "y": {
+          "aggregate": "sum",
+          "field": "people",
+          "title": "population"
+        },
+        "x": {
+          "field": "age",
+          "type": "ordinal"
+        },
+        "color": {
+          "field": "gender",
+          "scale": {
+            "range": [
+              "#675193",
+              "#ca8861"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "geo_circle",
+    "source": "vega-lite",
+    "category": "multiseries",
+    "keywords": [
+      "geo",
+      "circle",
+      "calculate",
+      "as",
+      "longitude",
+      "latitude",
+      "size",
+      "color",
+      "여러",
+      "시리즈",
+      "다중",
+      "그룹"
+    ],
+    "intent": "geo circle",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "width": 500,
+      "height": 300,
+      "data": {
+        "values": []
+      },
+      "transform": [
+        {
+          "calculate": "substring(datum.zip_code, 0, 1)",
+          "as": "digit"
+        }
+      ],
+      "projection": {
+        "type": "albersUsa"
+      },
+      "layer": [
+        {
+          "mark": "circle",
+          "encoding": {
+            "longitude": {
+              "field": "longitude",
+              "type": "quantitative"
+            },
+            "latitude": {
+              "field": "latitude",
+              "type": "quantitative"
+            },
+            "size": {
+              "value": 1
+            },
+            "color": {
+              "field": "digit",
+              "type": "nominal"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "interactive_global_development",
+    "source": "vega-lite",
+    "category": "annotation",
+    "keywords": [
+      "interactive",
+      "global",
+      "development",
+      "text",
+      "강조",
+      "배경",
+      "영역",
+      "주석",
+      "표시",
+      "구간"
+    ],
+    "intent": "An interactive scatter plot of global health statistics by country and year.",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "An interactive scatter plot of global health statistics by country and year.",
+      "data": {
+        "values": []
+      },
+      "width": 800,
+      "height": 500,
+      "layer": [
+        {
+          "transform": [
+            {
+              "filter": {
+                "field": "country",
+                "equal": "Afghanistan"
+              }
+            },
+            {
+              "filter": {
+                "param": "year"
+              }
+            }
+          ],
+          "mark": {
+            "type": "text",
+            "fontSize": 100,
+            "x": 420,
+            "y": 250,
+            "opacity": 0.06
+          },
+          "encoding": {
+            "text": {
+              "field": "year"
+            }
+          }
+        },
+        {
+          "transform": [
+            {
+              "lookup": "cluster",
+              "from": {
+                "key": "id",
+                "fields": [
+                  "name"
+                ],
+                "data": {
+                  "values": [
+                    {
+                      "id": 0,
+                      "name": "South Asia"
+                    },
+                    {
+                      "id": 1,
+                      "name": "Europe & Central Asia"
+                    },
+                    {
+                      "id": 2,
+                      "name": "Sub-Saharan Africa"
+                    },
+                    {
+                      "id": 3,
+                      "name": "America"
+                    },
+                    {
+                      "id": 4,
+                      "name": "East Asia & Pacific"
+                    },
+                    {
+                      "id": 5,
+                      "name": "Middle East & North Africa"
+                    }
+                  ]
+                }
+              }
+            }
+          ],
+          "encoding": {
+            "x": {
+              "field": "fertility",
+              "type": "quantitative",
+              "scale": {
+                "domain": [
+                  0,
+                  9
+                ]
+              },
+              "axis": {
+                "tickCount": 5,
+                "title": "Fertility"
+              }
+            },
+            "y": {
+              "field": "life_expect",
+              "type": "quantitative",
+              "scale": {
+                "domain": [
+                  20,
+                  85
+                ]
+              },
+              "axis": {
+                "tickCount": 5,
+                "title": "Life Expectancy"
+              }
+            }
+          },
+          "layer": [
+            {
+              "mark": {
+                "type": "line",
+                "size": 4,
+                "color": "lightgray",
+                "strokeCap": "round"
+              },
+              "encoding": {
+                "detail": {
+                  "field": "country"
+                },
+                "order": {
+                  "field": "year"
+                },
+                "opacity": {
+                  "condition": {
+                    "test": {
+                      "or": [
+                        {
+                          "param": "hovered",
+                          "empty": false
+                        },
+                        {
+                          "param": "clicked",
+                          "empty": false
+                        }
+                      ]
+                    },
+                    "value": 0.8
+                  },
+                  "value": 0
+                }
+              }
+            },
+            {
+              "params": [
+                {
+                  "name": "year",
+                  "value": [
+                    {
+                      "year": 1955
+                    }
+                  ],
+                  "select": {
+                    "type": "point",
+                    "fields": [
+                      "year"
+                    ]
+                  },
+                  "bind": {
+                    "name": "Year",
+                    "input": "range",
+                    "min": 1955,
+                    "max": 2005,
+                    "step": 5
+                  }
+                },
+                {
+                  "name": "hovered",
+                  "select": {
+                    "type": "point",
+                    "fields": [
+                      "country"
+                    ],
+                    "toggle": false,
+                    "on": "pointerover"
+                  }
+                },
+                {
+                  "name": "clicked",
+                  "select": {
+                    "type": "point",
+                    "fields": [
+                      "country"
+                    ]
+                  }
+                }
+              ],
+              "transform": [
+                {
+                  "filter": {
+                    "param": "year"
+                  }
+                }
+              ],
+              "mark": {
+                "type": "circle",
+                "size": 100,
+                "opacity": 0.9
+              },
+              "encoding": {
+                "color": {
+                  "field": "name",
+                  "title": "Region"
+                }
+              }
+            },
+            {
+              "transform": [
+                {
+                  "filter": {
+                    "and": [
+                      {
+                        "param": "year"
+                      },
+                      {
+                        "or": [
+                          {
+                            "param": "clicked",
+                            "empty": false
+                          },
+                          {
+                            "param": "hovered",
+                            "empty": false
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ],
+              "mark": {
+                "type": "text",
+                "yOffset": -12,
+                "fontSize": 12,
+                "fontWeight": "bold"
+              },
+              "encoding": {
+                "text": {
+                  "field": "country"
+                },
+                "color": {
+                  "field": "name",
+                  "title": "Region"
+                }
+              }
+            },
+            {
+              "transform": [
+                {
+                  "filter": {
+                    "param": "hovered",
+                    "empty": false
+                  }
+                },
+                {
+                  "filter": {
+                    "not": {
+                      "param": "year"
+                    }
+                  }
+                }
+              ],
+              "layer": [
+                {
+                  "mark": {
+                    "type": "text",
+                    "yOffset": -12,
+                    "fontSize": 12,
+                    "color": "gray"
+                  },
+                  "encoding": {
+                    "text": {
+                      "field": "year"
+                    }
+                  }
+                },
+                {
+                  "mark": {
+                    "type": "circle",
+                    "color": "gray"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "interactive_index_chart",
+    "source": "vega-lite",
+    "category": "multiseries",
+    "keywords": [
+      "interactive",
+      "index",
+      "chart",
+      "point",
+      "line",
+      "x",
+      "opacity",
+      "선",
+      "추이",
+      "여러",
+      "시리즈",
+      "다중",
+      "그룹"
+    ],
+    "intent": "interactive index chart",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "width": 650,
+      "height": 300,
+      "layer": [
+        {
+          "params": [
+            {
+              "name": "index",
+              "value": [
+                {
+                  "x": {
+                    "year": 2005,
+                    "month": 1,
+                    "date": 1
+                  }
+                }
+              ],
+              "select": {
+                "type": "point",
+                "encodings": [
+                  "x"
+                ],
+                "on": "pointerover",
+                "nearest": true
+              }
+            }
+          ],
+          "mark": "point",
+          "encoding": {
+            "x": {
+              "field": "date",
+              "type": "temporal",
+              "axis": null
+            },
+            "opacity": {
+              "value": 0
+            }
+          }
+        },
+        {
+          "transform": [
+            {
+              "lookup": "symbol",
+              "from": {
+                "param": "index",
+                "key": "symbol"
+              }
+            },
+            {
+              "calculate": "datum.index && datum.index.price > 0 ? (datum.price - datum.index.price)/datum.index.price : 0",
+              "as": "indexed_price"
+            }
+          ],
+          "mark": "line",
+          "encoding": {
+            "x": {
+              "field": "date",
+              "type": "temporal",
+              "axis": null
+            },
+            "y": {
+              "field": "indexed_price",
+              "type": "quantitative",
+              "axis": {
+                "format": "%"
+              }
+            },
+            "color": {
+              "field": "symbol",
+              "type": "nominal"
+            }
+          }
+        },
+        {
+          "transform": [
+            {
+              "filter": {
+                "param": "index"
+              }
+            }
+          ],
+          "encoding": {
+            "x": {
+              "field": "date",
+              "type": "temporal",
+              "axis": null
+            },
+            "color": {
+              "value": "firebrick"
+            }
+          },
+          "layer": [
+            {
+              "mark": {
+                "type": "rule",
+                "strokeWidth": 0.5
+              }
+            },
+            {
+              "mark": {
+                "type": "text",
+                "align": "center",
+                "fontWeight": 100
+              },
+              "encoding": {
+                "text": {
+                  "field": "date",
+                  "timeUnit": "yearmonth"
+                },
+                "y": {
+                  "value": 310
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "interactive_multi_line_pivot_tooltip",
+    "source": "vega-lite",
+    "category": "annotation",
+    "keywords": [
+      "interactive",
+      "multi",
+      "line",
+      "pivot",
+      "tooltip",
+      "rule",
+      "color",
+      "y",
+      "강조",
+      "배경",
+      "영역",
+      "주석",
+      "표시",
+      "구간"
+    ],
+    "intent": "interactive multi line pivot tooltip",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "width": 400,
+      "height": 300,
+      "encoding": {
+        "x": {
+          "field": "date",
+          "type": "temporal"
+        }
+      },
+      "layer": [
+        {
+          "encoding": {
+            "color": {
+              "field": "symbol",
+              "type": "nominal"
+            },
+            "y": {
+              "field": "price",
+              "type": "quantitative"
+            }
+          },
+          "layer": [
+            {
+              "mark": "line"
+            },
+            {
+              "transform": [
+                {
+                  "filter": {
+                    "param": "hover",
+                    "empty": false
+                  }
+                }
+              ],
+              "mark": "point"
+            }
+          ]
+        },
+        {
+          "transform": [
+            {
+              "pivot": "symbol",
+              "value": "price",
+              "groupby": [
+                "date"
+              ]
+            }
+          ],
+          "mark": "rule",
+          "encoding": {
+            "opacity": {
+              "condition": {
+                "value": 0.3,
+                "param": "hover",
+                "empty": false
+              },
+              "value": 0
+            },
+            "tooltip": [
+              {
+                "field": "AAPL",
+                "type": "quantitative"
+              },
+              {
+                "field": "AMZN",
+                "type": "quantitative"
+              },
+              {
+                "field": "GOOG",
+                "type": "quantitative"
+              },
+              {
+                "field": "IBM",
+                "type": "quantitative"
+              },
+              {
+                "field": "MSFT",
+                "type": "quantitative"
+              }
+            ]
+          },
+          "params": [
+            {
+              "name": "hover",
+              "select": {
+                "type": "point",
+                "fields": [
+                  "date"
+                ],
+                "nearest": true,
+                "on": "pointerover",
+                "clear": "pointerout"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "interactive_multi_line_tooltip",
+    "source": "vega-lite",
+    "category": "annotation",
+    "keywords": [
+      "interactive",
+      "multi",
+      "line",
+      "tooltip",
+      "rule",
+      "y",
+      "선",
+      "추이",
+      "강조",
+      "배경",
+      "영역",
+      "주석",
+      "표시",
+      "구간"
+    ],
+    "intent": "interactive multi line tooltip",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "encoding": {
+        "x": {
+          "timeUnit": "yearmonthdate",
+          "field": "date"
+        },
+        "tooltip": [
+          {
+            "timeUnit": "yearmonthdate",
+            "field": "date"
+          },
+          {
+            "field": "temp_max",
+            "type": "quantitative"
+          },
+          {
+            "field": "temp_min",
+            "type": "quantitative"
+          }
+        ]
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "line",
+            "color": "orange"
+          },
+          "encoding": {
+            "y": {
+              "field": "temp_max",
+              "type": "quantitative"
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "line",
+            "color": "red"
+          },
+          "encoding": {
+            "y": {
+              "field": "temp_min",
+              "type": "quantitative"
+            }
+          }
+        },
+        {
+          "mark": "rule",
+          "params": [
+            {
+              "name": "hover",
+              "select": {
+                "type": "point",
+                "on": "pointerover"
+              }
+            }
+          ],
+          "encoding": {
+            "color": {
+              "condition": {
+                "param": "hover",
+                "empty": false,
+                "value": "black"
+              },
+              "value": "transparent"
+            }
+          }
+        }
+      ],
+      "config": {
+        "axisY": {
+          "minExtent": 30
+        }
+      }
+    }
+  },
+  {
+    "id": "isotype_bar_chart",
+    "source": "vega-lite",
+    "category": "layout",
+    "keywords": [
+      "isotype",
+      "bar",
+      "chart",
+      "point",
+      "x",
+      "y",
+      "row",
+      "shape",
+      "color",
+      "opacity",
+      "size",
+      "패싯",
+      "격자",
+      "나누기",
+      "분할"
+    ],
+    "intent": "isotype bar chart",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "config": {
+        "view": {
+          "stroke": ""
+        }
+      },
+      "width": 800,
+      "height": 200,
+      "data": {
+        "values": []
+      },
+      "mark": {
+        "type": "point",
+        "filled": true
+      },
+      "encoding": {
+        "x": {
+          "field": "col",
+          "type": "ordinal",
+          "axis": null
+        },
+        "y": {
+          "field": "animal",
+          "type": "ordinal",
+          "axis": null
+        },
+        "row": {
+          "field": "country",
+          "header": {
+            "title": ""
+          }
+        },
+        "shape": {
+          "field": "animal",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "person",
+              "cattle",
+              "pigs",
+              "sheep"
+            ],
+            "range": [
+              "M1.7 -1.7h-0.8c0.3 -0.2 0.6 -0.5 0.6 -0.9c0 -0.6 -0.4 -1 -1 -1c-0.6 0 -1 0.4 -1 1c0 0.4 0.2 0.7 0.6 0.9h-0.8c-0.4 0 -0.7 0.3 -0.7 0.6v1.9c0 0.3 0.3 0.6 0.6 0.6h0.2c0 0 0 0.1 0 0.1v1.9c0 0.3 0.2 0.6 0.3 0.6h1.3c0.2 0 0.3 -0.3 0.3 -0.6v-1.8c0 0 0 -0.1 0 -0.1h0.2c0.3 0 0.6 -0.3 0.6 -0.6v-2c0.2 -0.3 -0.1 -0.6 -0.4 -0.6z",
+              "M4 -2c0 0 0.9 -0.7 1.1 -0.8c0.1 -0.1 -0.1 0.5 -0.3 0.7c-0.2 0.2 1.1 1.1 1.1 1.2c0 0.2 -0.2 0.8 -0.4 0.7c-0.1 0 -0.8 -0.3 -1.3 -0.2c-0.5 0.1 -1.3 1.6 -1.5 2c-0.3 0.4 -0.6 0.4 -0.6 0.4c0 0.1 0.3 1.7 0.4 1.8c0.1 0.1 -0.4 0.1 -0.5 0c0 0 -0.6 -1.9 -0.6 -1.9c-0.1 0 -0.3 -0.1 -0.3 -0.1c0 0.1 -0.5 1.4 -0.4 1.6c0.1 0.2 0.1 0.3 0.1 0.3c0 0 -0.4 0 -0.4 0c0 0 -0.2 -0.1 -0.1 -0.3c0 -0.2 0.3 -1.7 0.3 -1.7c0 0 -2.8 -0.9 -2.9 -0.8c-0.2 0.1 -0.4 0.6 -0.4 1c0 0.4 0.5 1.9 0.5 1.9l-0.5 0l-0.6 -2l0 -0.6c0 0 -1 0.8 -1 1c0 0.2 -0.2 1.3 -0.2 1.3c0 0 0.3 0.3 0.2 0.3c0 0 -0.5 0 -0.5 0c0 0 -0.2 -0.2 -0.1 -0.4c0 -0.1 0.2 -1.6 0.2 -1.6c0 0 0.5 -0.4 0.5 -0.5c0 -0.1 0 -2.7 -0.2 -2.7c-0.1 0 -0.4 2 -0.4 2c0 0 0 0.2 -0.2 0.5c-0.1 0.4 -0.2 1.1 -0.2 1.1c0 0 -0.2 -0.1 -0.2 -0.2c0 -0.1 -0.1 -0.7 0 -0.7c0.1 -0.1 0.3 -0.8 0.4 -1.4c0 -0.6 0.2 -1.3 0.4 -1.5c0.1 -0.2 0.6 -0.4 0.6 -0.4z",
+              "M1.2 -2c0 0 0.7 0 1.2 0.5c0.5 0.5 0.4 0.6 0.5 0.6c0.1 0 0.7 0 0.8 0.1c0.1 0 0.2 0.2 0.2 0.2c0 0 -0.6 0.2 -0.6 0.3c0 0.1 0.4 0.9 0.6 0.9c0.1 0 0.6 0 0.6 0.1c0 0.1 0 0.7 -0.1 0.7c-0.1 0 -1.2 0.4 -1.5 0.5c-0.3 0.1 -1.1 0.5 -1.1 0.7c-0.1 0.2 0.4 1.2 0.4 1.2l-0.4 0c0 0 -0.4 -0.8 -0.4 -0.9c0 -0.1 -0.1 -0.3 -0.1 -0.3l-0.2 0l-0.5 1.3l-0.4 0c0 0 -0.1 -0.4 0 -0.6c0.1 -0.1 0.3 -0.6 0.3 -0.7c0 0 -0.8 0 -1.5 -0.1c-0.7 -0.1 -1.2 -0.3 -1.2 -0.2c0 0.1 -0.4 0.6 -0.5 0.6c0 0 0.3 0.9 0.3 0.9l-0.4 0c0 0 -0.4 -0.5 -0.4 -0.6c0 -0.1 -0.2 -0.6 -0.2 -0.5c0 0 -0.4 0.4 -0.6 0.4c-0.2 0.1 -0.4 0.1 -0.4 0.1c0 0 -0.1 0.6 -0.1 0.6l-0.5 0l0 -1c0 0 0.5 -0.4 0.5 -0.5c0 -0.1 -0.7 -1.2 -0.6 -1.4c0.1 -0.1 0.1 -1.1 0.1 -1.1c0 0 -0.2 0.1 -0.2 0.1c0 0 0 0.9 0 1c0 0.1 -0.2 0.3 -0.3 0.3c-0.1 0 0 -0.5 0 -0.9c0 -0.4 0 -0.4 0.2 -0.6c0.2 -0.2 0.6 -0.3 0.8 -0.8c0.3 -0.5 1 -0.6 1 -0.6z",
+              "M-4.1 -0.5c0.2 0 0.2 0.2 0.5 0.2c0.3 0 0.3 -0.2 0.5 -0.2c0.2 0 0.2 0.2 0.4 0.2c0.2 0 0.2 -0.2 0.5 -0.2c0.2 0 0.2 0.2 0.4 0.2c0.2 0 0.2 -0.2 0.4 -0.2c0.1 0 0.2 0.2 0.4 0.1c0.2 0 0.2 -0.2 0.4 -0.3c0.1 0 0.1 -0.1 0.4 0c0.3 0 0.3 -0.4 0.6 -0.4c0.3 0 0.6 -0.3 0.7 -0.2c0.1 0.1 1.4 1 1.3 1.4c-0.1 0.4 -0.3 0.3 -0.4 0.3c-0.1 0 -0.5 -0.4 -0.7 -0.2c-0.3 0.2 -0.1 0.4 -0.2 0.6c-0.1 0.1 -0.2 0.2 -0.3 0.4c0 0.2 0.1 0.3 0 0.5c-0.1 0.2 -0.3 0.2 -0.3 0.5c0 0.3 -0.2 0.3 -0.3 0.6c-0.1 0.2 0 0.3 -0.1 0.5c-0.1 0.2 -0.1 0.2 -0.2 0.3c-0.1 0.1 0.3 1.1 0.3 1.1l-0.3 0c0 0 -0.3 -0.9 -0.3 -1c0 -0.1 -0.1 -0.2 -0.3 -0.2c-0.2 0 -0.3 0.1 -0.4 0.4c0 0.3 -0.2 0.8 -0.2 0.8l-0.3 0l0.3 -1c0 0 0.1 -0.6 -0.2 -0.5c-0.3 0.1 -0.2 -0.1 -0.4 -0.1c-0.2 -0.1 -0.3 0.1 -0.4 0c-0.2 -0.1 -0.3 0.1 -0.5 0c-0.2 -0.1 -0.1 0 -0.3 0.3c-0.2 0.3 -0.4 0.3 -0.4 0.3l0.2 1.1l-0.3 0l-0.2 -1.1c0 0 -0.4 -0.6 -0.5 -0.4c-0.1 0.3 -0.1 0.4 -0.3 0.4c-0.1 -0.1 -0.2 1.1 -0.2 1.1l-0.3 0l0.2 -1.1c0 0 -0.3 -0.1 -0.3 -0.5c0 -0.3 0.1 -0.5 0.1 -0.7c0.1 -0.2 -0.1 -1 -0.2 -1.1c-0.1 -0.2 -0.2 -0.8 -0.2 -0.8c0 0 -0.1 -0.5 0.4 -0.8z"
+            ]
+          },
+          "legend": null
+        },
+        "color": {
+          "field": "animal",
+          "type": "nominal",
+          "legend": null,
+          "scale": {
+            "domain": [
+              "person",
+              "cattle",
+              "pigs",
+              "sheep"
+            ],
+            "range": [
+              "rgb(162,160,152)",
+              "rgb(194,81,64)",
+              "rgb(93,93,93)",
+              "rgb(91,131,149)"
+            ]
+          }
+        },
+        "opacity": {
+          "value": 1
+        },
+        "size": {
+          "value": 200
+        }
+      }
+    }
+  },
+  {
+    "id": "layer_point_line_loess",
+    "source": "vega-lite",
+    "category": "trendline",
+    "keywords": [
+      "layer",
+      "point",
+      "line",
+      "loess",
+      "x",
+      "y",
+      "scatter",
+      "scatterplot",
+      "산점도",
+      "점",
+      "선",
+      "추이",
+      "추세선",
+      "추세",
+      "회귀",
+      "경향"
+    ],
+    "intent": "layer point line loess",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "point",
+            "filled": true
+          },
+          "encoding": {
+            "x": {
+              "field": "Rotten Tomatoes Rating",
+              "type": "quantitative"
+            },
+            "y": {
+              "field": "IMDB Rating",
+              "type": "quantitative"
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "line",
+            "color": "firebrick"
+          },
+          "transform": [
+            {
+              "loess": "IMDB Rating",
+              "on": "Rotten Tomatoes Rating"
+            }
+          ],
+          "encoding": {
+            "x": {
+              "field": "Rotten Tomatoes Rating",
+              "type": "quantitative"
+            },
+            "y": {
+              "field": "IMDB Rating",
+              "type": "quantitative"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "layer_point_line_regression",
+    "source": "vega-lite",
+    "category": "trendline",
+    "keywords": [
+      "layer",
+      "point",
+      "line",
+      "regression",
+      "text",
+      "x",
+      "y",
+      "scatter",
+      "scatterplot",
+      "산점도",
+      "점",
+      "선",
+      "추이",
+      "추세선",
+      "추세",
+      "회귀",
+      "경향"
+    ],
+    "intent": "layer point line regression",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "point",
+            "filled": true
+          },
+          "encoding": {
+            "x": {
+              "field": "Rotten Tomatoes Rating",
+              "type": "quantitative"
+            },
+            "y": {
+              "field": "IMDB Rating",
+              "type": "quantitative"
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "line",
+            "color": "firebrick"
+          },
+          "transform": [
+            {
+              "regression": "IMDB Rating",
+              "on": "Rotten Tomatoes Rating"
+            }
+          ],
+          "encoding": {
+            "x": {
+              "field": "Rotten Tomatoes Rating",
+              "type": "quantitative"
+            },
+            "y": {
+              "field": "IMDB Rating",
+              "type": "quantitative"
+            }
+          }
+        },
+        {
+          "transform": [
+            {
+              "regression": "IMDB Rating",
+              "on": "Rotten Tomatoes Rating",
+              "params": true
+            },
+            {
+              "calculate": "'R²: '+format(datum.rSquared, '.2f')",
+              "as": "R2"
+            }
+          ],
+          "mark": {
+            "type": "text",
+            "color": "firebrick",
+            "x": "width",
+            "align": "right",
+            "y": -5
+          },
+          "encoding": {
+            "text": {
+              "type": "nominal",
+              "field": "R2"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "line_color_binned",
+    "source": "vega-lite",
+    "category": "color",
+    "keywords": [
+      "line",
+      "color",
+      "binned",
+      "y",
+      "x",
+      "선",
+      "추이",
+      "색",
+      "색상",
+      "범례",
+      "컬러"
+    ],
+    "intent": "A scatterplot showing horsepower and miles per gallons for various cars.",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "A scatterplot showing horsepower and miles per gallons for various cars.",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "line",
+          "encoding": {
+            "y": {
+              "aggregate": "mean",
+              "field": "Horsepower"
+            },
+            "x": {
+              "field": "Year",
+              "type": "temporal"
+            },
+            "color": {
+              "bin": true,
+              "field": "Acceleration"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "line_color_label",
+    "source": "vega-lite",
+    "category": "color",
+    "keywords": [
+      "line",
+      "color",
+      "label",
+      "filter",
+      "x",
+      "y",
+      "선",
+      "추이",
+      "색",
+      "색상",
+      "범례",
+      "컬러"
+    ],
+    "intent": "Multi-series line chart with labels.",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "Multi-series line chart with labels.",
+      "data": {
+        "values": []
+      },
+      "transform": [
+        {
+          "filter": "datum.symbol!=='IBM'"
+        }
+      ],
+      "encoding": {
+        "color": {
+          "field": "symbol",
+          "type": "nominal",
+          "legend": null
+        }
+      },
+      "layer": [
+        {
+          "mark": "line",
+          "encoding": {
+            "x": {
+              "field": "date",
+              "type": "temporal",
+              "title": "date"
+            },
+            "y": {
+              "field": "price",
+              "type": "quantitative",
+              "title": "price"
+            }
+          }
+        },
+        {
+          "encoding": {
+            "x": {
+              "aggregate": "max",
+              "field": "date",
+              "type": "temporal"
+            },
+            "y": {
+              "aggregate": {
+                "argmax": "date"
+              },
+              "field": "price",
+              "type": "quantitative"
+            }
+          },
+          "layer": [
+            {
+              "mark": {
+                "type": "circle"
+              }
+            },
+            {
+              "mark": {
+                "type": "text",
+                "align": "left",
+                "dx": 4
+              },
+              "encoding": {
+                "text": {
+                  "field": "symbol",
+                  "type": "nominal"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "config": {
+        "view": {
+          "stroke": null
+        }
+      }
+    }
+  },
+  {
+    "id": "line_sort_axis",
+    "source": "vega-lite",
+    "category": "axis",
+    "keywords": [
+      "line",
+      "sort",
+      "axis",
+      "x",
+      "y",
+      "선",
+      "추이",
+      "축",
+      "라벨",
+      "회전",
+      "눈금"
+    ],
+    "intent": "line sort axis",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "line",
+          "encoding": {
+            "x": {
+              "type": "nominal",
+              "field": "Name",
+              "sort": [
+                "Peter",
+                "Mary",
+                "Paul"
+              ]
+            },
+            "y": {
+              "type": "quantitative",
+              "field": "Score"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "point_angle_windvector",
+    "source": "vega-lite",
+    "category": "axis",
+    "keywords": [
+      "point",
+      "angle",
+      "windvector",
+      "longitude",
+      "latitude",
+      "color",
+      "size",
+      "축",
+      "라벨",
+      "회전",
+      "눈금"
+    ],
+    "intent": "Vector array map showing wind speed and direction.",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "Vector array map showing wind speed and direction.",
+      "width": 615,
+      "height": 560,
+      "data": {
+        "values": []
+      },
+      "projection": {
+        "type": "equalEarth"
+      },
+      "config": {
+        "aria": false,
+        "view": {
+          "step": 10,
+          "fill": "black"
+        }
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "point",
+            "shape": "wedge",
+            "filled": true
+          },
+          "encoding": {
+            "longitude": {
+              "field": "longitude",
+              "type": "quantitative"
+            },
+            "latitude": {
+              "field": "latitude",
+              "type": "quantitative"
+            },
+            "color": {
+              "field": "dir",
+              "type": "quantitative",
+              "scale": {
+                "domain": [
+                  0,
+                  360
+                ],
+                "scheme": "rainbow"
+              },
+              "legend": null
+            },
+            "angle": {
+              "field": "dir",
+              "type": "quantitative",
+              "scale": {
+                "domain": [
+                  0,
+                  360
+                ],
+                "range": [
+                  180,
+                  540
+                ]
+              }
+            },
+            "size": {
+              "field": "speed",
+              "type": "quantitative",
+              "scale": {
+                "rangeMax": 500
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "point_binned_color",
+    "source": "vega-lite",
+    "category": "color",
+    "keywords": [
+      "point",
+      "binned",
+      "color",
+      "x",
+      "y",
+      "scatter",
+      "scatterplot",
+      "산점도",
+      "점",
+      "색",
+      "색상",
+      "범례",
+      "컬러"
+    ],
+    "intent": "A scatterplot showing horsepower and miles per gallons with binned acceleration on color.",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "A scatterplot showing horsepower and miles per gallons with binned acceleration on color.",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "point",
+          "encoding": {
+            "x": {
+              "field": "Horsepower",
+              "type": "quantitative"
+            },
+            "y": {
+              "field": "Miles_per_Gallon",
+              "type": "quantitative"
+            },
+            "color": {
+              "bin": true,
+              "field": "Acceleration"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "point_color_shape_constant",
+    "source": "vega-lite",
+    "category": "color",
+    "keywords": [
+      "point",
+      "color",
+      "shape",
+      "constant",
+      "x",
+      "y",
+      "scatter",
+      "scatterplot",
+      "산점도",
+      "점",
+      "색",
+      "색상",
+      "범례",
+      "컬러"
+    ],
+    "intent": "point color shape constant",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "point",
+          "encoding": {
+            "x": {
+              "field": "Horsepower",
+              "type": "quantitative"
+            },
+            "y": {
+              "field": "Miles_per_Gallon",
+              "type": "quantitative"
+            },
+            "color": {
+              "value": "#ff9900"
+            },
+            "shape": {
+              "value": "square"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "point_colorramp_size",
+    "source": "vega-lite",
+    "category": "color",
+    "keywords": [
+      "point",
+      "colorramp",
+      "size",
+      "x",
+      "y",
+      "color",
+      "scatter",
+      "scatterplot",
+      "산점도",
+      "점",
+      "색",
+      "색상",
+      "범례",
+      "컬러"
+    ],
+    "intent": "point colorramp size",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "point",
+          "encoding": {
+            "x": {
+              "field": "Horsepower",
+              "type": "quantitative"
+            },
+            "y": {
+              "field": "Acceleration",
+              "type": "quantitative"
+            },
+            "color": {
+              "field": "Miles_per_Gallon",
+              "type": "quantitative"
+            },
+            "size": {
+              "field": "Miles_per_Gallon",
+              "type": "quantitative"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "point_dot_timeunit_color",
+    "source": "vega-lite",
+    "category": "color",
+    "keywords": [
+      "point",
+      "dot",
+      "timeunit",
+      "color",
+      "x",
+      "색",
+      "색상",
+      "범례",
+      "컬러"
+    ],
+    "intent": "point dot timeunit color",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "point",
+          "encoding": {
+            "color": {
+              "timeUnit": "yearmonth",
+              "field": "date"
+            },
+            "x": {
+              "aggregate": "mean",
+              "field": "temp_max"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "point_log",
+    "source": "vega-lite",
+    "category": "axis",
+    "keywords": [
+      "point",
+      "log",
+      "x",
+      "y",
+      "축",
+      "라벨",
+      "회전",
+      "눈금"
+    ],
+    "intent": "point log",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "point",
+          "encoding": {
+            "x": {
+              "field": "x",
+              "type": "quantitative"
+            },
+            "y": {
+              "field": "y",
+              "scale": {
+                "type": "log"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "trail_comet",
+    "source": "vega-lite",
+    "category": "layout",
+    "keywords": [
+      "trail",
+      "comet",
+      "pivot",
+      "value",
+      "groupby",
+      "fold",
+      "as",
+      "calculate",
+      "x",
+      "y",
+      "size",
+      "tooltip",
+      "color",
+      "column",
+      "패싯",
+      "격자",
+      "나누기",
+      "분할"
+    ],
+    "intent": "Barley Yield comparison between 1932 and 1931",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "title": "Barley Yield comparison between 1932 and 1931",
+      "transform": [
+        {
+          "pivot": "year",
+          "value": "yield",
+          "groupby": [
+            "variety",
+            "site"
+          ]
+        },
+        {
+          "fold": [
+            "1931",
+            "1932"
+          ],
+          "as": [
+            "year",
+            "yield"
+          ]
+        },
+        {
+          "calculate": "toNumber(datum.year)",
+          "as": "year"
+        },
+        {
+          "calculate": "datum['1932'] - datum['1931']",
+          "as": "delta"
+        }
+      ],
+      "mark": "trail",
+      "encoding": {
+        "x": {
+          "field": "year",
+          "title": null
+        },
+        "y": {
+          "field": "variety",
+          "title": "Variety"
+        },
+        "size": {
+          "field": "yield",
+          "type": "quantitative",
+          "scale": {
+            "range": [
+              0,
+              12
+            ]
+          },
+          "legend": {
+            "values": [
+              20,
+              60
+            ]
+          },
+          "title": "Barley Yield (bushels/acre)"
+        },
+        "tooltip": [
+          {
+            "field": "year",
+            "type": "quantitative"
+          },
+          {
+            "field": "yield"
+          }
+        ],
+        "color": {
+          "field": "delta",
+          "type": "quantitative",
+          "scale": {
+            "domainMid": 0
+          },
+          "title": "Yield Delta (%)"
+        },
+        "column": {
+          "field": "site",
+          "title": "Site"
+        }
+      },
+      "view": {
+        "stroke": null
+      },
+      "config": {
+        "legend": {
+          "orient": "bottom",
+          "direction": "horizontal"
+        }
+      }
+    }
+  },
+  {
+    "id": "trellis_anscombe",
+    "source": "vega-lite",
+    "category": "layout",
+    "keywords": [
+      "trellis",
+      "anscombe",
+      "circle",
+      "column",
+      "x",
+      "y",
+      "opacity",
+      "scatter",
+      "scatterplot",
+      "산점도",
+      "점",
+      "패싯",
+      "격자",
+      "나누기",
+      "분할"
+    ],
+    "intent": "Anscombe's Quartet",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "Anscombe's Quartet",
+      "data": {
+        "values": []
+      },
+      "mark": "circle",
+      "encoding": {
+        "column": {
+          "field": "Series"
+        },
+        "x": {
+          "field": "X",
+          "type": "quantitative",
+          "scale": {
+            "zero": false
+          }
+        },
+        "y": {
+          "field": "Y",
+          "type": "quantitative",
+          "scale": {
+            "zero": false
+          }
+        },
+        "opacity": {
+          "value": 1
+        }
+      }
+    }
+  },
+  {
+    "id": "trellis_area",
+    "source": "vega-lite",
+    "category": "layout",
+    "keywords": [
+      "trellis",
+      "area",
+      "filter",
+      "x",
+      "y",
+      "color",
+      "row",
+      "면적",
+      "패싯",
+      "격자",
+      "나누기",
+      "분할"
+    ],
+    "intent": "Stock prices of four large companies as a small multiples of area charts.",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "description": "Stock prices of four large companies as a small multiples of area charts.",
+      "transform": [
+        {
+          "filter": "datum.symbol !== 'GOOG'"
+        }
+      ],
+      "width": 300,
+      "height": 40,
+      "data": {
+        "values": []
+      },
+      "mark": "area",
+      "encoding": {
+        "x": {
+          "field": "date",
+          "type": "temporal",
+          "title": "Time",
+          "axis": {
+            "grid": false
+          }
+        },
+        "y": {
+          "field": "price",
+          "type": "quantitative",
+          "title": "Price",
+          "axis": {
+            "grid": false
+          }
+        },
+        "color": {
+          "field": "symbol",
+          "type": "nominal",
+          "legend": null
+        },
+        "row": {
+          "field": "symbol",
+          "type": "nominal",
+          "title": "Symbol"
+        }
+      }
+    }
+  },
+  {
+    "id": "trellis_barley",
+    "source": "vega-lite",
+    "category": "layout",
+    "keywords": [
+      "trellis",
+      "barley",
+      "point",
+      "facet",
+      "x",
+      "y",
+      "color",
+      "패싯",
+      "격자",
+      "나누기",
+      "분할"
+    ],
+    "intent": "The Trellis display by Becker et al. helped establish small multiples as a “powerful mechanism for understanding interactions in studies of how a response depends on explanatory variables”. Here we reproduce a trellis of Barley yields from the 1930s, complete with main-effects ordering to facilitate comparison.",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "name": "trellis_barley",
+      "description": "The Trellis display by Becker et al. helped establish small multiples as a “powerful mechanism for understanding interactions in studies of how a response depends on explanatory variables”. Here we reproduce a trellis of Barley yields from the 1930s, complete with main-effects ordering to facilitate comparison.",
+      "data": {
+        "values": []
+      },
+      "mark": "point",
+      "height": {
+        "step": 12
+      },
+      "encoding": {
+        "facet": {
+          "field": "site",
+          "type": "ordinal",
+          "columns": 2,
+          "sort": {
+            "op": "median",
+            "field": "yield"
+          }
+        },
+        "x": {
+          "aggregate": "median",
+          "field": "yield",
+          "type": "quantitative",
+          "scale": {
+            "zero": false
+          }
+        },
+        "y": {
+          "field": "variety",
+          "type": "ordinal",
+          "sort": "-x"
+        },
+        "color": {
+          "field": "year",
+          "type": "nominal"
+        }
+      }
+    }
+  },
+  {
+    "id": "heatmap_annual_weather",
+    "source": "altair",
+    "category": "color",
+    "keywords": [
+      "heatmap",
+      "rect",
+      "히트맵",
+      "열지도",
+      "열지도",
+      "calendar",
+      "month",
+      "day",
+      "temperature",
+      "weather",
+      "색상",
+      "표"
+    ],
+    "intent": "Heatmap of an aggregated value over two categorical/time axes (rect mark with aggregated color)",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "title": "Daily Max Temperatures (heatmap)",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "rect",
+          "encoding": {
+            "x": {
+              "field": "date",
+              "type": "ordinal",
+              "timeUnit": "date",
+              "title": "Day",
+              "axis": {
+                "format": "%e",
+                "labelAngle": 0
+              }
+            },
+            "y": {
+              "field": "date",
+              "type": "ordinal",
+              "timeUnit": "month",
+              "title": "Month"
+            },
+            "color": {
+              "aggregate": "max",
+              "field": "temp_max",
+              "type": "quantitative",
+              "title": null
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "heatmap_text_labels",
+    "source": "altair",
+    "category": "annotation",
+    "keywords": [
+      "heatmap",
+      "rect",
+      "text",
+      "label",
+      "히트맵",
+      "열지도",
+      "라벨",
+      "텍스트",
+      "table",
+      "표",
+      "주석"
+    ],
+    "intent": "Heatmap with numeric text labels overlaid (layered rect + text sharing one aggregate transform, conditional text color)",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "transform": [
+        {
+          "aggregate": [
+            {
+              "op": "mean",
+              "field": "Horsepower",
+              "as": "mean_horsepower"
+            }
+          ],
+          "groupby": [
+            "Origin",
+            "Cylinders"
+          ]
+        }
+      ],
+      "layer": [
+        {
+          "mark": "rect",
+          "encoding": {
+            "x": {
+              "field": "Cylinders",
+              "type": "ordinal"
+            },
+            "y": {
+              "field": "Origin",
+              "type": "ordinal"
+            },
+            "color": {
+              "field": "mean_horsepower",
+              "type": "quantitative",
+              "scale": {
+                "scheme": "viridis"
+              },
+              "title": "Mean of Horsepower"
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "baseline": "middle"
+          },
+          "encoding": {
+            "x": {
+              "field": "Cylinders",
+              "type": "ordinal"
+            },
+            "y": {
+              "field": "Origin",
+              "type": "ordinal"
+            },
+            "text": {
+              "field": "mean_horsepower",
+              "type": "quantitative",
+              "format": ".0f"
+            },
+            "color": {
+              "condition": {
+                "test": "datum.mean_horsepower > 150",
+                "value": "black"
+              },
+              "value": "white"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "bump_chart",
+    "source": "altair",
+    "category": "basic",
+    "keywords": [
+      "bump",
+      "rank",
+      "ranking",
+      "window",
+      "line",
+      "순위",
+      "랭킹",
+      "범프",
+      "추이",
+      "선"
+    ],
+    "intent": "Bump chart: ranking over time computed with a window rank transform (line with points, color per series)",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "title": "Bump Chart",
+      "data": {
+        "values": []
+      },
+      "transform": [
+        {
+          "window": [
+            {
+              "op": "rank",
+              "as": "rank"
+            }
+          ],
+          "sort": [
+            {
+              "field": "price",
+              "order": "descending"
+            }
+          ],
+          "groupby": [
+            "date"
+          ]
+        }
+      ],
+      "layer": [
+        {
+          "mark": {
+            "type": "line",
+            "point": true
+          },
+          "encoding": {
+            "x": {
+              "field": "date",
+              "type": "ordinal",
+              "timeUnit": "yearmonth",
+              "title": "date"
+            },
+            "y": {
+              "field": "rank",
+              "type": "ordinal"
+            },
+            "color": {
+              "field": "symbol",
+              "type": "nominal"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "candlestick_ohlc",
+    "source": "altair",
+    "category": "annotation",
+    "keywords": [
+      "candlestick",
+      "ohlc",
+      "stock",
+      "finance",
+      "rule",
+      "bar",
+      "캔들",
+      "캔들스틱",
+      "주가",
+      "금융",
+      "봉차트"
+    ],
+    "intent": "Candlestick (OHLC) chart: layered rule (low–high) + bar (open–close) with an up/down conditional color",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "encoding": {
+        "x": {
+          "field": "date",
+          "type": "temporal",
+          "axis": {
+            "format": "%m/%d",
+            "labelAngle": -45
+          },
+          "title": "Date"
+        },
+        "color": {
+          "condition": {
+            "test": "datum.open <= datum.close",
+            "value": "#06982d"
+          },
+          "value": "#ae1325"
+        }
+      },
+      "layer": [
+        {
+          "mark": "rule",
+          "encoding": {
+            "y": {
+              "field": "low",
+              "type": "quantitative",
+              "title": "Price",
+              "scale": {
+                "zero": false
+              }
+            },
+            "y2": {
+              "field": "high"
+            }
+          }
+        },
+        {
+          "mark": "bar",
+          "encoding": {
+            "y": {
+              "field": "open",
+              "type": "quantitative"
+            },
+            "y2": {
+              "field": "close"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "streamgraph",
+    "source": "altair",
+    "category": "multiseries",
+    "keywords": [
+      "streamgraph",
+      "stream",
+      "area",
+      "stacked",
+      "center",
+      "스트림",
+      "스트림그래프",
+      "면적",
+      "누적",
+      "다중"
+    ],
+    "intent": "Streamgraph: stacked area with a centered baseline (stack:'center'), color per series",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "area",
+          "encoding": {
+            "x": {
+              "field": "date",
+              "type": "temporal",
+              "timeUnit": "yearmonth",
+              "axis": {
+                "format": "%Y",
+                "domain": false,
+                "tickSize": 0
+              }
+            },
+            "y": {
+              "aggregate": "sum",
+              "field": "count",
+              "type": "quantitative",
+              "stack": "center",
+              "axis": null
+            },
+            "color": {
+              "field": "series",
+              "type": "nominal",
+              "scale": {
+                "scheme": "category20b"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "ranged_dot_plot",
+    "source": "altair",
+    "category": "annotation",
+    "keywords": [
+      "dumbbell",
+      "ranged",
+      "dot",
+      "comparison",
+      "line",
+      "point",
+      "덤벨",
+      "비교",
+      "범위",
+      "점",
+      "변화"
+    ],
+    "intent": "Ranged dot / dumbbell plot: a connecting line plus two colored points per category to show change between two states",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "encoding": {
+        "x": {
+          "field": "life_expect",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "country",
+          "type": "nominal"
+        }
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "line",
+            "color": "#db646f"
+          },
+          "encoding": {
+            "detail": {
+              "field": "country",
+              "type": "nominal"
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "point",
+            "size": 100,
+            "opacity": 1,
+            "filled": true
+          },
+          "encoding": {
+            "color": {
+              "field": "year",
+              "type": "ordinal",
+              "scale": {
+                "domain": [
+                  1955,
+                  2000
+                ],
+                "range": [
+                  "#e6959c",
+                  "#911a24"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "parallel_coordinates",
+    "source": "altair",
+    "category": "multiseries",
+    "keywords": [
+      "parallel",
+      "coordinates",
+      "fold",
+      "window",
+      "multidimensional",
+      "평행좌표",
+      "다차원",
+      "평행",
+      "다변량"
+    ],
+    "intent": "Parallel coordinates: fold several numeric fields into key/value and draw one line per record (detail groups each line)",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "width": 500,
+      "transform": [
+        {
+          "window": [
+            {
+              "op": "count",
+              "as": "index"
+            }
+          ]
+        },
+        {
+          "fold": [
+            "Beak Length (mm)",
+            "Beak Depth (mm)",
+            "Flipper Length (mm)"
+          ]
+        }
+      ],
+      "layer": [
+        {
+          "mark": "line",
+          "encoding": {
+            "x": {
+              "field": "key",
+              "type": "nominal"
+            },
+            "y": {
+              "field": "value",
+              "type": "quantitative"
+            },
+            "color": {
+              "field": "Species",
+              "type": "nominal"
+            },
+            "detail": {
+              "field": "index",
+              "type": "nominal"
+            },
+            "opacity": {
+              "value": 0.5
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "line_with_ci_band",
+    "source": "altair",
+    "category": "distribution",
+    "keywords": [
+      "confidence",
+      "interval",
+      "errorband",
+      "band",
+      "uncertainty",
+      "line",
+      "ci",
+      "신뢰구간",
+      "오차",
+      "밴드",
+      "불확실성"
+    ],
+    "intent": "Line with a confidence-interval band (errorband + mean line layered)",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "errorband",
+            "extent": "ci"
+          },
+          "encoding": {
+            "x": {
+              "field": "Year",
+              "type": "temporal"
+            },
+            "y": {
+              "field": "Miles_per_Gallon",
+              "type": "quantitative",
+              "title": "Miles/Gallon"
+            }
+          }
+        },
+        {
+          "mark": "line",
+          "encoding": {
+            "x": {
+              "field": "Year",
+              "type": "temporal"
+            },
+            "y": {
+              "aggregate": "mean",
+              "field": "Miles_per_Gallon",
+              "type": "quantitative"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "scatter_rolling_mean",
+    "source": "altair",
+    "category": "trendline",
+    "keywords": [
+      "rolling",
+      "moving",
+      "average",
+      "window",
+      "scatter",
+      "smoothing",
+      "이동평균",
+      "이동",
+      "평균",
+      "추세",
+      "스무딩"
+    ],
+    "intent": "Scatter plot with a rolling-mean overlay (windowed moving average line over points)",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "point",
+          "encoding": {
+            "x": {
+              "field": "date",
+              "type": "temporal"
+            },
+            "y": {
+              "field": "temp_max",
+              "type": "quantitative",
+              "title": "Max Temp"
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "line",
+            "color": "red",
+            "size": 3
+          },
+          "transform": [
+            {
+              "window": [
+                {
+                  "op": "mean",
+                  "field": "temp_max",
+                  "as": "rolling_mean"
+                }
+              ],
+              "frame": [
+                -15,
+                15
+              ]
+            }
+          ],
+          "encoding": {
+            "x": {
+              "field": "date",
+              "type": "temporal"
+            },
+            "y": {
+              "field": "rolling_mean",
+              "type": "quantitative"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "normalized_stacked_bar",
+    "source": "altair",
+    "category": "multiseries",
+    "keywords": [
+      "normalized",
+      "percent",
+      "proportion",
+      "stacked",
+      "bar",
+      "정규화",
+      "비율",
+      "백분율",
+      "누적",
+      "막대",
+      "100%"
+    ],
+    "intent": "Normalized (100%) stacked bar chart using stack:'normalize'",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": "bar",
+          "encoding": {
+            "x": {
+              "aggregate": "sum",
+              "field": "yield",
+              "type": "quantitative",
+              "stack": "normalize"
+            },
+            "y": {
+              "field": "variety",
+              "type": "nominal"
+            },
+            "color": {
+              "field": "site",
+              "type": "nominal"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "strip_plot_jitter",
+    "source": "altair",
+    "category": "distribution",
+    "keywords": [
+      "strip",
+      "jitter",
+      "yoffset",
+      "random",
+      "distribution",
+      "beeswarm",
+      "지터",
+      "분포",
+      "흩뿌리기",
+      "스트립",
+      "산포"
+    ],
+    "intent": "Strip plot with random jitter: a calculate transform produces a random offset bound to yOffset to reduce overplotting",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "transform": [
+        {
+          "calculate": "sqrt(-2*log(random()))*cos(2*PI*random())",
+          "as": "jitter"
+        }
+      ],
+      "layer": [
+        {
+          "mark": {
+            "type": "circle",
+            "size": 8
+          },
+          "encoding": {
+            "y": {
+              "field": "Major Genre",
+              "type": "nominal"
+            },
+            "x": {
+              "field": "IMDB Rating",
+              "type": "quantitative"
+            },
+            "yOffset": {
+              "field": "jitter",
+              "type": "quantitative"
+            },
+            "color": {
+              "field": "Major Genre",
+              "type": "nominal",
+              "legend": null
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "violin_plot",
+    "source": "altair",
+    "category": "distribution",
+    "keywords": [
+      "violin",
+      "바이올린",
+      "바이올린플롯",
+      "distribution",
+      "분포",
+      "density",
+      "밀도",
+      "kde",
+      "mirror",
+      "미러"
+    ],
+    "intent": "Violin plot: a mirrored density curve per group (density transform + horizontal area with x stack:'center'), one column facet per group. Where __FIELD__ appears, substitute a real numeric column",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "width": 100,
+      "transform": [
+        {
+          "density": "__FIELD__",
+          "groupby": [
+            "group"
+          ]
+        }
+      ],
+      "mark": {
+        "type": "area",
+        "orient": "horizontal"
+      },
+      "encoding": {
+        "x": {
+          "field": "density",
+          "type": "quantitative",
+          "stack": "center",
+          "impute": null,
+          "title": null,
+          "axis": {
+            "labels": false,
+            "values": [
+              0
+            ],
+            "grid": false,
+            "ticks": true
+          }
+        },
+        "y": {
+          "field": "value",
+          "type": "quantitative"
+        },
+        "color": {
+          "field": "group",
+          "type": "nominal"
+        },
+        "column": {
+          "field": "group",
+          "type": "nominal",
+          "spacing": 0,
+          "header": {
+            "titleOrient": "bottom",
+            "labelOrient": "bottom",
+            "labelPadding": 0
+          }
+        }
+      }
+    },
+    "_placeholderFields": [
+      "__FIELD__"
+    ]
+  },
+  {
+    "id": "violin_with_jittered_points",
+    "source": "altair",
+    "category": "distribution",
+    "keywords": [
+      "violin",
+      "points",
+      "data points",
+      "jitter",
+      "strip",
+      "sina",
+      "raincloud",
+      "dot",
+      "raw",
+      "overlay",
+      "distribution",
+      "scatter",
+      "facet",
+      "바이올린",
+      "점",
+      "데이터 점",
+      "데이터 포인트",
+      "지터",
+      "흩뿌리기",
+      "산점",
+      "분포",
+      "원시 데이터",
+      "오버레이"
+    ],
+    "intent": "Faceted violin (density area per group) with raw data points overlaid as a centered jittered strip. KEY STRUCTURE: to facet a LAYERED chart you MUST use the 'facet' operator wrapping the layer spec ({facet, spec:{layer:[...]}}) — putting row/column in a layered spec's shared encoding silently fails to facet (all groups collapse into one cell). The density transform is scoped INSIDE the violin layer so the points are not aggregated. Points share the violin's density x-axis and are centered with x:{value:<half of width>} and jittered per-point via mark.xOffset {expr:'(random()-0.5)*N'}. Where __FIELD__ appears, substitute a real numeric column; 'group' is the grouping category",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "facet": {
+        "column": {
+          "field": "group",
+          "type": "nominal",
+          "spacing": 0,
+          "header": {
+            "titleOrient": "bottom",
+            "labelOrient": "bottom",
+            "labelPadding": 0
+          }
+        }
+      },
+      "spec": {
+        "width": 100,
+        "layer": [
+          {
+            "transform": [
+              {
+                "density": "__FIELD__",
+                "groupby": [
+                  "group"
+                ]
+              }
+            ],
+            "mark": {
+              "type": "area",
+              "orient": "horizontal",
+              "opacity": 0.5
+            },
+            "encoding": {
+              "x": {
+                "field": "density",
+                "type": "quantitative",
+                "stack": "center",
+                "impute": null,
+                "title": null,
+                "axis": {
+                  "labels": false,
+                  "values": [
+                    0
+                  ],
+                  "grid": false,
+                  "ticks": false,
+                  "domain": true
+                },
+                "scale": {
+                  "zero": false
+                }
+              },
+              "y": {
+                "field": "value",
+                "type": "quantitative",
+                "title": "__FIELD__",
+                "scale": {
+                  "zero": false
+                }
+              },
+              "color": {
+                "field": "group",
+                "type": "nominal",
+                "legend": null
+              }
+            }
+          },
+          {
+            "transform": [
+              {
+                "calculate": "random()",
+                "as": "_jitter"
+              }
+            ],
+            "mark": {
+              "type": "point",
+              "size": 12,
+              "opacity": 0.4,
+              "filled": true,
+              "color": "black"
+            },
+            "encoding": {
+              "x": {
+                "datum": "points"
+              },
+              "xOffset": {
+                "field": "_jitter",
+                "type": "quantitative",
+                "scale": {
+                  "domain": [
+                    0,
+                    1
+                  ]
+                },
+                "legend": null
+              },
+              "y": {
+                "field": "__FIELD__",
+                "type": "quantitative",
+                "scale": {
+                  "zero": false
+                }
+              }
+            }
+          }
+        ],
+        "resolve": {
+          "scale": {
+            "x": "independent"
+          }
+        }
+      },
+      "config": {
+        "view": {
+          "stroke": "#ffffff"
+        }
+      }
+    },
+    "_placeholderFields": [
+      "__FIELD__"
+    ]
+  },
+  {
+    "id": "line_with_arrow_annotation",
+    "source": "altair",
+    "category": "annotation",
+    "keywords": [
+      "arrow",
+      "annotation",
+      "increasing",
+      "decreasing",
+      "triangle",
+      "arrowhead",
+      "pointer",
+      "callout",
+      "label",
+      "note",
+      "화살표",
+      "주석",
+      "표시",
+      "가리키기",
+      "라벨",
+      "방향",
+      "화살",
+      "화살표그리기",
+      "증가",
+      "감소",
+      "위로",
+      "방향표시"
+    ],
+    "intent": "Line chart with an arrow annotation — a rule segment for the shaft, a rotated filled triangle point as the arrowhead, and a text label",
+    "spec": {
+      "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+      "data": {
+        "values": []
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "line",
+            "point": true
+          },
+          "encoding": {
+            "x": {
+              "field": "x",
+              "type": "quantitative"
+            },
+            "y": {
+              "field": "y",
+              "type": "quantitative"
+            }
+          }
+        },
+        {
+          "data": {
+            "values": [
+              {}
+            ]
+          },
+          "mark": {
+            "type": "rule",
+            "size": 2,
+            "color": "#000000"
+          },
+          "encoding": {
+            "x": {
+              "datum": 5.4
+            },
+            "x2": {
+              "datum": 5.9
+            },
+            "y": {
+              "datum": -0.4
+            },
+            "y2": {
+              "datum": 0
+            }
+          }
+        },
+        {
+          "data": {
+            "values": [
+              {}
+            ]
+          },
+          "mark": {
+            "type": "point",
+            "shape": "triangle",
+            "filled": true,
+            "fillOpacity": 1,
+            "size": 100
+          },
+          "encoding": {
+            "angle": {
+              "value": 23
+            },
+            "color": {
+              "value": "#000000"
+            },
+            "x": {
+              "datum": 5.9
+            },
+            "y": {
+              "datum": 0
+            }
+          }
+        },
+        {
+          "data": {
+            "values": [
+              {}
+            ]
+          },
+          "mark": {
+            "type": "text",
+            "align": "center",
+            "baseline": "bottom",
+            "fontSize": 14
+          },
+          "encoding": {
+            "text": {
+              "datum": "increasing"
+            },
+            "x": {
+              "datum": 4.7
+            },
+            "y": {
+              "datum": -0.3
+            }
+          }
+        }
+      ]
+    }
+  }
+]
