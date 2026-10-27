@@ -197,6 +197,15 @@
   overflow: visible !important;
 }
 
+/* Vega Embed defaults to position: relative. Inside a transformed foreignObject,
+   that creates a WebKit layer that can paint at the outer SVG origin and ignore
+   zoom (https://bugs.webkit.org/show_bug.cgi?id=23113). Actions are disabled on
+   canvas charts, so the embed does not need a positioned containing block.
+   Include previews; leave ordinary HTML gallery thumbnails unchanged. */
+.canvas-svg foreignObject .vega-embed {
+  position: static;
+}
+
 .vega-embed .vega-bindings {
   overflow: visible;
 }
