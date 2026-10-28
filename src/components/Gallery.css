@@ -20,7 +20,7 @@
 .gallery-grid-head h1 { font-size: 26px; margin: 0 0 4px; font-weight: 700; }
 .gallery-grid-sub { color: var(--g-muted); margin: 0 0 24px; font-size: 14px; }
 .gallery-grid-head-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.gallery-grid-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.gallery-grid-head { display: flex; align-items: flex-start; gap: 16px; }
 .gallery-system-btn {
   border: 1px solid #d0d5dd; background: #fff; color: #1f2328; border-radius: 8px;
   padding: 8px 16px; cursor: pointer; font-size: 13px; font-weight: 600; flex-shrink: 0;

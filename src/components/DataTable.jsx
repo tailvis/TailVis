@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { parseCSV, analyzeColumns } from '../utils/dataUtils'
+import { SAMPLE_DATASETS, DEFAULT_SAMPLE_DATASET_IDS } from '../data/sampleDatasets'
 import './DataTable.css'
 
 
@@ -759,7 +760,9 @@ function DataTable({ data, columnInfos, onSelectionChange, onColumnInfoChange, o
 
   // No active data: show data source list
   if (!selectedChartDataSourceId && !activeDataSourceId) {
-    const dsList = dataSources ? Object.entries(dataSources) : []
+    const dsList = Object.entries(dataSources || {}).filter(([id]) =>
+      readOnly || !Object.hasOwn(SAMPLE_DATASETS, id) || DEFAULT_SAMPLE_DATASET_IDS.has(id)
+    )
     return (
       <div className="data-table-panel" ref={panelRef} tabIndex={-1}>
         <input type="file" accept=".csv,.json,.tsv" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileUpload} />

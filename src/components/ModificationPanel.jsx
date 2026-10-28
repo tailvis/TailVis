@@ -156,10 +156,11 @@ function applyHoverHighlight(chartId, mod, apply) {
   // Grouped modification: highlight all elements in the group
   if (mod.group && Array.isArray(mod.group)) {
     const elements = []
-    for (const item of mod.group) {
-      if (!item.selector) continue
+    const selectors = mod.selectedSelectors || mod.group.map(item => item.selector)
+    for (const selector of selectors) {
+      if (!selector) continue
       try {
-        const el = svg.querySelector(item.selector)
+        const el = svg.querySelector(selector)
         if (el) elements.push(el)
       } catch { /* invalid selector */ }
     }
@@ -495,7 +496,7 @@ function ModificationRow({ mod, chartId, spec, compact, activeModificationId, on
   }
 
   const handleInputKeyDown = (e) => {
-    if (e.key === 'Enter') e.target.blur()
+    if (e.key === 'Enter' && mod.property !== 'text') e.target.blur()
     if (e.key === 'Escape') setIsEditing(false)
   }
 
@@ -578,6 +579,20 @@ function ModificationRow({ mod, chartId, spec, compact, activeModificationId, on
               onClick={(e) => e.stopPropagation()}
               autoFocus
             />
+          ) : mod.property === 'text' ? (
+            <textarea
+              className="mod-inline-input mod-inline-text"
+              rows={2}
+              value={editValue}
+              onChange={(e) => {
+                setEditValue(e.target.value)
+                if (onValueChange) onValueChange(chartId, mod.id, mod.property, e.target.value)
+              }}
+              onBlur={() => setIsEditing(false)}
+              onKeyDown={handleInputKeyDown}
+              onClick={(e) => e.stopPropagation()}
+              autoFocus
+            />
           ) : (
             <input
               type={isNumber ? 'number' : 'text'}
@@ -604,8 +619,8 @@ function ModificationRow({ mod, chartId, spec, compact, activeModificationId, on
 
       {/* Col 5: scope select (1fr) — for grouped mods show count label instead */}
       {mod.group ? (
-        <span className="mod-group-scope-label" title={`Applied to ${mod.group.length} elements`}>
-          {mod.group.length} elements
+        <span className="mod-group-scope-label" title={`Applied to ${mod.selectedCount ?? mod.group.length} elements`}>
+          {mod.selectedCount ?? mod.group.length} elements
         </span>
       ) : lockedScopeLabel ? (
         // Not re-scopable (text content / legend config) — static label, no scope dropdown.

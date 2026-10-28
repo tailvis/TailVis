@@ -385,11 +385,13 @@ const SPEC_PATH_MAP = {
     width: 'gridWidth',
   },
   'axis-label': {
+    font: 'labelFont',
     color: 'labelColor', fill: 'labelColor', stroke: 'labelColor',
     fontSize: 'labelFontSize', fontWeight: 'labelFontWeight', opacity: 'labelOpacity',
     angle: 'labelAngle', fontStyle: 'labelFontStyle',
   },
   'axis-title': {
+    font: 'titleFont',
     color: 'titleColor', fill: 'titleColor', stroke: 'titleColor',
     fontSize: 'titleFontSize', fontWeight: 'titleFontWeight', opacity: 'titleOpacity',
     text: 'title', angle: 'titleAngle', fontStyle: 'titleFontStyle',
@@ -411,11 +413,13 @@ const SPEC_PATH_MAP = {
     size: 'symbolSize',
   },
   'legend-label': {
+    font: 'labelFont',
     color: 'labelColor', fill: 'labelColor',
     fontSize: 'labelFontSize', fontWeight: 'labelFontWeight',
     opacity: 'labelOpacity', fontStyle: 'labelFontStyle',
   },
   'legend-title': {
+    font: 'titleFont',
     color: 'titleColor', fill: 'titleColor',
     fontSize: 'titleFontSize', fontWeight: 'titleFontWeight',
     opacity: 'titleOpacity', fontStyle: 'titleFontStyle',
@@ -435,6 +439,7 @@ const propToChannels = {
   shape: ['shape'],
   strokeWidth: ['strokeWidth'],
   fontSize: [],
+  font: [],
   fontWeight: [],
   text: [],
 }
@@ -1181,6 +1186,14 @@ function applyIndividualConditionalEncoding(spec, property, testExpr, value, mar
   const isFilledMark = resolvedMarkSpec?.filled === true
     || !['point', 'line', 'rule'].includes(resolvedMarkType) // bars, areas, arcs are filled by default
 
+  if (targetEncoding !== spec.encoding && spec.encoding) {
+    for (const channel of propToChannels[property] || [property]) {
+      if (!targetEncoding[channel] && spec.encoding[channel]) {
+        targetEncoding[channel] = JSON.parse(JSON.stringify(spec.encoding[channel]))
+      }
+    }
+  }
+
   // Redirect to the field-bound color channel only when the property matches
   // what the color channel actually controls for this mark type:
   //   - Unfilled point/line: color → stroke. Only redirect stroke→color.
@@ -1238,23 +1251,20 @@ function applyIndividualConditionalEncoding(spec, property, testExpr, value, mar
 /**
  * Apply a property change to a single mark spec (non-layer).
  */
-function applyToMarkSpec(spec, property, value) {
-  if (typeof spec.mark === 'string') {
-    spec.mark = { type: spec.mark }
+function applyToMarkSpec(spec, property, value, inheritedEncoding = {}) {
+  if (typeof spec.mark === 'string') spec.mark = { type: spec.mark }
+  if (!spec.mark) return
+  const actualProperty = property === 'strokeDasharray' ? 'strokeDash' : property
+  const actualValue = actualProperty === 'strokeDash' ? parseDashValue(value) : value
+  const channels = property === 'stroke' && !['line', 'rule'].includes(spec.mark.type)
+    ? ['stroke'] : propToChannels[property] || [property]
+  const effectiveEncoding = { ...inheritedEncoding, ...spec.encoding }
+  const channel = channels.find(ch => effectiveEncoding[ch])
+  if (channel) {
+    spec.encoding ||= {}
+    spec.encoding[channel] = { value: actualValue }
   }
-  
-  if (property === 'fill' || property === 'color') {
-    if (spec.mark.color !== undefined && property === 'fill') {
-      spec.mark.color = value
-    } else if (spec.mark.fill !== undefined && property === 'color') {
-      spec.mark.fill = value
-    } else {
-      spec.mark[property] = value
-    }
-  } else {
-    spec.mark[property] = value
-  }
-  
+  spec.mark[actualProperty] = actualValue
   if ((property === 'fill' || property === 'color') && spec.mark.type === 'point') {
     spec.mark.filled = true
   }
@@ -1483,7 +1493,7 @@ function buildDeleteKeepPredicate(spec, mod) {
 // These are written to encoding[channel].legend[prop].
 const LEGEND_CONFIG_PROPS = new Set([
   'orient', 'direction', 'title', 'padding', 'offset',
-  'labelFontSize', 'symbolSize', 'fillColor', 'strokeColor',
+  'labelFontSize', 'labelFont', 'titleFont', 'symbolSize', 'fillColor', 'strokeColor',
 ])
 
 // Write a legend config prop onto every field-bound legend channel in the spec
@@ -1587,6 +1597,15 @@ export function applyModificationsToSpec(baseSpec, modifications) {
       continue
     }
 
+    // Explicit targets (including composite parts) keep the exact selected SVGs.
+    if (scope.type === 'selected-element') {
+      if (selector) {
+        if (!svgOverrides[selector]) svgOverrides[selector] = {}
+        svgOverrides[selector][property] = value
+      }
+      continue
+    }
+
     // --- Data mark scopes ---
     if (scope.type === 'all' || scope.type === 'all-marks') {
       // For composite marks, route through config instead of spec.mark
@@ -1626,7 +1645,7 @@ export function applyModificationsToSpec(baseSpec, modifications) {
           }
           cloned.mark = markObj
         } else {
-          applyToMarkSpec(cloned, property, value)
+          applyToMarkSpec(cloned, property, value, spec.encoding)
         }
         spec.layer[layerIndex] = cloned
       } else if (spec.layer && markGroup) {
@@ -1636,7 +1655,7 @@ export function applyModificationsToSpec(baseSpec, modifications) {
             const layerMarkType = typeof layerSpec.mark === 'string' ? layerSpec.mark : layerSpec.mark?.type
             if (layerMarkType === targetMarkType) {
               const cloned = JSON.parse(JSON.stringify(layerSpec))
-              applyToMarkSpec(cloned, property, value)
+              applyToMarkSpec(cloned, property, value, spec.encoding)
               return cloned
             }
             return layerSpec
@@ -1668,7 +1687,7 @@ export function applyModificationsToSpec(baseSpec, modifications) {
           }
           // else: markGroup doesn't match spec mark → skip
         } else {
-          spec.mark[property] = value
+          applyToMarkSpec(spec, property, value)
         }
       }
 
@@ -1709,7 +1728,10 @@ export function applyModificationsToSpec(baseSpec, modifications) {
       // whisker=rule, outliers, ticks) CANNOT be isolated per-datum. Route the edit to the
       // mark's sub-part config so it lands correctly, e.g. mark.median.color for a boxplot
       // median. Line sub-parts (median/whisker/tick/borders) use `color` for their line.
-      if (mod.compositeMarkType && mod.compositeSubPart) {
+      if (mod.compositeMarkType && mod.compositeSubPart && selector) {
+        if (!svgOverrides[selector]) svgOverrides[selector] = {}
+        svgOverrides[selector][property] = value
+      } else if (mod.compositeMarkType && mod.compositeSubPart) {
         const subPart = mod.compositeSubPart
         const lineSubParts = new Set(['median', 'rule', 'ticks', 'borders'])
         const subProp = (lineSubParts.has(subPart) && (property === 'fill' || property === 'color' || property === 'stroke'))
@@ -1756,7 +1778,8 @@ export function applyModificationsToSpec(baseSpec, modifications) {
         } else {
           target = spec
         }
-        const hasColorField = !!(target.encoding?.color?.field || target.encoding?.fill?.field || target.encoding?.stroke?.field)
+        const effectiveEncoding = { ...spec.encoding, ...target.encoding }
+        const hasColorField = !!(effectiveEncoding.color?.field || effectiveEncoding.fill?.field || effectiveEncoding.stroke?.field)
         const targetMarkType = typeof target.mark === 'string' ? target.mark : target.mark?.type
         // The line:true overlay of an AREA is styled via mark.line, NOT mark.stroke
         // (mark.stroke colors the area's own border, leaving the overlay unchanged).
@@ -1790,11 +1813,12 @@ export function applyModificationsToSpec(baseSpec, modifications) {
           if (!svgOverrides[selector]) svgOverrides[selector] = {}
           svgOverrides[selector][property] = value
         }
-      // Axis elements (title/label/tick/grid/domain): there is only ONE axis per channel,
-      // so "this element" can't be isolated. Route the edit to the axis config IN-SPEC so it
-      // persists across re-renders. A selector-based SVG override is fragile here — the axis
-      // title's aria-label selector depends on its text, so changing the text (or the font
-      // size, which re-renders it) breaks the override and the edit reverts.
+      // An individual guide label is an exact visual target. Keep its text and
+      // styling together so a per-label edit also overrides saved per-label styles.
+      } else if (mod.semanticRole === 'axis' && mod.axisSubType === 'label' && selector) {
+        if (!svgOverrides[selector]) svgOverrides[selector] = {}
+        svgOverrides[selector][property] = value
+      // Axis-wide properties and titles use the owning encoding's axis config.
       } else if (mod.semanticRole === 'axis' && mod.axisSubType && (mod.axisChannel || scope.axisChannel)) {
         const axCh = mod.axisChannel || scope.axisChannel
         const axisPropName = buildAxisPropName(mod.axisSubType, property)
@@ -2282,8 +2306,8 @@ const CONTINUOUS_SCHEME_ENDPOINTS = {
 }
 
 // Default scheme to use when no scheme is specified.
-// Our app uses theme: 'vox', which overrides the default categorical colors.
-const DEFAULT_SCHEME = 'vox'
+// Match the unthemed Vega-Lite renderer used by Canvas.
+const DEFAULT_SCHEME = 'tableau10'
 
 function resolveSchemeColors(scheme, count) {
   // scheme can be a string name or { name: '...', count: N }
@@ -2529,9 +2553,7 @@ function applyByFieldScope(spec, mod) {
     if (better >= 0) layerIndex = better
   }
 
-  const testExpr = typeof resolvedFieldValue === 'number'
-    ? `datum['${field}'] === ${resolvedFieldValue}`
-    : `datum['${field}'] === '${resolvedFieldValue}'`
+  const testExpr = `datum[${JSON.stringify(field)}] === ${JSON.stringify(resolvedFieldValue)}`
   const condition = { test: testExpr, value }
 
   const targetMarkType = markGroup ? markGroupToMarkType[markGroup] : null
@@ -2579,6 +2601,16 @@ function applyByFieldScope(spec, mod) {
     targetEncoding = spec.encoding
   }
 
+  // A layer inherits encodings from its parent. Preserve that effective fallback
+  // before adding a condition so unselected categories keep their original colors.
+  if (targetEncoding !== spec.encoding && spec.encoding) {
+    for (const channel of propToChannels[property] || [property]) {
+      if (!targetEncoding[channel] && spec.encoding[channel]) {
+        targetEncoding[channel] = JSON.parse(JSON.stringify(spec.encoding[channel]))
+      }
+    }
+  }
+
   // Determine if the mark renders as filled or stroked
   // Find the mark from the layer that owns targetEncoding (handles layerIndex=null from legend clicks)
   let resolvedMark = spec.mark
@@ -2618,11 +2650,10 @@ function applyByFieldScope(spec, mod) {
   // the SAME field, use scale.domain/range instead of condition.
   // This ensures the legend updates together with the marks.
 
-  if (existingEnc && existingEnc.field && (property === 'fill' || property === 'color' || property === 'stroke')
+  if (existingEnc && existingEnc.field && !existingEnc.condition && (property === 'fill' || property === 'color' || property === 'stroke')
       && existingEnc.field === field) {
     // Same-field color change: range-only approach for all mark types.
-    // Never set scale.domain — Vega-Lite determines nominal domain in alphabetical order
-    // internally. We build range aligned to that alphabetical order.
+    // Align the palette with the explicit domain or the effective category sort order.
     if (!targetEncoding[channel].scale) {
       targetEncoding[channel] = { ...targetEncoding[channel], scale: {} }
     }
@@ -2630,7 +2661,7 @@ function applyByFieldScope(spec, mod) {
 
     // Build alphabetically sorted category list (Vega-Lite's internal domain order)
     // Find data values: check top-level first, then layer-level
-    let dataValues = spec.data?.values
+    let dataValues = (layerIndex != null ? spec.layer?.[layerIndex]?.data?.values : null) || spec.data?.values
     if ((!dataValues || dataValues.length === 0) && spec.layer) {
       for (let li = 0; li < spec.layer.length; li++) {
         const layer = spec.layer[li]
@@ -2641,13 +2672,18 @@ function applyByFieldScope(spec, mod) {
       }
     }
     let alphaSorted = null
-    if (dataValues && Array.isArray(dataValues)) {
+    if (Array.isArray(scale.domain)) {
+      alphaSorted = [...scale.domain]
+    } else if (dataValues && Array.isArray(dataValues)) {
       const rawOrder = dataValues.map(d => d[field]).filter(v => v != null)
       const uniqueVals = [...new Set(rawOrder)]
       alphaSorted = uniqueVals.length > 0
         ? [...uniqueVals].sort((a, b) => String(a).localeCompare(String(b)))
         : null
     }
+
+    if (!Array.isArray(scale.domain) && Array.isArray(existingEnc.sort)) alphaSorted = [...existingEnc.sort]
+    else if (!Array.isArray(scale.domain) && existingEnc.sort === 'descending') alphaSorted?.reverse()
 
     // Fallback: if alphaSorted is empty (field created by transform, e.g. row_index),
     // give up range-only approach and use condition instead.
@@ -2666,13 +2702,15 @@ function applyByFieldScope(spec, mod) {
           : [targetEncoding[channel].condition]
         const idx = existing.findIndex(c => c.test === testExpr)
         if (idx >= 0) existing[idx] = condition
-        else existing.push(condition)
+        else existing.unshift(condition)
         targetEncoding[channel].condition = existing
       }
     } else {
       // Normal range-only approach
       if (!scale.range) {
-        scale.range = resolveSchemeColors(scale.scheme, alphaSorted.length)
+        scale.range = Array.isArray(spec.config?.range?.category) && !scale.scheme
+          ? [...spec.config.range.category]
+          : resolveSchemeColors(scale.scheme, alphaSorted.length)
         if (scale.scheme) delete scale.scheme
       }
 
@@ -2683,8 +2721,7 @@ function applyByFieldScope(spec, mod) {
         }
       }
 
-      // Never set domain — it can override ordering and cause layout issues
-      if (scale.domain) delete scale.domain
+      // Preserve an explicit domain: its order defines how range colors map to values.
     }
 
   } else if (existingEnc && existingEnc.field) {
@@ -2697,7 +2734,7 @@ function applyByFieldScope(spec, mod) {
         : [targetEncoding[channel].condition]
       const idx = existing.findIndex(c => c.test === testExpr)
       if (idx >= 0) existing[idx] = condition
-      else existing.push(condition)
+      else existing.unshift(condition)
       targetEncoding[channel].condition = existing
     }
 
@@ -2729,14 +2766,6 @@ function applyByFieldScope(spec, mod) {
     delete spec.layer[layerIndex].mark[property]
   } else if (spec.mark && typeof spec.mark === 'object' && spec.mark[property] !== undefined) {
     delete spec.mark[property]
-  }
-  if (spec.layer) {
-    spec.layer.forEach(layerSpec => {
-      const lm = typeof layerSpec.mark === 'object' ? layerSpec.mark : null
-      if (lm && lm[property] !== undefined) {
-        delete lm[property]
-      }
-    })
   }
 
   // For line/area charts with point overlay, ensure points are filled when setting fill

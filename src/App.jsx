@@ -1,3 +1,5 @@
+import { stabilizeChartSelectors } from './utils/stableSelectors'
+import { setSvgText } from './utils/svgText'
 import { useState, useRef, useCallback, useEffect, useMemo, lazy, Suspense } from 'react'
 // Lazy: pulls the vega/vega-embed/d3 stack into a separate chunk, off the initial bundle.
 const Canvas = lazy(() => import('./components/Canvas'))
@@ -10,6 +12,7 @@ import DataTable from './components/DataTable'
 import EncodingBar from './components/EncodingBar'
 import { CHART_TYPES } from './components/EncodingBar'
 import { applyModificationsToSpec, analyzeEncodingBindings, extractColorMapping, evaluateTestExpression, detectBindingIntegrity, classifyLayer, analyzeLayerContext } from './utils/scopeUtils'
+import { buildSelectionTargets, selectionKey } from './utils/selectionTargets'
 import { detectElementType, extractDatum, getLayerIndex } from './utils/elementUtils'
 import { SAMPLE_DATA, analyzeColumns, generateSpecFromColumns, generateSpecFromAssignments, donutifySpec } from './utils/dataUtils'
 import { renderChartPng } from './utils/chartThumbnail'
@@ -1007,22 +1010,17 @@ function App({ readOnly = false, galleryExample = null } = {}) {
 
       let result = prev.map(chart => {
         if (chart.id === id) {
-          const merged = { ...chart, ...updates }
-          // Keep baseSpec's SIZE in sync with a spec size change — but operate on the
-          // ALREADY-MERGED baseSpec, which honors a caller-provided updates.baseSpec (e.g.
-          // handleMarkOption mutates baseSpec to add point/interpolate). Previously this
-          // recomputed from the STALE chart.baseSpec and clobbered updates.baseSpec, so mark
-          // options never reached baseSpec and got reverted on the next modification replay.
-          if (updates.spec && merged.baseSpec) {
-            const src = updates.spec.facet && updates.spec.spec ? updates.spec.spec : updates.spec
-            const newW = src.width
-            const newH = src.height
-            const base = JSON.parse(JSON.stringify(merged.baseSpec))
-            const dst = base.facet && base.spec ? base.spec : base
-            if (newW != null) dst.width = newW
-            if (newH != null) dst.height = newH
-            if (dst !== base) { delete base.width; delete base.height }
-            merged.baseSpec = base
+          const stableChart = updates.spec
+            ? stabilizeChartSelectors(chart, document.getElementById(`vega-chart-${id}`)?.querySelector('svg'))
+            : chart
+          const merged = { ...stableChart, ...updates }
+          // Direct spec edits must update the replay baseline as well, otherwise
+          // the next element modification reconstructs the chart from stale settings.
+          // Apply only this edit's delta so existing modification effects stay separate.
+          // A caller-supplied baseline (including null) remains authoritative.
+          if (updates.spec && merged.baseSpec &&
+              !Object.prototype.hasOwnProperty.call(updates, 'baseSpec') && changes?.length) {
+            merged.baseSpec = applySpecChanges(merged.baseSpec, changes)
           }
           return merged
         }
@@ -1035,7 +1033,8 @@ function App({ readOnly = false, galleryExample = null } = {}) {
             ? changes.filter(ch => !isUnderAnyPath(pathArrToString(ch.path), widgetPaths))
             : changes
           if (ops.length === 0) return chart
-          const propagated = { ...chart, spec: applyPropagatedOps(chart.spec, ops) }
+          const stableChart = stabilizeChartSelectors(chart, document.getElementById(`vega-chart-${chart.id}`)?.querySelector('svg'))
+          const propagated = { ...stableChart, spec: applyPropagatedOps(chart.spec, ops) }
           if (chart.baseSpec) propagated.baseSpec = applyPropagatedOps(chart.baseSpec, ops)
           return propagated
         }
@@ -1683,10 +1682,9 @@ function App({ readOnly = false, galleryExample = null } = {}) {
       if (activeModificationId && !overrides) {
         const activeMod = chart.modifications?.find(m => m.id === activeModificationId)
         const isSameProperty = activeMod && activeMod.property === propName
-        const isSameElement = activeMod && (
-          activeMod.selector === effectiveElement?.selector ||
-          activeMod.markGroup === effectiveElement?.markGroup
-        )
+        const isSameElement = activeMod?.selector && effectiveElement?.selector
+          && activeMod.selector === effectiveElement.selector
+          && (activeMod.layerIndex ?? null) === (effectiveElement.layerIndex ?? null)
 
         if (isSameProperty && isSameElement) {
           handleModificationValueUpdate(elementChartId, activeModificationId, propName, value)
@@ -1736,6 +1734,7 @@ function App({ readOnly = false, galleryExample = null } = {}) {
         opacity: 'opacity',
         strokeDasharray: 'stroke-dasharray',
         fontSize: 'font-size',
+        font: 'font-family',
         fontWeight: 'font-weight',
         color: 'fill'  // text color
       }
@@ -1754,7 +1753,7 @@ function App({ readOnly = false, galleryExample = null } = {}) {
       }
 
       if (propName === 'text' && el.tagName.toLowerCase() === 'text') {
-        el.textContent = value
+        setSvgText(el, value)
       }
     }
 
@@ -1769,10 +1768,10 @@ function App({ readOnly = false, galleryExample = null } = {}) {
       }
       if (propName === 'text') {
         updatedSpec.title = typeof updatedSpec.title === 'object'
-          ? { ...updatedSpec.title, text: value }
+          ? { ...updatedSpec.title, text: String(value).split(/\r?\n/) }
           : value
       } else {
-        updatedSpec.title = { ...updatedSpec.title, [propName]: value }
+        updatedSpec.title = { ...updatedSpec.title, [propName]: propName === 'subtitle' ? String(value).split(/\r?\n/) : value }
       }
       specUpdated = true
     } else if (elementPath === 'mark') {
@@ -1851,20 +1850,15 @@ function App({ readOnly = false, galleryExample = null } = {}) {
   }
 
   // Helper: get modification identity key (element + property + scope)
-  // Extract stable element identity from selector (aria-label part is stable across re-renders)
-  const normalizeSelector = (selector) => {
-    if (!selector) return ''
-    const ariaMatch = selector.match(/\[aria-label="([^"]+)"\]/)
-    return ariaMatch ? ariaMatch[1] : selector
-  }
-
+  // Keep the complete selector: an ancestor aria-label identifies an entire
+  // axis/facet, while its child path identifies the individual editable label.
   const getModificationKey = (mod) => {
     // Element identity: which mark group or element type this targets
     const elementId = mod.compositeMarkType && mod.compositeSubPart
       ? `${mod.compositeMarkType}:${mod.compositeSubPart}`
       : mod.markGroup || mod.targetType || 'unknown'
 
-    const normalizedSelector = normalizeSelector(mod.selector)
+    const normalizedSelector = mod.selector || ''
 
     const scopeId = (() => {
       const s = mod.scope
@@ -1889,13 +1883,18 @@ function App({ readOnly = false, galleryExample = null } = {}) {
       return s.type || 'all-marks'
     })()
 
-    // Use normalized selector so different CSS paths to the same element match
+    // Preserve the exact target path, including facet and label position.
     return `${elementId}::${mod.property}::${scopeId}::${normalizedSelector}`
   }
 
-  // Helper: rebuild svgOverrides cleanly from base + modification output
+  // Replay only replaces properties edited by modifications, not the entire
+  // element's saved styling (e.g. a text edit must keep its baseline font).
   const rebuildSvgOverrides = (baseSvgOverrides, modSvgOverrides) => {
-    return { ...(baseSvgOverrides || {}), ...modSvgOverrides }
+    const merged = { ...(baseSvgOverrides || {}) }
+    for (const [selector, props] of Object.entries(modSvgOverrides || {})) {
+      merged[selector] = { ...merged[selector], ...props }
+    }
+    return merged
   }
 
   // Handle grouped multi-element modification: creates a single entry with group[] field
@@ -1930,213 +1929,8 @@ function App({ readOnly = false, galleryExample = null } = {}) {
         'mark-symbol': 'POINT', 'mark-text': 'TEXT', 'mark-arc': 'ARC', 'mark-rule': 'RULE'
       }
 
-      // --- Scope-based optimization ---
-      // If all elements share a scope-level type from scopeHierarchy (same-mark-type, all-marks, field-value),
-      // create ONE efficient modification instead of N individual this-only modifications.
-      const firstEl = groupElements[0]
-      const sharedScopeType = firstEl?._scopeType
-      const sharedScopeData = firstEl?._scopeData
-      const allShareScope = sharedScopeType &&
-        sharedScopeType !== 'individual' &&
-        sharedScopeType !== 'explicit' &&
-        groupElements.every(el => el._scopeType === sharedScopeType)
-
-      // --- Legend scope-based optimization ---
-      // Map legend scopeHierarchy types to unified modification scopes
-      if (allShareScope && firstEl.semanticRole === 'legend') {
-        let unifiedScope
-        if (sharedScopeType === 'entire-legend') {
-          unifiedScope = { type: 'all-in-legend' }
-        } else if (sharedScopeType === 'all-legend-labels') {
-          unifiedScope = { type: 'all-legend-labels' }
-        } else if (sharedScopeType === 'all-legend-symbols') {
-          unifiedScope = { type: 'all-legend-symbols' }
-        } else if (sharedScopeType === 'field-value' && sharedScopeData?.field != null) {
-          unifiedScope = { type: 'legend-with-data', legendField: sharedScopeData.field, legendValue: sharedScopeData.value }
-        } else {
-          unifiedScope = null // fall through to grouped modification path
-        }
-
-        if (unifiedScope) {
-          const representativeEl = firstEl
-          const targetType = sharedScopeType === 'entire-legend' ? 'LEGEND (전체)'
-            : sharedScopeType === 'all-legend-labels' ? 'LEGEND (라벨)'
-            : sharedScopeType === 'all-legend-symbols' ? 'LEGEND (심볼)'
-            : sharedScopeType === 'field-value' ? `LEGEND (${sharedScopeData?.field}=${sharedScopeData?.value})`
-            : 'LEGEND'
-
-          const existingIdx = modifications.findIndex(m =>
-            !m.group && m.property === propName && m.targetType === targetType &&
-            m.scope?.type === unifiedScope.type
-          )
-
-          if (existingIdx >= 0) {
-            modifications[existingIdx] = {
-              ...modifications[existingIdx],
-              value,
-              scope: unifiedScope,
-              fromScopeSelection: true,
-            }
-          } else {
-            const newMod = {
-              id: `mod-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-              property: propName,
-              value,
-              originalValue: representativeEl.properties?.[propName] ?? null,
-              scope: unifiedScope,
-              selector: null,
-              datum: null,
-              targetType,
-              markGroup: null,
-              semanticRole: 'legend',
-              axisChannel: null,
-              axisSubType: null,
-              legendField: unifiedScope.legendField || representativeEl.legendField || null,
-              legendValue: unifiedScope.legendValue ?? representativeEl.legendValue ?? null,
-              legendSubType: null,
-              compositeMarkType: null,
-              compositeSubPart: null,
-              layerIndex: null,
-              isAnnotation: false,
-              layerContext: null,
-              layerClassification: null,
-              modStrategy: null,
-              batchId: null,
-              group: null,
-              fromScopeSelection: true,
-              bindingIntegrity: 'config-level',
-              timestamp: Date.now()
-            }
-            modifications.push(newMod)
-          }
-
-          const { spec: newSpec, svgOverrides: modOverrides } = applyModificationsToSpec(baseSpec, modifications)
-          const finalOverrides = rebuildSvgOverrides(baseSvgOverrides, modOverrides)
-          return { ...chart, modifications, baseSpec, baseSvgOverrides, spec: newSpec, svgOverrides: finalOverrides }
-        }
-      }
-      // --- End legend scope-based optimization ---
-
-      if (allShareScope && firstEl.semanticRole === 'data-mark') {
-        // Map scopeHierarchy scopeType → modification scope.type
-        let unifiedScope
-        if (sharedScopeType === 'composite-sub-all') {
-          unifiedScope = {
-            type: 'composite-sub-all',
-            compositeMarkType: sharedScopeData?.compositeMarkType || firstEl.compositeMarkType,
-            compositeSubPart: sharedScopeData?.compositeSubPart || firstEl.compositeSubPart,
-          }
-        } else if (sharedScopeType === 'same-mark-type' || sharedScopeType === 'all-marks') {
-          unifiedScope = { type: 'all-marks' }
-        } else if (sharedScopeType === 'field-value' && sharedScopeData?.field != null) {
-          unifiedScope = { type: 'by-field', field: sharedScopeData.field, fieldValue: sharedScopeData.value }
-        } else if (sharedScopeType === 'condition-match' && sharedScopeData?.channel != null) {
-          unifiedScope = { type: 'condition-match', channel: sharedScopeData.channel, conditionIndex: sharedScopeData.conditionIndex }
-        } else if (sharedScopeType === 'condition-default' && sharedScopeData?.channel != null) {
-          unifiedScope = { type: 'condition-default', channel: sharedScopeData.channel }
-        } else {
-          unifiedScope = { type: 'all-marks' }
-        }
-
-        const representativeEl = firstEl
-        const markGroup = representativeEl.markGroup || null
-        const layerIndex = representativeEl.layerIndex ?? null
-        const semanticRole = representativeEl.semanticRole || 'data-mark'
-        const markGroups = [...new Set(groupElements.map(el => el.markGroup).filter(Boolean))]
-        const markGroupLabel = markGroups.length === 1 ? (markGroupToLabel[markGroups[0]] || 'MARK') : 'MARK'
-        const scopeLabel = sharedScopeType === 'all-marks' ? 'ALL' :
-          sharedScopeType === 'composite-sub-all' ? `ALL ${(unifiedScope.compositeSubPart || 'PART').toUpperCase()}` :
-          sharedScopeType === 'same-mark-type' ? (sharedScopeData?.markType?.toUpperCase() || 'MARK') :
-          sharedScopeType === 'field-value' ? `${sharedScopeData?.field}=${sharedScopeData?.value}` : 'SCOPE'
-        const targetType = sharedScopeType === 'composite-sub-all'
-          ? `${(unifiedScope.compositeMarkType || 'MARK').toUpperCase()} (${scopeLabel})`
-          : `${markGroupLabel} (${scopeLabel})`
-
-        const existingIdx = modifications.findIndex(m =>
-          !m.group && m.property === propName && m.targetType === targetType &&
-          m.scope?.type === unifiedScope.type
-        )
-
-        if (existingIdx >= 0) {
-          modifications[existingIdx] = {
-            ...modifications[existingIdx],
-            value,
-            scope: unifiedScope,
-            markGroup: sharedScopeType === 'all-marks' ? null : markGroup,
-            layerIndex,
-            fromScopeSelection: true,
-          }
-        } else {
-          const newMod = {
-            id: `mod-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-            property: propName,
-            value,
-            originalValue: representativeEl.properties?.[propName] ?? null,
-            scope: unifiedScope,
-            selector: null,
-            datum: null,
-            targetType,
-            markGroup: sharedScopeType === 'all-marks' ? null : markGroup,
-            semanticRole,
-            axisChannel: null,
-            axisSubType: null,
-            legendField: unifiedScope.type === 'by-field' ? unifiedScope.field : null,
-            legendValue: unifiedScope.type === 'by-field' ? unifiedScope.fieldValue : null,
-            legendSubType: null,
-            compositeMarkType: representativeEl.compositeMarkType || null,
-            compositeSubPart: representativeEl.compositeSubPart || null,
-            layerIndex,
-            isAnnotation: false,
-            layerContext: null,
-            layerClassification: null,
-            modStrategy: null,
-            batchId: null,
-            group: null,
-            fromScopeSelection: true,
-            bindingIntegrity: 'binding-overridden',
-            timestamp: Date.now()
-          }
-          modifications.push(newMod)
-        }
-
-        const { spec: newSpec, svgOverrides: modOverrides } = applyModificationsToSpec(baseSpec, modifications)
-        const finalOverrides = rebuildSvgOverrides(baseSvgOverrides, modOverrides)
-        return { ...chart, modifications, baseSpec, baseSvgOverrides, spec: newSpec, svgOverrides: finalOverrides }
-      }
-      // --- End scope-based optimization ---
-
-      const group = groupElements.map(el => {
-        const semanticRole = el.semanticRole || 'data-mark'
-        let scope = { type: 'this-only' }
-        // For axis elements, use axis-specific scope
-        if (semanticRole === 'axis') {
-          const axisChannel = el.axisChannel || 'x'
-          scope = el.axisSubType
-            ? { type: 'same-type-in-axis', axisChannel, axisSubType: el.axisSubType }
-            : { type: 'all-in-axis', axisChannel }
-        } else if (semanticRole === 'legend') {
-          if (el.legendSubType === 'label') scope = { type: 'all-legend-labels' }
-          else if (el.legendSubType === 'title') scope = { type: 'legend-title' }
-          else if (el.legendField && el.legendValue != null) scope = { type: 'legend-with-data', legendField: el.legendField, legendValue: el.legendValue }
-          else scope = { type: 'legend-item-only' }
-        }
-        return {
-          selector: el.selector || null,
-          datum: el.datum || null,
-          scope,
-          originalValue: el.properties?.[propName] ?? null,
-          semanticRole,
-          markGroup: el.markGroup || null,
-          axisChannel: el.axisChannel || null,
-          axisSubType: el.axisSubType || null,
-          legendField: el.legendField || null,
-          legendValue: el.legendValue || null,
-          legendSubType: el.legendSubType || null,
-          compositeMarkType: el.compositeMarkType || null,
-          compositeSubPart: el.compositeSubPart || null,
-          layerIndex: el.layerIndex ?? null,
-        }
-      })
+      const group = buildSelectionTargets(groupElements, propName)
+      const targetKey = selectionKey(groupElements)
 
       // Derive summary label
       const roles = [...new Set(group.map(g => g.semanticRole))]
@@ -2152,19 +1946,20 @@ function App({ readOnly = false, galleryExample = null } = {}) {
           // data-mark: use markGroup label
           const markGroups = [...new Set(group.map(g => g.markGroup).filter(Boolean))]
           const label = markGroups.length === 1 ? (markGroupToLabel[markGroups[0]] || 'MARK') : 'MARK'
-          targetType = `${label} Group (${group.length})`
+          targetType = `${label} Group (${groupElements.length})`
         }
       } else {
-        targetType = `Mixed Selection (${group.length})`
+        targetType = `Mixed Selection (${groupElements.length})`
       }
 
-      // Check if an existing grouped modification with same property+targetType exists
+      // Match the actual selection, including layer and scope, rather than its label.
       const existingIdx = modifications.findIndex(m =>
-        m.group && m.property === propName && m.targetType === targetType
+        m.group && m.property === propName && m.selectionKey === targetKey
       )
 
       if (existingIdx >= 0) {
-        modifications[existingIdx] = { ...modifications[existingIdx], value, group }
+        const [existing] = modifications.splice(existingIdx, 1)
+        modifications.push({ ...existing, value, group, selectedCount: groupElements.length, selectedSelectors: groupElements.map(el => el.selector).filter(Boolean), timestamp: Date.now() })
       } else {
         const newMod = {
           id: `mod-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -2172,6 +1967,10 @@ function App({ readOnly = false, galleryExample = null } = {}) {
           value,
           originalValue: null,
           scope: { type: 'group' },
+          selectionKey: targetKey,
+          selectedCount: groupElements.length,
+          selectedSelectors: groupElements.map(el => el.selector).filter(Boolean),
+          fromScopeSelection: groupElements.some(el => el._scopeType && el._scopeType !== 'individual'),
           selector: null,
           datum: null,
           targetType,
@@ -2747,25 +2546,11 @@ function App({ readOnly = false, galleryExample = null } = {}) {
       const clarification = data.clarification
       const changeType = clarification?.change_type || 'visual_refinement'
 
-      // Determine chart position and relationship based on change_type
+      // Change classification affects override inheritance, not lineage layout.
       const isDataTransform = changeType === 'data_transformation'
-
-      let newX, newY, svgOverrides
-
-      if (isDataTransform) {
-        // Data transformation: position below, connected with orange line, no svgOverrides inheritance
-        const chartsAtSameOrigin = chartObjects.filter(c =>
-          Math.abs(c.x - selectedChart.x) < 50
-        )
-        newX = selectedChart.x
-        newY = Math.max(...chartsAtSameOrigin.map(c => c.y + c.height)) + 80
-        svgOverrides = {}
-      } else {
-        // Visual refinement: position right, connected to parent, inherit svgOverrides
-        newX = selectedChart.x + selectedChart.width + 450
-        newY = selectedChart.y
-        svgOverrides = selectedChart.svgOverrides ? { ...selectedChart.svgOverrides } : {}
-      }
+      let newX = selectedChart.x + selectedChart.width + 450
+      let newY = selectedChart.y
+      const svgOverrides = isDataTransform ? {} : { ...selectedChart.svgOverrides }
 
       // Avoid overlapping with existing charts
       const nonOverlap = findNonOverlappingPosition(newX, newY, 480, 350, chartObjects)
@@ -3712,6 +3497,7 @@ function App({ readOnly = false, galleryExample = null } = {}) {
                       padding:       ['padding'],
                       title:         ['title', 'text'],
                       titleFontSize: ['title', 'fontSize'],
+                      font:          ['config', 'font'],
                       subtitle:      ['title', 'subtitle'],
                     }
 
@@ -3754,6 +3540,9 @@ function App({ readOnly = false, galleryExample = null } = {}) {
                     return prev.map(c => {
                       if (c.id === selectedChartId) {
                         const updated = { ...c, spec: s }
+                        if (propName === 'font' && c.baseSpec) {
+                          updated.baseSpec = { ...c.baseSpec, config: { ...c.baseSpec.config, font: value } }
+                        }
                         if ((propName === 'width' || propName === 'height') && c.baseSpec) {
                           const bs = { ...c.baseSpec }
                           if (bs.facet && bs.spec) {
@@ -3896,17 +3685,8 @@ function App({ readOnly = false, galleryExample = null } = {}) {
             const sourceChart = chartObjects.find(c => c.id === activeChatId)
             if (!sourceChart) return
 
-            const isNewBranch = changeType === 'data_transformation'
-            let previewX, previewY
-
-            if (isNewBranch) {
-              const chartsAtSameOrigin = chartObjects.filter(c => Math.abs(c.x - sourceChart.x) < 50)
-              previewX = sourceChart.x
-              previewY = Math.max(...chartsAtSameOrigin.map(c => c.y + c.height)) + 80
-            } else {
-              previewX = sourceChart.x + sourceChart.width + 450
-              previewY = sourceChart.y
-            }
+            let previewX = sourceChart.x + sourceChart.width + 450
+            let previewY = sourceChart.y
 
             const adjusted = findNonOverlappingPosition(previewX, previewY, 480, 350, chartObjects)
             previewX = adjusted.x
@@ -3948,17 +3728,9 @@ function App({ readOnly = false, galleryExample = null } = {}) {
 
             const isDataTransform = result.changeType === 'data_transformation'
 
-            let newX, newY, svgOverrides
-            if (isDataTransform) {
-              const chartsAtSameOrigin = chartObjects.filter(c => Math.abs(c.x - sourceChart.x) < 50)
-              newX = sourceChart.x
-              newY = Math.max(...chartsAtSameOrigin.map(c => c.y + c.height)) + 80
-              svgOverrides = {}
-            } else {
-              newX = sourceChart.x + sourceChart.width + 450
-              newY = sourceChart.y
-              svgOverrides = sourceChart.svgOverrides ? { ...sourceChart.svgOverrides } : {}
-            }
+            let newX = sourceChart.x + sourceChart.width + 450
+            let newY = sourceChart.y
+            const svgOverrides = isDataTransform ? {} : { ...sourceChart.svgOverrides }
 
             const adjusted = findNonOverlappingPosition(newX, newY, 480, 350, chartObjects)
             newX = adjusted.x

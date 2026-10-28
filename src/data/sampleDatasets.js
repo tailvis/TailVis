@@ -3,6 +3,15 @@
  * Each dataset has: name, description, values
  */
 
+// Keep the full catalog for saved charts; offer a smaller selection in the editor.
+export const DEFAULT_SAMPLE_DATASET_IDS = new Set([
+  'csv-penguins',
+  'csv-seattle-weather',
+  'csv-waterfall',
+  'csv-movies',
+  'csv-stocks',
+])
+
 export const SAMPLE_DATASETS = {
   "csv-population": {
     name: "Falkansee Population",

@@ -39,7 +39,7 @@ function chartRows(example, chart) {
 // Compact port of Canvas.applySvgOverrides — reproduce the saved look on thumbnails.
 const SVG_ATTR_MAP = {
   fill: 'fill', stroke: 'stroke', strokeWidth: 'stroke-width', opacity: 'opacity',
-  strokeDasharray: 'stroke-dasharray', fontSize: 'font-size', fontWeight: 'font-weight', color: 'fill',
+  strokeDasharray: 'stroke-dasharray', fontSize: 'font-size', font: 'font-family', fontWeight: 'font-weight', color: 'fill',
 }
 function applySvgOverrides(svg, overrides) {
   if (!svg || !overrides) return
@@ -48,12 +48,20 @@ function applySvgOverrides(svg, overrides) {
     try { els = svg.querySelectorAll(selector) } catch { continue }
     els.forEach(el => {
       for (const [k, v] of Object.entries(props)) {
+        if (k === 'childrenFont') {
+          el.querySelectorAll('text').forEach(text => {
+            text.setAttribute('font-family', v)
+            text.style.setProperty('font-family', v)
+          })
+          continue
+        }
         if (k === 'transform') { el.setAttribute('transform', v); continue }
         if (k === 'text' && el.tagName.toLowerCase() === 'text') { el.textContent = v; continue }
         const attr = SVG_ATTR_MAP[k]
         if (!attr) continue
         if (k === 'strokeDasharray' && v === 'solid') { el.removeAttribute('stroke-dasharray'); continue }
         el.setAttribute(attr, v)
+        if (k === 'font') el.style.setProperty('font-family', v)
       }
     })
   }
@@ -111,19 +119,19 @@ export default function Gallery() {
     <div className="gallery-root">
       <div className="gallery-grid-view">
         <header className="gallery-grid-head">
-          <div className="gallery-grid-head-text">
-            <h1>TailVis Example Gallery</h1>
-            <p className="gallery-grid-sub">
-              {total} example{total === 1 ? '' : 's'} · click to open a read-only, selectable view.
-            </p>
-          </div>
           <button
             className="gallery-system-btn"
             title="Open the TailVis editor"
             onClick={() => { window.location.search = '' }}
           >
-            System →
+            ← System
           </button>
+          <div className="gallery-grid-head-text">
+            <h1>TailVis Example Gallery</h1>
+            <p className="gallery-grid-sub">
+              click to open a read-only, selectable view.
+            </p>
+          </div>
         </header>
 
         {total === 0 ? (

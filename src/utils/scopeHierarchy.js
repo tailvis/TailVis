@@ -4,8 +4,8 @@
  * scope candidates from narrowest to broadest, for Tab-cycling.
  */
 
-import { detectElementType, extractDatum } from './elementUtils'
-import { evaluateTestExpression, formatTestLabel } from './scopeUtils'
+import { detectElementType, extractDatum, getLayerIndex } from './elementUtils.js'
+import { evaluateTestExpression, formatTestLabel } from './scopeUtils.js'
 
 // ─── Helpers ─────────────────────────────────────────────
 
@@ -348,18 +348,29 @@ function inferMarkGroupLabel(element, markGroup, siblings) {
  * Build scope levels based on conditional encodings (color/fill conditions).
  * Returns the scope matching the clicked datum's condition.
  */
-function buildConditionScopes(spec, datum, allMarks, svgRoot) {
+function buildConditionScopes(spec, datum, allMarks, svgRoot, elementInfo) {
   if (!datum || allMarks.length <= 1) return []
 
   const scopes = []
   const checkedChannels = new Set()
 
-  const encodingSources = []
-  if (spec?.encoding) encodingSources.push(spec.encoding)
-  if (spec?.layer) {
-    for (const layer of spec.layer) {
-      if (layer.encoding) encodingSources.push(layer.encoding)
+  const inner = spec?.facet && spec.spec ? spec.spec : spec
+  const selectedLayer = elementInfo?.layerIndex
+  const effectiveEncoding = (layerIndex) => ({
+    ...inner?.encoding, ...(layerIndex != null ? inner?.layer?.[layerIndex]?.encoding : {}),
+  })
+  const encodingSources = [effectiveEncoding(selectedLayer)]
+  const winningTest = (mark, channel) => {
+    const enc = effectiveEncoding(getLayerIndex(mark.element, svgRoot))[channel]
+    const conditions = enc?.condition ? (Array.isArray(enc.condition) ? enc.condition : [enc.condition]) : []
+    // Non-expression predicates cannot be evaluated reliably by this scope helper.
+    if (!conditions.length || conditions.some(c => typeof c.test !== 'string')) return undefined
+    for (const c of conditions) {
+      const result = evaluateTestExpression(c.test, mark.datum)
+      if (result === null) return undefined
+      if (result === true) return c.test
     }
+    return null
   }
 
   for (const encoding of encodingSources) {
@@ -384,7 +395,7 @@ function buildConditionScopes(spec, datum, allMarks, svgRoot) {
       if (matchedConditionIndex >= 0) {
         const cond = predicates[matchedConditionIndex]
         const matchingElements = allMarks.filter(m =>
-          m.datum && evaluateTestExpression(cond.test, m.datum) === true
+          m.datum && winningTest(m, channel) === cond.test
         )
         if (matchingElements.length > 1 && matchingElements.length < allMarks.length) {
           const readableLabel = formatTestLabel(cond.test)
@@ -399,7 +410,7 @@ function buildConditionScopes(spec, datum, allMarks, svgRoot) {
       } else {
         const defaultElements = allMarks.filter(m => {
           if (!m.datum) return false
-          return predicates.every(c => evaluateTestExpression(c.test, m.datum) !== true)
+          return winningTest(m, channel) === null
         })
         if (defaultElements.length > 1 && defaultElements.length < allMarks.length) {
           scopes.push({
@@ -422,43 +433,6 @@ const SUBPART_NOUN = {
   box: 'box', median: 'median line', rule: 'whisker',
   outliers: 'outlier', ticks: 'end cap',
   band: 'band', borders: 'border line',
-}
-
-/**
- * Collect all sibling composite sub-parts of the same kind (e.g. every median
- * line across all boxplots / facets). Vega renders each sub-part into its own
- * mark group class (median → mark-tick, whisker → mark-rule, box → mark-rect),
- * so we match the clicked element's group class across the whole SVG.
- */
-function findCompositeSubPartSiblings(element, svgRoot) {
-  const group = getMarkGroup(element)
-  const cls = (typeof group?.className === 'string' ? group.className : group?.className?.baseVal) || ''
-  const m = cls.match(/mark-(\w+)/)
-  if (!m) return [element]
-  const key = m[1] // e.g. "tick", "rule", "rect"
-  const shapeTags = new Set(['rect', 'circle', 'ellipse', 'line', 'path', 'polygon', 'polyline'])
-  // Axis gridlines/ticks are ALSO rendered as mark-rule/mark-tick groups, so a naive
-  // class match would sweep them in. Skip any group that lives inside an axis/legend.
-  const isChrome = (g) => {
-    const gcls = (typeof g.className === 'string' ? g.className : g.className?.baseVal) || ''
-    if (/role-(axis|legend|grid|title)/.test(gcls)) return true
-    let p = g.parentElement
-    while (p && p.tagName?.toLowerCase() !== 'svg') {
-      const role = p.getAttribute?.('role') || p.getAttribute?.('aria-roledescription') || ''
-      const pcls = (typeof p.className === 'string' ? p.className : p.className?.baseVal) || ''
-      if (/axis|legend/.test(role) || /role-(axis|legend)/.test(pcls)) return true
-      p = p.parentElement
-    }
-    return false
-  }
-  const result = []
-  svgRoot.querySelectorAll(`g[class*="mark-${key}"]`).forEach(g => {
-    if (isChrome(g)) return
-    Array.from(g.children).forEach(c => {
-      if (shapeTags.has(c.tagName?.toLowerCase())) result.push(c)
-    })
-  })
-  return result.length ? result : [element]
 }
 
 function buildDataMarkHierarchy(elementInfo, datum, spec, svgRoot) {
@@ -494,7 +468,7 @@ function buildDataMarkHierarchy(elementInfo, datum, spec, svgRoot) {
   const allMarks = findAllDataMarks(svgRoot, spec)
 
   // Condition-based scope levels: group marks by which encoding condition they match
-  const conditionScopes = buildConditionScopes(spec, datum, allMarks, svgRoot)
+  const conditionScopes = buildConditionScopes(spec, datum, allMarks, svgRoot, elementInfo)
   for (const condScope of conditionScopes) {
     hierarchy.push({
       level: hierarchy.length,
@@ -544,7 +518,10 @@ function buildDataMarkHierarchy(elementInfo, datum, spec, svgRoot) {
   // Composite sub-part: offer "All median lines" / "All whiskers" etc. (config-based),
   // NOT a mislabeled "All points". Sub-parts share one mark group per kind.
   if (subPart) {
-    const siblings = findCompositeSubPartSiblings(element, svgRoot)
+    const siblings = allMarks.filter(m =>
+      m.elementInfo.compositeMarkType === compositeMarkType &&
+      m.elementInfo.compositeSubPart === subPart
+    ).map(m => m.element)
     if (siblings.length > 1) {
       hierarchy.push({
         level: hierarchy.length,

@@ -135,6 +135,7 @@
   line-height: 1.3;
 }
 
+.property-row textarea,
 .property-row input[type="text"],
 .property-row input[type="number"] {
   flex: 1;
@@ -154,6 +155,7 @@
   width: 68px;
 }
 
+.property-row textarea:focus,
 .property-row input[type="text"]:focus,
 .property-row input[type="number"]:focus {
   outline: none;
@@ -706,3 +708,34 @@
   background: #f0f0f0;
   border-color: #bbb;
 }
+
+/* Shared input layout for individual and grouped selections. The wrapper must
+   be allowed to shrink; otherwise Mixed + Fill pushes the picker off-panel. */
+.selection-color-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.property-row > .color-input-combo,
+.selection-color-control > .color-input-combo {
+  flex: 1 1 0;
+  width: 0;
+}
+
+.property-row .hex-input {
+  width: 0;
+  flex: 1 1 0;
+}
+
+.property-row > label {
+  overflow-wrap: anywhere;
+}
+
+.selection-color-control .mixed-value-indicator {
+  flex-shrink: 0;
+}
+
+.property-row textarea { resize: vertical; font-family: inherit; line-height: 1.4; }

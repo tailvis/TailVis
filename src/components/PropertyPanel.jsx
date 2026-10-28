@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { inferColumnType } from '../utils/dataUtils'
 import { evaluateTestExpression, extractConditions, deleteCondition, updateConditionValue, updateConditionTest, parseTestExpression, buildTestExpression, extractColorMapping } from '../utils/scopeUtils'
 import './PropertyPanel.css'
+import FontSelect from './FontSelect'
 
 // Number input that allows typing freely (local string state) and commits on blur/Enter
 function NumInput({ value, onChange, min, max, step, ...rest }) {
@@ -390,6 +391,7 @@ const getGroupTextProperties = (groupElement) => {
 
   return {
     color,
+    font: firstText.getAttribute('font-family') || getComputedStyle(firstText).fontFamily || 'sans-serif',
     fontSize,
     fontWeight,
     rotate
@@ -416,6 +418,7 @@ function GroupProperties({ getElement, onGroupPropertyChange, selectorKey }) {
       childStrokeWidth: isLineType ? 1 : 0,
       childOpacity: 1,
       childColor: '#000000',
+      childFont: 'sans-serif',
       childFontSize: 11,
       childFontWeight: 'normal',
       groupAnalysis: analysis,
@@ -425,6 +428,7 @@ function GroupProperties({ getElement, onGroupPropertyChange, selectorKey }) {
     if (analysis.isHomogeneous && analysis.childType === 'text') {
       const props = getGroupTextProperties(el)
       values.childColor = props.color
+      values.childFont = props.font
       values.childFontSize = props.fontSize
       values.childFontWeight = props.fontWeight
       values.transformRotate = props.rotate
@@ -463,6 +467,7 @@ function GroupProperties({ getElement, onGroupPropertyChange, selectorKey }) {
   const [childOpacity, setChildOpacity] = useState(init.childOpacity)
   const [childColor, setChildColor] = useState(init.childColor)
   const [childFontSize, setChildFontSize] = useState(init.childFontSize)
+  const [childFont, setChildFont] = useState(init.childFont)
   const [childFontWeight, setChildFontWeight] = useState(init.childFontWeight)
 
   useEffect(() => {
@@ -478,6 +483,7 @@ function GroupProperties({ getElement, onGroupPropertyChange, selectorKey }) {
     setChildOpacity(newInit.childOpacity)
     setChildColor(newInit.childColor)
     setChildFontSize(newInit.childFontSize)
+    setChildFont(newInit.childFont)
     setChildFontWeight(newInit.childFontWeight)
     pendingUpdatesRef.current = {}
   }, [selectorKey])
@@ -610,6 +616,7 @@ function GroupProperties({ getElement, onGroupPropertyChange, selectorKey }) {
 
     if (propName === 'color') setChildColor(value)
     if (propName === 'fontSize') setChildFontSize(value)
+    if (propName === 'font') setChildFont(value)
     if (propName === 'fontWeight') setChildFontWeight(value)
 
     const textChildren = findVisualElements(el).filter(c =>
@@ -623,6 +630,9 @@ function GroupProperties({ getElement, onGroupPropertyChange, selectorKey }) {
         child.setAttribute('font-size', value)
       } else if (propName === 'fontWeight') {
         child.setAttribute('font-weight', value)
+      } else if (propName === 'font') {
+        child.setAttribute('font-family', value)
+        child.style.setProperty('font-family', value)
       }
     })
 
@@ -694,6 +704,11 @@ function GroupProperties({ getElement, onGroupPropertyChange, selectorKey }) {
 
           <div className="property-row">
             <label>Font</label>
+            <FontSelect value={childFont} onChange={v => handleChildrenTextProperty('font', v, true)} />
+          </div>
+
+          <div className="property-row">
+            <label>Style</label>
             <div className="transform-inputs">
               <div className="transform-field">
                 <span className="transform-label">Weight</span>
@@ -1294,6 +1309,14 @@ function ChartProperties({ readOnly = false, chart, onChartPropertyChange, dataS
           </div>
         ))}
 
+        <div className="property-group">
+          <h3>Typography</h3>
+          <div className="property-row">
+            <label>Default Font</label>
+            <FontSelect label="Chart font" value={spec.config?.font} onChange={v => onChartPropertyChange('font', v)} />
+          </div>
+        </div>
+
         {/* <div className="property-group">
           <h3>Background</h3>
           <div className="property-row">
@@ -1607,7 +1630,7 @@ function mergeElementProperties(elements) {
   const types = [...new Set(elements.map(e => e.type))]
   const roles = [...new Set(elements.map(e => e.semanticRole))]
   const markGroups = [...new Set(elements.map(e => e.markGroup).filter(Boolean))]
-  const allLine = elements.every(e => e.type === 'line')
+  const allLine = elements.every(e => e.type === 'line' || ['mark-line', 'mark-rule'].includes(e.markGroup))
   const allAnnotation = elements.every(e => e.isAnnotation || e.semanticRole === 'annotation')
   const anyNonData = elements.some(e => e.isAnnotation || e.semanticRole !== 'data-mark')
   return { merged, commonType: types.length === 1 ? types[0] : 'mixed', commonSemanticRole: roles.length === 1 ? roles[0] : 'mixed', count: elements.length, allLine, allAnnotation, anyNonData }
@@ -1633,7 +1656,7 @@ function PropertyPanel({ readOnly = false, selectedElement, selectedElements, ch
       const remaining = selectedElements.filter(el => el.type !== type)
       onDeselectElements(remaining)
     } : null
-    return <MultiSelectPanel elements={selectedElements} chartId={chartId} selectedChart={selectedChart} onPropertyChange={onPropertyChange} onDeleteElement={onDeleteElement} onDeselectType={handleDeselectType} />
+    return <MultiSelectPanel elements={selectedElements} chartId={chartId} selectedChart={selectedChart} onPropertyChange={onPropertyChange} onDeleteElement={onDeleteElement} onDeselectType={handleDeselectType} onClose={onClose} />
   }
 
   const { type, properties, elementPath, element, selector, semanticRole, axisChannel, markGroup } = selectedElement
@@ -1695,6 +1718,14 @@ function PropertyPanel({ readOnly = false, selectedElement, selectedElements, ch
     <div className="property-group">
       <h3>Legend</h3>
       <div className="property-row">
+        <label>Label Font</label>
+        <FontSelect label="Legend label font" value={properties.labelFont} onChange={v => handleLegendPropChange('labelFont', v)} />
+      </div>
+      <div className="property-row">
+        <label>Title Font</label>
+        <FontSelect label="Legend title font" value={properties.titleFont} onChange={v => handleLegendPropChange('titleFont', v)} />
+      </div>
+      <div className="property-row">
         <label>Orient</label>
         <select value={properties.orient || 'right'} onChange={(e) => handleLegendPropChange('orient', e.target.value)}>
           <option value="top">Top</option>
@@ -1752,12 +1783,17 @@ function PropertyPanel({ readOnly = false, selectedElement, selectedElements, ch
 
   const renderTextProperties = () => (
     <div className="property-group">
-      <h3>Text Properties</h3>
+      <h3>Properties</h3>
+
+      <div className="property-row">
+        <label>Font</label>
+        <FontSelect value={properties.font} onChange={v => handleChange('font', v)} />
+      </div>
 
       <div className="property-row">
         <label>Content</label>
-        <input
-          type="text"
+        <textarea
+          rows={2}
           value={properties.text || ''}
           onChange={(e) => handleChange('text', e.target.value)}
         />
@@ -1813,7 +1849,16 @@ function PropertyPanel({ readOnly = false, selectedElement, selectedElements, ch
 
   const renderAxisProperties = () => (
     <div className="property-group">
-      <h3>Axis Properties</h3>
+      <h3>Properties</h3>
+
+      <div className="property-row">
+        <label>Title Font</label>
+        <FontSelect label="Axis title font" value={properties.titleFont} onChange={v => handleChange('titleFont', v)} />
+      </div>
+      <div className="property-row">
+        <label>Label Font</label>
+        <FontSelect label="Axis label font" value={properties.labelFont} onChange={v => handleChange('labelFont', v)} />
+      </div>
 
       <div className="property-row">
         <label>Axis Title</label>
@@ -1881,26 +1926,25 @@ function PropertyPanel({ readOnly = false, selectedElement, selectedElements, ch
     const ch = channel || axisChannel
     if (!ch) return
     const newSpec = JSON.parse(JSON.stringify(selectedChart.spec))
-    // Top-level encoding
-    if (newSpec.encoding?.[ch]) {
-      if (!newSpec.encoding[ch].axis) newSpec.encoding[ch].axis = {}
-      newSpec.encoding[ch].axis.title = null
-    }
-    // Also handle layers
-    if (newSpec.layer) {
-      for (const layer of newSpec.layer) {
-        if (layer.encoding?.[ch]) {
-          if (!layer.encoding[ch].axis) layer.encoding[ch].axis = {}
-          layer.encoding[ch].axis.title = null
-        }
+    // Encoding can live in a unit, facet/repeat spec, or any composed child.
+    const hideTitle = (host) => {
+      const enc = host?.encoding?.[ch]
+      if (enc && enc.axis !== null && enc.axis !== false) {
+        enc.axis = { ...(enc.axis || {}), title: null }
+      }
+      if (host?.spec) hideTitle(host.spec)
+      for (const key of ['layer', 'concat', 'hconcat', 'vconcat']) {
+        host?.[key]?.forEach(hideTitle)
       }
     }
+    hideTitle(newSpec)
     onUpdateChart(selectedChart.id, { spec: newSpec })
   }
 
   const handleSubtitleChange = (propName, value) => {
     const subtitlePropMap = {
       text: 'subtitle',
+      font: 'subtitleFont',
       fontSize: 'subtitleFontSize',
       color: 'subtitleColor',
       fontWeight: 'subtitleFontWeight',
@@ -1929,8 +1973,13 @@ function PropertyPanel({ readOnly = false, selectedElement, selectedElements, ch
         </div>
 
         <div className="property-row">
+          <label>Font</label>
+          <FontSelect label="Title font" value={properties.font} onChange={v => handleChange('font', v)} />
+        </div>
+
+        <div className="property-row">
           <label>Text</label>
-          <input type="text" value={properties.text || ''} onChange={(e) => handleChange('text', e.target.value)} />
+          <textarea rows={2} value={Array.isArray(properties.text) ? properties.text.join('\n') : properties.text || ''} onChange={(e) => handleChange('text', e.target.value)} />
         </div>
 
         <div className="property-row">
@@ -1966,11 +2015,15 @@ function PropertyPanel({ readOnly = false, selectedElement, selectedElements, ch
 
         <div className="property-row">
           <label>Text</label>
-          <input type="text" value={properties.subtitle || ''} onChange={(e) => handleSubtitleChange('text', e.target.value)} />
+          <textarea rows={2} value={Array.isArray(properties.subtitle) ? properties.subtitle.join('\n') : properties.subtitle || ''} onChange={(e) => handleSubtitleChange('text', e.target.value)} />
         </div>
 
         {properties.subtitle && (
           <>
+            <div className="property-row">
+              <label>Font</label>
+              <FontSelect label="Subtitle font" value={properties.subtitleFont} onChange={v => handleSubtitleChange('font', v)} />
+            </div>
             <div className="property-row">
               <label>Style</label>
               <div className="transform-inputs">
@@ -2049,7 +2102,7 @@ function PropertyPanel({ readOnly = false, selectedElement, selectedElements, ch
     const opacityBinding = getBindingStatus(spec, 'opacity', datum)
     return (
     <div className="property-group">
-      <h3>Line Properties</h3>
+      <h3>Properties</h3>
 
       <div className="property-row">
         <label>Stroke</label>
@@ -2090,7 +2143,7 @@ function PropertyPanel({ readOnly = false, selectedElement, selectedElements, ch
             min={0}
             max={1}
             step={0.05}
-            value={properties.opacity || 1}
+            value={properties.opacity ?? 1}
             onChange={(e) => {
               const v = parseFloat(e.target.value); if (!isNaN(v)) handleChange('opacity', Math.max(0, Math.min(1, v)))
             }}
@@ -2100,7 +2153,7 @@ function PropertyPanel({ readOnly = false, selectedElement, selectedElements, ch
             min={0}
             max={1}
             step={0.05}
-            value={properties.opacity || 1}
+            value={properties.opacity ?? 1}
             onChange={(e) => handleChange('opacity', parseFloat(e.target.value))}
           />
         </div>
@@ -2129,7 +2182,7 @@ function PropertyPanel({ readOnly = false, selectedElement, selectedElements, ch
     const opacityBinding = getBindingStatus(spec, 'opacity', datum)
     return (
     <div className="property-group">
-      <h3>Path Properties</h3>
+      <h3>Properties</h3>
 
       {!isLineMark && (
       <div className="property-row">
@@ -2181,7 +2234,7 @@ function PropertyPanel({ readOnly = false, selectedElement, selectedElements, ch
             min={0}
             max={1}
             step={0.05}
-            value={properties.opacity || 1}
+            value={properties.opacity ?? 1}
             onChange={(e) => {
               const v = parseFloat(e.target.value); if (!isNaN(v)) handleChange('opacity', Math.max(0, Math.min(1, v)))
             }}
@@ -2191,7 +2244,7 @@ function PropertyPanel({ readOnly = false, selectedElement, selectedElements, ch
             min={0}
             max={1}
             step={0.05}
-            value={properties.opacity || 1}
+            value={properties.opacity ?? 1}
             onChange={(e) => handleChange('opacity', parseFloat(e.target.value))}
           />
         </div>
@@ -2207,7 +2260,7 @@ function PropertyPanel({ readOnly = false, selectedElement, selectedElements, ch
     const opacityBinding = getBindingStatus(spec, 'opacity', datum)
     return (
     <div className="property-group">
-      <h3>Rect Properties</h3>
+      <h3>Properties</h3>
 
       <div className="property-row">
         <label>Fill</label>
@@ -2257,7 +2310,7 @@ function PropertyPanel({ readOnly = false, selectedElement, selectedElements, ch
             min={0}
             max={1}
             step={0.05}
-            value={properties.opacity || 1}
+            value={properties.opacity ?? 1}
             onChange={(e) => {
               const v = parseFloat(e.target.value); if (!isNaN(v)) handleChange('opacity', Math.max(0, Math.min(1, v)))
             }}
@@ -2267,7 +2320,7 @@ function PropertyPanel({ readOnly = false, selectedElement, selectedElements, ch
             min={0}
             max={1}
             step={0.05}
-            value={properties.opacity || 1}
+            value={properties.opacity ?? 1}
             onChange={(e) => handleChange('opacity', parseFloat(e.target.value))}
           />
         </div>
@@ -2296,7 +2349,7 @@ function PropertyPanel({ readOnly = false, selectedElement, selectedElements, ch
           const sizeBinding = getBindingStatus(spec, 'size', datum)
           return (
           <div className="property-group">
-            <h3>Point Properties</h3>
+            <h3>Properties</h3>
             <div className="property-row"><label>Size</label>
               <div className="slider-combo">
                 <input type="number" min={1} max={1000} step={10} value={properties.size || 60}
@@ -2364,7 +2417,7 @@ function PropertyPanel({ readOnly = false, selectedElement, selectedElements, ch
           const sizeBinding = getBindingStatus(spec, 'size', datum)
           return (
           <div className="property-group">
-            <h3>Point Properties</h3>
+            <h3>Properties</h3>
 
             <div className="property-row">
               <label>Size</label>
@@ -2437,7 +2490,7 @@ function PropertyPanel({ readOnly = false, selectedElement, selectedElements, ch
                   min={0}
                   max={1}
                   step={0.05}
-                  value={properties.opacity || 1}
+                  value={properties.opacity ?? 1}
                   onChange={(e) => {
                     const v = parseFloat(e.target.value); if (!isNaN(v)) handleChange('opacity', Math.max(0, Math.min(1, v)))
                   }}
@@ -2447,7 +2500,7 @@ function PropertyPanel({ readOnly = false, selectedElement, selectedElements, ch
                   min={0}
                   max={1}
                   step={0.05}
-                  value={properties.opacity || 1}
+                  value={properties.opacity ?? 1}
                   onChange={(e) => handleChange('opacity', parseFloat(e.target.value))}
                 />
               </div>
@@ -2513,7 +2566,7 @@ function SubGroupPanel({ elements, mergeResult, selectedChart, onPropertyChange 
   const { merged, commonType, commonSemanticRole, allLine, allAnnotation } = mergeResult
 
   const isAllText = elements.every(e =>
-    e.semanticRole === 'text' || e.semanticRole === 'axis' ||
+    e.type === 'text' || e.semanticRole === 'text' ||
     (e.properties && (e.properties.fontSize != null || e.properties.fontWeight != null))
   )
 
@@ -2528,6 +2581,7 @@ function SubGroupPanel({ elements, mergeResult, selectedChart, onPropertyChange 
     if (isAllText || commonSemanticRole === 'text') {
       if (merged.color) props.push({ key: 'color', label: 'Color', type: 'color' })
       else if (merged.fill) props.push({ key: 'fill', label: 'Color', type: 'color' })
+      if (merged.font) props.push({ key: 'font', label: 'Font', type: 'font' })
       if (merged.fontSize) props.push({ key: 'fontSize', label: 'Font Size', type: 'number', min: 8, max: 72 })
       if (merged.opacity) props.push({ key: 'opacity', label: 'Opacity', type: 'range', min: 0, max: 1, step: 0.05 })
       return props
@@ -2535,7 +2589,7 @@ function SubGroupPanel({ elements, mergeResult, selectedChart, onPropertyChange 
     if (merged.fill) props.push({ key: 'fill', label: 'Fill', type: 'color' })
     if (merged.color && !merged.fill) props.push({ key: 'color', label: 'Color', type: 'color' })
     if (merged.stroke) props.push({ key: 'stroke', label: 'Stroke', type: 'color' })
-    if (merged.strokeWidth) props.push({ key: 'strokeWidth', label: 'Width', type: 'number', min: 0, max: 10, step: 0.5 })
+    if (merged.strokeWidth) props.push({ key: 'strokeWidth', label: 'Stroke Width', type: 'number', min: 0, max: 10, step: 0.5 })
     if (merged.opacity) props.push({ key: 'opacity', label: 'Opacity', type: 'range', min: 0, max: 1, step: 0.05 })
     if (merged.size) props.push({ key: 'size', label: 'Size', type: 'number', min: 1, max: 500, step: 5 })
     return props
@@ -2573,10 +2627,13 @@ function SubGroupPanel({ elements, mergeResult, selectedChart, onPropertyChange 
           <div className="property-row" key={prop.key}>
             <label>{prop.label}</label>
             {prop.type === 'color' && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1 }}>
+              <div className="selection-color-control">
                 {isMixed && <span className="mixed-value-indicator">Mixed</span>}
-                <ColorInput value={isMixed ? '#888888' : (val || '#000000')} onChange={(v) => handleBatchChange(prop.key, v)} />
+                <ColorInput value={isMixed ? '#888888' : (val === 'none' ? 'none' : colorToHex(val, '#000000'))} onChange={(v) => handleBatchChange(prop.key, v)} />
               </div>
+            )}
+            {prop.type === 'font' && (
+              <FontSelect value={val} mixed={isMixed} onChange={v => handleBatchChange(prop.key, v)} />
             )}
             {prop.type === 'number' && (
               <div className="slider-combo">
@@ -2603,7 +2660,7 @@ function SubGroupPanel({ elements, mergeResult, selectedChart, onPropertyChange 
 }
 
 // Multi-select property panel
-function MultiSelectPanel({ elements, chartId, selectedChart, onPropertyChange, onDeleteElement, onDeselectType }) {
+function MultiSelectPanel({ elements, chartId, selectedChart, onPropertyChange, onDeleteElement, onDeselectType, onClose }) {
   const [focusedType, setFocusedType] = useState(null)
   const mergeResult = mergeElementProperties(elements)
   if (!mergeResult) return null
@@ -2632,7 +2689,7 @@ function MultiSelectPanel({ elements, chartId, selectedChart, onPropertyChange, 
   }
 
   // Scope expansion: elements share a scope — show merged panel, not multi-type list
-  const isFromScope = elements.some(el => el._scopeType)
+  const isFromScope = elements.some(el => el._scopeType && !['individual', 'explicit'].includes(el._scopeType))
 
   // If mixed types (and NOT from scope expansion), show accordion-style type list with toggle
   if (commonType === 'mixed' && !isFromScope) {
@@ -2640,6 +2697,7 @@ function MultiSelectPanel({ elements, chartId, selectedChart, onPropertyChange, 
       <div className="property-panel">
         <div className="panel-header">
           <span className="element-type">{count} ELEMENTS SELECTED</span>
+          <button className="close-btn" onClick={onClose} aria-label="Clear selection">x</button>
         </div>
         <div className="multi-type-list">
           {Object.entries(typeGroups).map(([type, elems]) => {
@@ -2697,7 +2755,7 @@ function MultiSelectPanel({ elements, chartId, selectedChart, onPropertyChange, 
 
   // Check if all elements are text-like (have fontSize or color as primary property)
   const isAllText = elements.every(e =>
-    e.semanticRole === 'text' || e.semanticRole === 'axis' ||
+    e.type === 'text' || e.semanticRole === 'text' ||
     (e.properties && (e.properties.fontSize != null || e.properties.fontWeight != null))
   )
 
@@ -2729,6 +2787,7 @@ function MultiSelectPanel({ elements, chartId, selectedChart, onPropertyChange, 
     if (isAllText || commonSemanticRole === 'text') {
       if (merged.color) props.push({ key: 'color', label: 'Color', type: 'color' })
       else if (merged.fill) props.push({ key: 'fill', label: 'Color', type: 'color' })
+      if (merged.font) props.push({ key: 'font', label: 'Font', type: 'font' })
       if (merged.fontSize) props.push({ key: 'fontSize', label: 'Font Size', type: 'number', min: 8, max: 72 })
       if (merged.fontWeight) props.push({ key: 'fontWeight', label: 'Font Weight', type: 'select', options: [
         { value: 'normal', label: 'Normal' }, { value: 'bold', label: 'Bold' }, { value: 'lighter', label: 'Light' }
@@ -2740,6 +2799,7 @@ function MultiSelectPanel({ elements, chartId, selectedChart, onPropertyChange, 
 
     if (commonSemanticRole === 'axis') {
       if (merged.fill || merged.color) props.push({ key: merged.color ? 'color' : 'fill', label: 'Color', type: 'color' })
+      if (merged.font) props.push({ key: 'font', label: 'Font', type: 'font' })
       if (merged.fontSize) props.push({ key: 'fontSize', label: 'Font Size', type: 'number', min: 8, max: 72 })
       if (merged.fontWeight) props.push({ key: 'fontWeight', label: 'Font Weight', type: 'select', options: [
         { value: 'normal', label: 'Normal' }, { value: 'bold', label: 'Bold' }
@@ -2752,8 +2812,9 @@ function MultiSelectPanel({ elements, chartId, selectedChart, onPropertyChange, 
       if (merged.fill) props.push({ key: 'fill', label: 'Fill', type: 'color' })
       if (merged.color && !merged.fill) props.push({ key: 'color', label: 'Color', type: 'color' })
       if (merged.stroke) props.push({ key: 'stroke', label: 'Stroke', type: 'color' })
-      if (merged.strokeWidth) props.push({ key: 'strokeWidth', label: 'Width', type: 'number', min: 0, max: 10, step: 0.5 })
+      if (merged.strokeWidth) props.push({ key: 'strokeWidth', label: 'Stroke Width', type: 'number', min: 0, max: 10, step: 0.5 })
       if (merged.opacity) props.push({ key: 'opacity', label: 'Opacity', type: 'range', min: 0, max: 1, step: 0.05 })
+      if (merged.font) props.push({ key: 'font', label: 'Font', type: 'font' })
       if (merged.fontSize) props.push({ key: 'fontSize', label: 'Font Size', type: 'number', min: 8, max: 72 })
       return props
     }
@@ -2810,10 +2871,11 @@ function MultiSelectPanel({ elements, chartId, selectedChart, onPropertyChange, 
     <div className="property-panel">
       <div className="panel-header">
         <span className="element-type">{getHeaderLabel()}</span>
+        <button className="close-btn" onClick={onClose} aria-label="Clear selection">x</button>
       </div>
       <div className="panel-content">
         <div className="property-group">
-          <h3>Common Properties</h3>
+          <h3>Properties</h3>
 
           {editableProps.length === 0 && (
             <p style={{ color: '#888', fontSize: '12px' }}>No editable common properties</p>
@@ -2829,15 +2891,18 @@ function MultiSelectPanel({ elements, chartId, selectedChart, onPropertyChange, 
                 <label>{prop.label}</label>
 
                 {prop.type === 'color' && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1 }}>
+                  <div className="selection-color-control">
                     {isMixed && <span className="mixed-value-indicator">Mixed</span>}
                     <ColorInput
-                      value={isMixed ? '#888888' : (val || '#000000')}
+                      value={isMixed ? '#888888' : (val === 'none' ? 'none' : colorToHex(val, '#000000'))}
                       onChange={(v) => handleBatchChange(prop.key, v)}
                     />
                   </div>
                 )}
 
+                {prop.type === 'font' && (
+                  <FontSelect value={val} mixed={isMixed} onChange={v => handleBatchChange(prop.key, v)} />
+                )}
                 {prop.type === 'number' && (
                   <div className="slider-combo">
                     <input

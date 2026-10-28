@@ -1,3 +1,6 @@
+import { compile } from 'vega-lite'
+import { readSvgText } from './svgText.js'
+
 /**
  * Shared element detection utilities.
  * Used by both Canvas click and Layer click paths to produce identical elementInfo.
@@ -6,7 +9,7 @@
 /**
  * Generate a unique CSS selector path for a DOM element relative to an SVG root.
  */
-function generateSelector(el, svgElement) {
+export function generateSelector(el, svgElement) {
   if (!el || el === svgElement) return null
 
   const tag = el.tagName?.toLowerCase()
@@ -22,7 +25,9 @@ function generateSelector(el, svgElement) {
     const parent = current.parentElement
 
     const ariaLabel = current.getAttribute('aria-label')
-    if (ariaLabel) {
+    // Guide descriptions contain mutable titles and scale values. Text/guide
+    // targets use their structural path so editing/removing a title keeps identity.
+    if (ariaLabel && current === el && tag !== 'text' && !el.closest?.('.role-axis, .role-legend')) {
       // Escape backslashes and double-quotes so the CSS attribute selector stays valid
       const escaped = ariaLabel.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
       pathParts.unshift(`${currentTag}[aria-label="${escaped}"]`)
@@ -164,141 +169,44 @@ function detectAxisSubType(el, axisG) {
   return null
 }
 
-/**
- * Composite mark definitions: maps mark group class to sub-part name.
- */
-const COMPOSITE_MARKS = {
-  boxplot: {
-    subParts: {
-      'mark-rect': 'box',
-      'mark-tick': 'median',
-      'mark-rule': 'rule',
-      'mark-symbol': 'outliers',
-    }
-  },
-  errorbar: {
-    subParts: {
-      'mark-rule': 'rule',
-      'mark-tick': 'ticks',
-    }
-  },
-  errorband: {
-    subParts: {
-      'mark-area': 'band',
-      'mark-line': 'borders',
-    }
-  }
+// Vega-Lite's compiled styles retain semantic sub-part identity even when boxes
+// and medians are both SVG paths in mark-rect groups. Cache by immutable spec.
+const compiledPartCache = new WeakMap()
+function compositeParts(spec) {
+  if (!spec || typeof spec !== 'object') return new Map()
+  if (compiledPartCache.has(spec)) return compiledPartCache.get(spec)
+  const parts = new Map()
+  try {
+    const vegaSpec = Array.isArray(spec.marks) ? spec : compile(spec).spec
+    const walk = marks => marks?.forEach(mark => {
+      const styles = Array.isArray(mark.style) ? mark.style : [mark.style]
+      const style = styles.find(s => /^(boxplot|errorbar|errorband)-/.test(s || ''))
+      const match = style?.match(/^(boxplot|errorbar|errorband)-(.+)$/)
+      if (mark.name) parts.set(mark.name, match
+        ? { compositeMarkType: match[1], compositeSubPart: match[2] }
+        : { compositeMarkType: null, compositeSubPart: null })
+      walk(mark.marks)
+    })
+    walk(vegaSpec.marks)
+  } catch { /* Invalid/incomplete specs have no compiled semantic identity. */ }
+  compiledPartCache.set(spec, parts)
+  return parts
 }
 
-/**
- * Detect composite mark info from spec, mark group, AND the element itself.
- * Falls back to element-based heuristics when markGroup mapping is ambiguous
- * (e.g., boxplot where median lines share the same parent group as boxes).
- */
-function detectCompositeInfo(spec, markGroup, element) {
-  const specMarkType = typeof spec.mark === 'string' ? spec.mark : spec.mark?.type
-
-  // Also check layer specs
-  let compositeType = null
-  if (specMarkType && COMPOSITE_MARKS[specMarkType]) {
-    compositeType = specMarkType
-  } else if (spec.layer) {
-    for (const layer of spec.layer) {
-      const lmt = typeof layer.mark === 'string' ? layer.mark : layer.mark?.type
-      if (lmt && COMPOSITE_MARKS[lmt]) { compositeType = lmt; break }
+function detectCompositeInfo(spec, element) {
+  const parts = compositeParts(spec)
+  let cur = element
+  while (cur) {
+    const name = cur.__data__?.mark?.name
+    if (name && parts.has(name)) return parts.get(name)
+    const cls = typeof cur.className === 'string' ? cur.className : cur.className?.baseVal || ''
+    for (const token of cls.split(/\s+/)) {
+      if (parts.has(token)) return parts.get(token)
     }
+    if (cur.tagName?.toLowerCase() === 'svg') break
+    cur = cur.parentElement
   }
-
-  if (!compositeType) return { compositeMarkType: null, compositeSubPart: null }
-
-  // Try markGroup-based mapping first
-  const subPartFromGroup = markGroup ? (COMPOSITE_MARKS[compositeType].subParts[markGroup] || null) : null
-
-  // Primary: use aria-roledescription set by Vega runtime — most reliable method.
-  // Vega often puts this on the parent <g> group, not the SVG element itself,
-  // so walk up the tree (max 4 levels) to find it.
-  if (element) {
-    const roleToSubPart = {
-      'box': 'box', 'tick': 'median', 'rule': 'rule', 'point': 'outliers',
-      'band': 'band', 'borders': 'borders', 'ticks': 'ticks',
-    }
-    let cur = element
-    for (let i = 0; i < 4 && cur; i++) {
-      const ariaRole = cur.getAttribute?.('aria-roledescription')
-      if (ariaRole && roleToSubPart[ariaRole]) {
-        return { compositeMarkType: compositeType, compositeSubPart: roleToSubPart[ariaRole] }
-      }
-      cur = cur.parentElement
-    }
-  }
-
-  // Fallback heuristics when aria-roledescription is not available
-  if (compositeType === 'boxplot' && element) {
-    const tag = element.tagName?.toLowerCase()
-    if (tag === 'line') {
-      const x1 = parseFloat(element.getAttribute('x1') || 0)
-      const y1 = parseFloat(element.getAttribute('y1') || 0)
-      const x2 = parseFloat(element.getAttribute('x2') || 0)
-      const y2 = parseFloat(element.getAttribute('y2') || 0)
-      const isHorizontal = Math.abs(y2 - y1) < Math.abs(x2 - x1) || (y1 === y2)
-      const isVertical = Math.abs(y2 - y1) > Math.abs(x2 - x1)
-      if (isHorizontal) return { compositeMarkType: compositeType, compositeSubPart: 'median' }
-      if (isVertical) return { compositeMarkType: compositeType, compositeSubPart: 'rule' }
-      return { compositeMarkType: compositeType, compositeSubPart: 'median' }
-    }
-    if (tag === 'rect') {
-      if (subPartFromGroup === 'median' || subPartFromGroup === 'ticks') {
-        return { compositeMarkType: compositeType, compositeSubPart: subPartFromGroup }
-      }
-      const w = parseFloat(element.getAttribute('width') || 0)
-      const h = parseFloat(element.getAttribute('height') || 0)
-      const minDim = Math.min(w, h)
-      const maxDim = Math.max(w, h)
-      if (minDim <= 5 || (maxDim > 0 && minDim / maxDim < 0.2 && minDim < 8)) {
-        return { compositeMarkType: compositeType, compositeSubPart: 'median' }
-      }
-      return { compositeMarkType: compositeType, compositeSubPart: 'box' }
-    }
-    if (tag === 'path') {
-      // Parse d attribute to estimate width/height from h/v commands
-      // e.g. "M59,128h14v1h-14Z" → h totals=14, v totals=1
-      const d = element.getAttribute('d') || ''
-      const hMatches = d.match(/h(-?[\d.]+)/gi)
-      const vMatches = d.match(/v(-?[\d.]+)/gi)
-      if (hMatches && vMatches) {
-        const totalH = hMatches.reduce((sum, m) => Math.max(sum, Math.abs(parseFloat(m.slice(1)))), 0)
-        const totalV = vMatches.reduce((sum, m) => Math.max(sum, Math.abs(parseFloat(m.slice(1)))), 0)
-        const minDim = Math.min(totalH, totalV)
-        const maxDim = Math.max(totalH, totalV)
-        if (maxDim > 0 && (minDim <= 3 || minDim / maxDim < 0.2)) {
-          return { compositeMarkType: compositeType, compositeSubPart: 'median' }
-        }
-      }
-      return { compositeMarkType: compositeType, compositeSubPart: 'box' }
-    }
-    if (tag === 'circle') return { compositeMarkType: compositeType, compositeSubPart: 'outliers' }
-  }
-
-  if (compositeType === 'errorbar' && element) {
-    const tag = element.tagName?.toLowerCase()
-    if (tag === 'line') {
-      const x1 = parseFloat(element.getAttribute('x1') || 0)
-      const y1 = parseFloat(element.getAttribute('y1') || 0)
-      const x2 = parseFloat(element.getAttribute('x2') || 0)
-      const y2 = parseFloat(element.getAttribute('y2') || 0)
-      const isHorizontal = Math.abs(y2 - y1) <= Math.abs(x2 - x1)
-      return { compositeMarkType: compositeType, compositeSubPart: isHorizontal ? 'ticks' : 'rule' }
-    }
-  }
-
-  if (compositeType === 'errorband' && element) {
-    const tag = element.tagName?.toLowerCase()
-    if (tag === 'path' || tag === 'area') return { compositeMarkType: compositeType, compositeSubPart: 'band' }
-    if (tag === 'line') return { compositeMarkType: compositeType, compositeSubPart: 'borders' }
-  }
-
-  // Fallback to markGroup-based mapping
-  return { compositeMarkType: compositeType, compositeSubPart: subPartFromGroup }
+  return { compositeMarkType: null, compositeSubPart: null }
 }
 
 /**
@@ -501,9 +409,13 @@ function buildVisualProperties(element) {
   const tagName = element.tagName?.toLowerCase()
 
   if (tagName === 'text') {
-    const textContent = element.textContent?.trim() || ''
+    const textContent = readSvgText(element)
     let fontSize = 12
     let fontWeight = 'normal'
+    let font = element.getAttribute('font-family')
+    if (!font) {
+      try { font = getComputedStyle(element).fontFamily } catch {}
+    }
     // Try attribute first, then computed style
     const fsa = element.getAttribute('font-size')
     if (fsa) {
@@ -527,6 +439,7 @@ function buildVisualProperties(element) {
 
     return {
       text: textContent,
+      font: font || 'sans-serif',
       fontSize,
       fontWeight,
       color: resolveColor(element, 'fill', '#000000'),
@@ -564,6 +477,7 @@ function buildVisualProperties(element) {
  */
 export function detectElementType(element, spec, svgElement) {
   if (!element || !svgElement) return null
+  if (element.tagName?.toLowerCase() === 'tspan') element = element.closest('text')
 
   const tagName = element.tagName?.toLowerCase()
   if (!tagName) return null
@@ -657,11 +571,13 @@ export function detectElementType(element, spec, svgElement) {
         semanticRole: 'text',
         properties: {
           text: typeof spec.title === 'string' ? spec.title : titleObj.text || '',
+          font: titleObj.font || spec.config?.font || 'sans-serif',
           fontSize: titleObj.fontSize || 14,
           fontWeight: titleObj.fontWeight || 'bold',
           color: titleObj.color || '#000000',
           anchor: titleObj.anchor || 'middle', // Vega-Lite default title anchor is centered
           subtitle: titleObj.subtitle || '',
+          subtitleFont: titleObj.subtitleFont || spec.config?.font || 'sans-serif',
           subtitleFontSize: titleObj.subtitleFontSize || 12,
           subtitleFontWeight: titleObj.subtitleFontWeight || 'normal',
           subtitleColor: titleObj.subtitleColor || '#888888',
@@ -679,11 +595,13 @@ export function detectElementType(element, spec, svgElement) {
         semanticRole: 'text',
         properties: {
           text: typeof spec.title === 'string' ? spec.title : titleObj.text || '',
+          font: titleObj.font || spec.config?.font || 'sans-serif',
           fontSize: titleObj.fontSize || 14,
           fontWeight: titleObj.fontWeight || 'bold',
           color: titleObj.color || '#000000',
           anchor: titleObj.anchor || 'middle', // Vega-Lite default title anchor is centered
           subtitle: titleObj.subtitle || '',
+          subtitleFont: titleObj.subtitleFont || spec.config?.font || 'sans-serif',
           subtitleFontSize: titleObj.subtitleFontSize || 12,
           subtitleFontWeight: titleObj.subtitleFontWeight || 'normal',
           subtitleColor: titleObj.subtitleColor || '#888888',
@@ -711,6 +629,8 @@ export function detectElementType(element, spec, svgElement) {
           title: axisSpec.title || encoding.field || '',
           titleFontSize: axisSpec.titleFontSize || 11,
           titleColor: axisSpec.titleColor || '#000',
+          labelFont: axisSpec.labelFont || spec.config?.font || 'sans-serif',
+          titleFont: axisSpec.titleFont || spec.config?.font || 'sans-serif',
           labelFontSize: axisSpec.labelFontSize || 10,
           labelColor: axisSpec.labelColor || '#000',
           labelAngle: axisSpec.labelAngle || 0,
@@ -744,6 +664,8 @@ export function detectElementType(element, spec, svgElement) {
           legendProps.orient = leg.orient || 'right'
           legendProps.direction = leg.direction || (leg.orient === 'top' || leg.orient === 'bottom' ? 'horizontal' : 'vertical')
           legendProps.title = leg.title ?? chEnc.field ?? ''
+          legendProps.labelFont = leg.labelFont || spec.config?.font || 'sans-serif'
+          legendProps.titleFont = leg.titleFont || spec.config?.font || 'sans-serif'
           legendProps.labelFontSize = leg.labelFontSize || 11
           legendProps.symbolSize = leg.symbolSize || 100
           legendProps.padding = leg.padding || 0
@@ -859,7 +781,7 @@ export function detectElementType(element, spec, svgElement) {
   // Line element → always show line properties
   if (tagName === 'line') {
     const lineMarkGroup = isMarkElement ? (getMarkGroup(element, svgElement)?.markGroup || null) : null
-    const lineComposite = detectCompositeInfo(spec, lineMarkGroup, element)
+    const lineComposite = detectCompositeInfo(spec, element)
     return {
       type: 'line',
       elementPath: 'line',
@@ -883,7 +805,7 @@ export function detectElementType(element, spec, svgElement) {
   const visualTags = ['rect', 'circle', 'ellipse', 'path', 'polyline', 'polygon']
   if (visualTags.includes(tagName)) {
     const markGroupInfo = isMarkElement ? getMarkGroup(element, svgElement) : null
-    const composite = detectCompositeInfo(spec, markGroupInfo?.markGroup, element)
+    const composite = detectCompositeInfo(spec, element)
     const _w = parseFloat(element.getAttribute('width') || 0)
     const _h = parseFloat(element.getAttribute('height') || 0)
     // Detect marks rendered as <path> by Vega (symbol→point, rect/bar→rect)
@@ -952,14 +874,14 @@ export function getLayerIndex(element, svgRoot) {
   //   Nested:  "layer_0_layer_0_marks"
   //   Faceted: "child_layer_0_marks" (a facet wraps the unit spec in a "child")
   // We need to extract the FIRST layer index from all patterns. Anchor on start OR an
-  // underscore so the "child_" facet prefix (word chars, no \b boundary) still matches.
-  const layerPattern = /(?:^|_)layer_(\d+)[\w]*_marks\b/
+  // whitespace/underscore so class lists and the "child_" facet prefix both match.
+  const layerPattern = /(?:^|[\s_])layer_(\d+)[\w]*_marks\b/
 
   // Strategy 1: Walk up from element, look for ancestor <g> with Vega's layer class pattern
   let el = element
   const ancestorClasses = []
   while (el && el !== svgRoot) {
-    const cls = el.className?.baseVal || ''
+    const cls = typeof el.className === 'string' ? el.className : el.className?.baseVal || ''
     if (cls) ancestorClasses.push(cls)
     const layerMatch = cls.match(layerPattern)
     if (layerMatch) {

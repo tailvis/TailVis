@@ -544,8 +544,8 @@ OUTPUT FORMAT (JSON only):
 
 CHANGE_TYPE CLASSIFICATION (STRICT):
 - "data_transformation": ONLY when the request actually reshapes the DATA — aggregation, binning,
-  filtering rows, pivot/fold, computing a new field, changing granularity. This is the only type
-  that branches off visually; use it sparingly.
+  filtering rows, pivot/fold, computing a new field, changing granularity. This classification
+  describes the edit; all edits use the same rightward lineage layout.
 - "chart_type": switching the mark/chart family (bar↔line↔scatter↔area↔point, etc.) WITHOUT
   reshaping the data. A chart-type switch is NOT a data_transformation.
 - "visual_refinement": styling, colors, axes, labels, annotations, highlights, mark options, legend.

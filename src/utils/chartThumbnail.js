@@ -1,3 +1,4 @@
+import { setSvgText } from './svgText'
 // Render a Vega-Lite spec (with the chart's svgOverrides applied) to a PNG data URL.
 // Used at "Save to Gallery" time so example thumbnails are a fixed raster with the
 // correct aspect ratio, instead of being re-rendered (which distorts proportions).
@@ -6,7 +7,7 @@ import vegaEmbed from 'vega-embed'
 
 const SVG_ATTR_MAP = {
   fill: 'fill', stroke: 'stroke', strokeWidth: 'stroke-width', opacity: 'opacity',
-  strokeDasharray: 'stroke-dasharray', fontSize: 'font-size', fontWeight: 'font-weight', color: 'fill',
+  strokeDasharray: 'stroke-dasharray', fontSize: 'font-size', font: 'font-family', fontWeight: 'font-weight', color: 'fill',
 }
 
 // Compact port of Canvas.applySvgOverrides — enough to reproduce the final look.
@@ -17,6 +18,13 @@ function applySvgOverrides(svg, overrides) {
     try { els = svg.querySelectorAll(selector) } catch { continue }
     els.forEach(el => {
       for (const [k, v] of Object.entries(props)) {
+        if (k === 'childrenFont') {
+          el.querySelectorAll('text').forEach(text => {
+            text.setAttribute('font-family', v)
+            text.style.setProperty('font-family', v)
+          })
+          continue
+        }
         if (k === 'transform') { el.setAttribute('transform', v); continue }
         if (k === 'dx' || k === 'dy') {
           if (el.dataset.origTransform == null) el.dataset.origTransform = el.getAttribute('transform') || ''
@@ -24,12 +32,12 @@ function applySvgOverrides(svg, overrides) {
           el.setAttribute('transform', (dx || dy) ? `${el.dataset.origTransform} translate(${dx},${dy})`.trim() : el.dataset.origTransform)
           continue
         }
-        if (k === 'text' && el.tagName.toLowerCase() === 'text') { el.textContent = v; continue }
+        if (k === 'text' && el.tagName.toLowerCase() === 'text') { setSvgText(el, v); continue }
         const attr = SVG_ATTR_MAP[k]
         if (!attr) continue
         if (k === 'strokeDasharray' && v === 'solid') { el.removeAttribute('stroke-dasharray'); continue }
         el.setAttribute(attr, v)
-        if (['fill', 'stroke', 'opacity', 'font-weight', 'font-size'].includes(attr)) {
+        if (['fill', 'stroke', 'opacity', 'font-weight', 'font-size', 'font-family'].includes(attr)) {
           const existing = el.getAttribute('style') || ''
           const cleaned = existing.split(';').filter(s => !s.trim().startsWith(attr)).join(';')
           el.setAttribute('style', `${cleaned};${attr}:${v}`.replace(/^;/, ''))

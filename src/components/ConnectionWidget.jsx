@@ -90,7 +90,6 @@ function ConnectionWidget({ chartId, command, widgetTitle, intent, widgetOptions
   const inputRef = useRef(null)
   const widgetRef = useRef(null)
 
-  const isDataTransform = changeType === 'data_transformation'
   const allOptions = widgetOptions || []
   const hasOptions = allOptions.length > 0
   const hasChat = conversationHistory && conversationHistory.length > 0
@@ -437,7 +436,7 @@ function ConnectionWidget({ chartId, command, widgetTitle, intent, widgetOptions
   // If nothing to show, just display the command (+ continue button)
   if (!hasChat && !hasOptions && !chatMode) {
     return (
-      <div className={`connection-widget ${isDataTransform ? 'data-transform' : ''}`} ref={widgetRef}>
+      <div className="connection-widget" ref={widgetRef}>
         {command && (
           <div className="widget-command-only">
             {widgetTitle || (command?.length > 25 ? command.slice(0, 25) + '...' : command)}
@@ -455,7 +454,7 @@ function ConnectionWidget({ chartId, command, widgetTitle, intent, widgetOptions
   }
 
   return (
-    <div className={`connection-widget ${isDataTransform ? 'data-transform' : ''} ${chatMode ? 'chat-active' : ''}`} ref={widgetRef}>
+    <div className={`connection-widget ${chatMode ? 'chat-active' : ''}`} ref={widgetRef}>
       {/* Widget section — all options unified */}
       {hasOptions && (
         <div className="widget-section">

@@ -567,3 +567,5 @@
   from { opacity: 0; transform: translateX(-4px); }
   to { opacity: 1; transform: translateX(0); }
 }
+
+.mod-inline-text { width: 140px; resize: vertical; text-align: left; font-family: inherit; }

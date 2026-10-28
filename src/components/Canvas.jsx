@@ -1,3 +1,4 @@
+import { setSvgText } from '../utils/svgText'
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import * as d3 from 'd3'
 import vegaEmbed from 'vega-embed'
@@ -334,7 +335,6 @@ function Canvas({
         overlay.setAttribute('y', bbox.y - pad)
         overlay.setAttribute('width', bbox.width + pad * 2)
         overlay.setAttribute('height', bbox.height + pad * 2)
-        overlay.setAttribute('rx', '2')
       }
 
       // Style as highlight outline — clear inherited SVG attrs from clone
@@ -629,6 +629,7 @@ function Canvas({
     const hoveredEl = svgEl._hoveredElement
     const pointEl = document.elementFromPoint(clientX, clientY)
     let target = hoveredEl || pointEl
+    if (target?.tagName?.toLowerCase() === 'tspan') target = target.closest('text')
 
     if (hoveredEl) {
       const hCls = hoveredEl.className?.baseVal || ''
@@ -898,7 +899,7 @@ function Canvas({
               }
             }
             selectionTimestampRef.current = Date.now()
-            onElementSelect(chartId, elInfo, allSelectors, allInfos, { skipLog: true })
+            onElementSelect(chartId, allInfos[0] || elInfo, allSelectors, allInfos, { skipLog: true })
           }
         }
       }
@@ -908,12 +909,13 @@ function Canvas({
   // Handle keyboard delete + Escape to clear element selection + Tab for semi-auto selection
   useEffect(() => {
     const handleKeyDown = (e) => {
-      const isInputFocused = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA'
+      if (e.defaultPrevented || e.isComposing) return
+      const isInputFocused = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT'
         || e.target.isContentEditable || !!e.target.closest?.('.cm-editor')
 
       // Allow Tab/Enter for scope cycling even when chat textarea is focused
       if (isInputFocused) {
-        const isScopeKey = (e.key === 'Tab' || e.key === 'Enter') &&
+        const isScopeKey = !!e.target.closest?.('.chat-bubble') && (e.key === 'Tab' || e.key === 'Enter') &&
           scopeHierarchy.length >= 2 && selectedElementsRef.current.length > 0
         if (!isScopeKey) return
       }
@@ -1058,6 +1060,7 @@ function Canvas({
       opacity: 'opacity',
       strokeDasharray: 'stroke-dasharray',
       fontSize: 'font-size',
+      font: 'font-family',
       fontWeight: 'font-weight',
       color: 'fill'
     }
@@ -1071,6 +1074,27 @@ function Canvas({
           Object.entries(props).forEach(([propName, value]) => {
             if (propName === 'transform') {
               el.setAttribute('transform', value)
+              return
+            }
+
+            // Symbol size has no SVG attribute: scale the selected glyph around
+            // its existing origin instead of silently dropping a grouped size edit.
+            if (propName === 'size' && el.__data__?.mark?.marktype === 'symbol') {
+              const originalSize = el.__data__.size
+              if (originalSize > 0 && Number(value) >= 0) {
+                if (el.dataset.origSizeTransform == null) {
+                  el.dataset.origSizeTransform = el.getAttribute('transform') || ''
+                }
+                el.setAttribute('transform', `${el.dataset.origSizeTransform} scale(${Math.sqrt(Number(value) / originalSize)})`)
+              }
+              return
+            }
+
+            if (propName === 'angle' && el.tagName?.toLowerCase() === 'text') {
+              if (el.dataset.origAngleTransform == null) {
+                el.dataset.origAngleTransform = (el.getAttribute('transform') || '').replace(/rotate\([^)]*\)/g, '').trim()
+              }
+              el.setAttribute('transform', `${el.dataset.origAngleTransform} rotate(${Number(value) || 0})`)
               return
             }
 
@@ -1114,6 +1138,9 @@ function Canvas({
                   child.setAttribute('font-size', value)
                 } else if (childProp === 'fontweight' && child.tagName?.toLowerCase() === 'text') {
                   child.setAttribute('font-weight', value)
+                } else if (childProp === 'font' && child.tagName?.toLowerCase() === 'text') {
+                  child.setAttribute('font-family', value)
+                  child.style.setProperty('font-family', value)
                 } else if (childProp === 'rotate' && child.tagName?.toLowerCase() === 'text') {
                   const existingTransform = child.getAttribute('transform') || ''
                   const baseTransform = existingTransform.replace(/\s*rotate\([^)]*\)/g, '').trim()
@@ -1148,7 +1175,7 @@ function Canvas({
                 // font-weight/font-size are included because Vega emits them via `style`,
                 // which beats a bare presentation attribute (so bold/normal wouldn't apply).
                 el.setAttribute(attrName, value)
-                if (['fill', 'stroke', 'opacity', 'font-weight', 'font-size'].includes(attrName)) {
+                if (['fill', 'stroke', 'opacity', 'font-weight', 'font-size', 'font-family'].includes(attrName)) {
                   const existingStyle = el.getAttribute('style') || ''
                   // Replace or append the CSS property in the style attribute
                   const cssProp = attrName === 'opacity' ? 'opacity' : attrName
@@ -1161,7 +1188,7 @@ function Canvas({
               }
             }
             if (propName === 'text' && el.tagName.toLowerCase() === 'text') {
-              el.textContent = value
+              setSvgText(el, value)
             }
           })
         })
@@ -1187,6 +1214,10 @@ function Canvas({
         }
       })
       const vegaView = result.view
+      if (!container.isConnected) {
+        vegaView.finalize()
+        return
+      }
 
       // Store view reference on container for external access
       container._vegaView = vegaView
@@ -1210,7 +1241,7 @@ function Canvas({
           const svgWidth = parseFloat(svgElement.getAttribute('width')) || 0
           const svgHeight = parseFloat(svgElement.getAttribute('height')) || 0
 
-          if (onSizeReady && svgWidth > 0 && svgHeight > 0) {
+          if (container.isConnected && onSizeReady && svgWidth > 0 && svgHeight > 0) {
             const padding = 20
             onSizeReady(svgWidth + padding * 2, svgHeight + padding * 2)
           }
@@ -1257,7 +1288,7 @@ function Canvas({
         // Hover highlight via event delegation — two listeners total instead of two per mark.
         // mouseover/mouseout bubble (unlike mouseenter/mouseleave), so delegation works.
         svgElement.addEventListener('mouseover', (e) => {
-          const el = e.target
+          const el = e.target.tagName?.toLowerCase() === 'tspan' ? e.target.closest('text') : e.target
           if (!isHoverableMark(el)) return
           if (!el.classList.contains('element-selected')) {
             if (el._hoverOverlay) el._hoverOverlay.remove()
@@ -1267,7 +1298,7 @@ function Canvas({
         })
 
         svgElement.addEventListener('mouseout', (e) => {
-          const el = e.target
+          const el = e.target.tagName?.toLowerCase() === 'tspan' ? e.target.closest('text') : e.target
           if (el && el._hoverOverlay) { el._hoverOverlay.remove(); el._hoverOverlay = null }
           if (svgElement._hoveredElement === el) svgElement._hoveredElement = null
         })
@@ -1638,28 +1669,18 @@ function Canvas({
       if (chartObj.parentId) {
         const parentChart = chartObjects.find(c => c.id === chartObj.parentId)
         if (parentChart) {
-          const isDataTransform = chartObj.changeType === 'data_transformation'
-          const lineColor = isDataTransform ? '#dd6b20' : '#4a9eff'
+          const lineColor = '#4a9eff'
 
           let startX, startY, endX, endY, arrowPoints
 
           // Calculate default widget midpoint (canvas coords)
           let wmx, wmy
-          if (isDataTransform) {
-            startX = parentChart.x + parentChart.width / 2
-            startY = parentChart.y + parentChart.height
-            endX = chartObj.x + chartObj.width / 2
-            endY = chartObj.y
-            wmx = (startX + endX) / 2
-            wmy = (startY + endY) / 2
-          } else {
-            startX = parentChart.x + parentChart.width
-            startY = parentChart.y + parentChart.height / 2
-            endX = chartObj.x
-            endY = chartObj.y + chartObj.height / 2
-            wmx = (startX + endX) / 2
-            wmy = (startY + endY) / 2
-          }
+          startX = parentChart.x + parentChart.width
+          startY = parentChart.y + parentChart.height / 2
+          endX = chartObj.x
+          endY = chartObj.y + chartObj.height / 2
+          wmx = (startX + endX) / 2
+          wmy = (startY + endY) / 2
 
           // Apply widget drag offset
           const off = widgetOffsetsSnap[chartObj.id]
@@ -1668,19 +1689,11 @@ function Canvas({
           // Draw two-segment bezier: start → widget midpoint → end
           const path1 = d3.path()
           path1.moveTo(startX, startY)
-          if (isDataTransform) {
-            path1.bezierCurveTo(startX, (startY + wmy) / 2, wmx, (startY + wmy) / 2, wmx, wmy)
-          } else {
-            path1.bezierCurveTo((startX + wmx) / 2, startY, (startX + wmx) / 2, wmy, wmx, wmy)
-          }
+          path1.bezierCurveTo((startX + wmx) / 2, startY, (startX + wmx) / 2, wmy, wmx, wmy)
 
           const path2 = d3.path()
           path2.moveTo(wmx, wmy)
-          if (isDataTransform) {
-            path2.bezierCurveTo(wmx, (wmy + endY) / 2, endX, (wmy + endY) / 2, endX, endY)
-          } else {
-            path2.bezierCurveTo((wmx + endX) / 2, wmy, (wmx + endX) / 2, endY, endX, endY)
-          }
+          path2.bezierCurveTo((wmx + endX) / 2, wmy, (wmx + endX) / 2, endY, endX, endY)
 
           // Boost connection line when both ends are in the highlighted chain
           const isConnectionHighlighted = allHighlightedIds.has(chartObj.id) && allHighlightedIds.has(parentChart.id)
@@ -1695,9 +1708,7 @@ function Canvas({
           // Arrow (larger when highlighted)
           const as = isConnectionHighlighted ? ARROW_LEN_ACTIVE : ARROW_LEN
           const ah = isConnectionHighlighted ? ARROW_HALF_ACTIVE : ARROW_HALF
-          arrowPoints = isDataTransform
-            ? `0,0 ${-ah},${-as} ${ah},${-as}`
-            : `0,0 ${-as},${-ah} ${-as},${ah}`
+          arrowPoints = `0,0 ${-as},${-ah} ${-as},${ah}`
           connectionsGroup.append('polygon')
             .attr('class', 'chrome-arrow')
             .attr('points', arrowPoints)
@@ -2442,8 +2453,7 @@ function Canvas({
         const parentChart = chartObjects.find(c => c.id === chartObj.parentId)
         if (!parentChart) return
 
-        const isDataTransform = chartObj.changeType === 'data_transformation'
-        const lineColor = isDataTransform ? '#dd6b20' : '#4a9eff'
+        const lineColor = '#4a9eff'
         const allHighlighted = new Set([...selectedChartIds, ...connectedIds])
         const isConnectionHighlighted = allHighlighted.has(chartObj.id) && allHighlighted.has(parentChart.id)
         const lineOpacity = isConnectionHighlighted ? 1 : 0.45
@@ -2451,17 +2461,10 @@ function Canvas({
 
         let startX, startY, endX, endY
         let wmx, wmy
-        if (isDataTransform) {
-          startX = parentChart.x + parentChart.width / 2
-          startY = parentChart.y + parentChart.height
-          endX = chartObj.x + chartObj.width / 2
-          endY = chartObj.y
-        } else {
-          startX = parentChart.x + parentChart.width
-          startY = parentChart.y + parentChart.height / 2
-          endX = chartObj.x
-          endY = chartObj.y + chartObj.height / 2
-        }
+        startX = parentChart.x + parentChart.width
+        startY = parentChart.y + parentChart.height / 2
+        endX = chartObj.x
+        endY = chartObj.y + chartObj.height / 2
         wmx = (startX + endX) / 2
         wmy = (startY + endY) / 2
         const off = widgetOffsetsRef.current[chartObj.id]
@@ -2469,18 +2472,10 @@ function Canvas({
 
         const path1 = d3.path()
         path1.moveTo(startX, startY)
-        if (isDataTransform) {
-          path1.bezierCurveTo(startX, (startY + wmy) / 2, wmx, (startY + wmy) / 2, wmx, wmy)
-        } else {
-          path1.bezierCurveTo((startX + wmx) / 2, startY, (startX + wmx) / 2, wmy, wmx, wmy)
-        }
+        path1.bezierCurveTo((startX + wmx) / 2, startY, (startX + wmx) / 2, wmy, wmx, wmy)
         const path2 = d3.path()
         path2.moveTo(wmx, wmy)
-        if (isDataTransform) {
-          path2.bezierCurveTo(wmx, (wmy + endY) / 2, endX, (wmy + endY) / 2, endX, endY)
-        } else {
-          path2.bezierCurveTo((wmx + endX) / 2, wmy, (wmx + endX) / 2, endY, endX, endY)
-        }
+        path2.bezierCurveTo((wmx + endX) / 2, wmy, (wmx + endX) / 2, endY, endX, endY)
 
         const lineAttrs = { fill: 'none', stroke: lineColor, 'stroke-width': lineWidth, 'vector-effect': NON_SCALING, 'stroke-dasharray': isConnectionHighlighted ? 'none' : '4,4', opacity: lineOpacity }
         const seg1 = d3Connections.append('path').attr('d', path1.toString())
@@ -2489,9 +2484,7 @@ function Canvas({
 
         const as = isConnectionHighlighted ? ARROW_LEN_ACTIVE : ARROW_LEN
         const ah = isConnectionHighlighted ? ARROW_HALF_ACTIVE : ARROW_HALF
-        const arrowPoints = isDataTransform
-          ? `0,0 ${-ah},${-as} ${ah},${-as}`
-          : `0,0 ${-as},${-ah} ${-as},${ah}`
+        const arrowPoints = `0,0 ${-as},${-ah} ${-as},${ah}`
         d3Connections.append('polygon')
           .attr('class', 'chrome-arrow')
           .attr('points', arrowPoints)
@@ -2677,22 +2670,12 @@ function Canvas({
         let canvasX, canvasY
 
         if (parentChart) {
-          const isDataTransform = chartObj.changeType === 'data_transformation'
-          if (isDataTransform) {
-            const sx = parentChart.x + parentChart.width / 2
-            const sy = parentChart.y + parentChart.height
-            const ex = chartObj.x + chartObj.width / 2
-            const ey = chartObj.y
-            canvasX = (sx + ex) / 2
-            canvasY = (sy + ey) / 2
-          } else {
-            const sx = parentChart.x + parentChart.width
-            const sy = parentChart.y + parentChart.height / 2
-            const ex = chartObj.x
-            const ey = chartObj.y + chartObj.height / 2
-            canvasX = (sx + ex) / 2
-            canvasY = (sy + ey) / 2
-          }
+          const sx = parentChart.x + parentChart.width
+          const sy = parentChart.y + parentChart.height / 2
+          const ex = chartObj.x
+          const ey = chartObj.y + chartObj.height / 2
+          canvasX = (sx + ex) / 2
+          canvasY = (sy + ey) / 2
         } else {
           canvasX = chartObj.x
           canvasY = chartObj.y
