@@ -98,7 +98,7 @@ function createModOverlay(el, color) {
     overlay.setAttribute('y', Math.min(...ys))
     overlay.setAttribute('width', Math.max(...xs) - Math.min(...xs))
     overlay.setAttribute('height', Math.max(...ys) - Math.min(...ys))
-    overlay.setAttribute('rx', '2')
+    overlay.setAttribute('rx', '0')
     overlay.setAttribute('fill', 'none')
     overlay.setAttribute('stroke', color)
     overlay.setAttribute('stroke-width', '2')

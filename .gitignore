@@ -6,3 +6,11 @@ __pycache__/
 prompt/
 dist/
 System.tex
+
+# Local presentation pages and generated demonstration media
+/.local-demo/
+/artifacts/selection-demo/
+
+# Other standalone local previews and reference captures
+/random-data-table.html
+/singlelement.png

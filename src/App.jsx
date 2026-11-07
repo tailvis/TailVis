@@ -465,6 +465,22 @@ export function prepareGalleryExample(example) {
 }
 
 function App({ readOnly = false, galleryExample = null } = {}) {
+  useEffect(() => {
+    const clearTextSelection = (event) => {
+      if (event.button !== 0) return
+      const selection = window.getSelection()
+      if (!selection || selection.isCollapsed) return
+      // Preserve an editor's own selection, but clear stale chart text even when
+      // the next click enters a different text editor.
+      const editor = event.target.closest?.('input, textarea, [contenteditable]:not([contenteditable="false"]), .cm-editor')
+      if (editor && (editor.contains(selection.anchorNode) || editor.contains(selection.focusNode) || document.activeElement === editor)) return
+      selection.removeAllRanges()
+    }
+    // Capture runs even when chart dragging or panel controls stop propagation.
+    document.addEventListener('pointerdown', clearTextSelection, true)
+    return () => document.removeEventListener('pointerdown', clearTextSelection, true)
+  }, [])
+
   // Read-only gallery mode seeds from a frozen example and NEVER persists (guarded below).
   const savedState = useRef(readOnly ? null : loadFromStorage()).current
   const galleryInit = useRef(readOnly && galleryExample ? prepareGalleryExample(galleryExample) : null).current

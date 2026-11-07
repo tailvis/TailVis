@@ -2,7 +2,7 @@
 .mod-panel {
   background: #FFF9E6;
   border: 1px solid #F0E0A0;
-  border-radius: 8px;
+  border-radius: 0;
   padding: 12px;
   width: 100%;
   min-width: 350px;
@@ -62,7 +62,7 @@
   font-weight: 700;
   color: #555;
   background: #e8e8e8;
-  border-radius: 3px 3px 0 0;
+  border-radius: 0;
   padding: 2px 7px;
   text-transform: uppercase;
   letter-spacing: 0.4px;
@@ -81,7 +81,7 @@
   gap: 6px;
   padding: 6px 8px;
   background: #fff;
-  border-radius: 0 6px 6px 6px;
+  border-radius: 0;
   border: 1px solid #eee;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
@@ -89,10 +89,10 @@
   box-sizing: border-box;
 }
 
-/* When no target type, round all corners */
+/* Keep rows without a target tag square as well. */
 .mod-row-wrapper-compact .mod-row,
 .mod-row-wrapper:not(:has(.mod-target-type)) .mod-row {
-  border-radius: 6px;
+  border-radius: 0;
 }
 
 .mod-row:hover {
@@ -373,7 +373,7 @@
   padding: 4px 10px;
   cursor: pointer;
   user-select: none;
-  border-radius: 5px 5px 0 0;
+  border-radius: 0;
   background: #f5f0e0;
   border: 1px solid #e8dfc0;
   border-bottom: none;
@@ -430,18 +430,18 @@
 /* Compact rows inside groups: no target type column, same prop-name fixed width */
 .mod-row-compact {
   grid-template-columns: 64px minmax(0, 1fr) minmax(0, 1fr) max-content 24px;
-  border-radius: 6px;
+  border-radius: 0;
   margin-left: 8px;
   border-left: 2px solid #e0dac0;
 }
 
 .mod-row-compact:first-child,
 .mod-group-header + .mod-row-compact {
-  border-radius: 0 6px 0 0;
+  border-radius: 0;
 }
 
 .mod-row-compact:last-child {
-  border-radius: 0 0 6px 6px;
+  border-radius: 0;
 }
 
 /* Unbind confirmation overlay */
