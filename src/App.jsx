@@ -25,6 +25,9 @@ import scatterSpec from './data/scatter.json'
 import histogramSpec from './data/histogram.json'
 import './App.css'
 
+// Temporarily hide layer browsing; retain the implementation for re-enabling.
+const SHOW_LAYER_PANEL = false
+
 // Default Vega-Lite specs
 
 
@@ -1597,7 +1600,7 @@ function App({ readOnly = false, galleryExample = null } = {}) {
       setLayerPanelWidth(newWidth)
     }
     if (isDraggingDataTableResize) {
-      const baseLeft = ICON_SIDEBAR_WIDTH + (layerPanelOpen ? layerPanelWidth + 6 : 0)
+      const baseLeft = ICON_SIDEBAR_WIDTH + (SHOW_LAYER_PANEL && layerPanelOpen ? layerPanelWidth + 6 : 0)
       const newWidth = Math.max(220, Math.min(700, e.clientX - baseLeft))
       setDataTableWidth(newWidth)
     }
@@ -3077,14 +3080,14 @@ function App({ readOnly = false, galleryExample = null } = {}) {
       >
         {/* Icon Sidebar */}
         <div className="icon-sidebar">
-          <button
+          {SHOW_LAYER_PANEL && <button
             className={`sidebar-icon-btn ${layerPanelOpen ? 'active' : ''}`}
             onClick={() => setLayerPanelOpen(prev => !prev)}
             title={layerPanelOpen ? 'Hide Layers' : 'Show Layers'}
           >
             <span className="sidebar-icon">🗂</span>
             <span className="sidebar-label">Layers</span>
-          </button>
+          </button>}
           <button
             className={`sidebar-icon-btn ${dataTableOpen ? 'active' : ''}`}
             onClick={() => setDataTableOpen(prev => !prev)}
@@ -3096,7 +3099,7 @@ function App({ readOnly = false, galleryExample = null } = {}) {
         </div>
 
         {/* Layer Panel (collapsible) */}
-        {layerPanelOpen && (
+        {SHOW_LAYER_PANEL && layerPanelOpen && (
           <div
             className={`layer-overlay-panel ${isDraggingLayerResize ? 'resizing' : ''}`}
             ref={leftPanelRef}
