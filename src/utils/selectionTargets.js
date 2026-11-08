@@ -38,8 +38,8 @@ export function buildSelectionTargets(elements, property) {
       scope = scopeType === 'field-value'
         ? { type: 'by-field', field: el._scopeData.field, fieldValue: el._scopeData.value }
         : { type: 'all-marks' }
-    } else if (['axis', 'legend', 'text'].includes(el.semanticRole) || el.compositeMarkType) {
-      // An explicit selection must not expand to every axis label, legend, or
+    } else if (scopeType === 'field-value-kind' || ['axis', 'legend', 'text'].includes(el.semanticRole) || el.compositeMarkType) {
+      // Kind/category intersections and explicit selections must not expand to every axis label, legend, or
       // composite sub-part merely because those elements share a role.
       scope = { type: 'selected-element' }
     }

@@ -630,7 +630,7 @@ function ModificationRow({ mod, chartId, spec, compact, activeModificationId, on
       ) : mod.fromScopeSelection ? (
         <span className="mod-group-scope-label" title="Scope selection">
           {mod.scope?.type === 'all-marks' ? 'All Marks' :
-           mod.scope?.type === 'by-field' ? `${mod.scope.field}=${mod.scope.fieldValue}` :
+           mod.scope?.type === 'by-field' ? `${mod.scope.field}: ${mod.scope.fieldValue}` :
            'Scope'}
         </span>
       ) : (

@@ -9,11 +9,20 @@ lineage-based branching.
 
 A static demo is published via GitHub Pages: **https://tailvis.github.io/TailVis/**
 
-In the demo you can browse the example gallery, pan/zoom, select elements, expand
-semantic scopes, inspect the widgets and modification stack, and edit the Vega-Lite
-spec directly — no setup required.
+The home page introduces TailVis and shows the example gallery. This checkout has
+three views, using query parameters that also work on GitHub Pages:
 
-The **AI features** (natural-language chart creation, editing, and the chat/widget
+- **Home / Gallery**: `/` or `?gallery` — browse frozen examples and their histories.
+- **Try Demo**: `?demo` — choose from three guided requests (colors, panels, median
+  labels), adjust the real widget preview, and apply or branch a refinement. These
+  requests use local presets; no backend or API key is needed. Demo work is saved
+  separately from the full editor; **Reset demo** clears only the demo.
+- **System**: `?system` — the full editor, including free-form AI requests when a
+  backend is connected.
+
+Existing `?gallery&example=<id>` links still open a read-only example.
+
+The **AI features** (natural-language chart creation, editing, and free-form chat/widget
 refinement) need a backend, which static hosting can't run. To use them, run the backend
 yourself and point the demo at it: run `npm run server` locally (with your Anthropic key
 in `.env`), then click the **Backend** button in the demo's top bar and enter its URL
@@ -37,7 +46,8 @@ npm install
 npm start
 ```
 
-Then open http://localhost:5104 (the backend runs on port 5105; Vite proxies `/api` to it).
+Then open http://localhost:5104 for the home page, `?demo` for the guided demo, or
+`?system` for the full editor (the backend runs on port 5105; Vite proxies `/api` to it).
 
 To run the two processes separately:
 
@@ -54,7 +64,7 @@ npm run build
 
 ## Anthropic API key (required for AI features)
 
-The AI features — natural-language chart creation, editing, and the chat/widget
+The AI features — natural-language chart creation, editing, and free-form chat/widget
 refinement — call the Claude API and need an Anthropic API key. **You bring your own key.**
 
 Put it in a `.env` file at the project root; the backend reads it:
@@ -72,7 +82,7 @@ selecting, the gallery, direct editing of the Vega-Lite spec) works without a ke
 
 ## Example Gallery
 
-Click the **☆ Gallery** button in the top bar (or visit `?gallery`) to open the example
+The home page (also available at `?gallery`) contains the example
 gallery — a grid of saved chart trees. Selecting one opens it in a **read-only** view of the
 real editor scoped to that lineage tree: you can pan/zoom, select elements, expand scopes, and
 inspect the widgets, modification stack, and dataset, but nothing can be edited. Use

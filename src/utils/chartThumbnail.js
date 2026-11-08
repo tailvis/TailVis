@@ -1,3 +1,4 @@
+import { normalizeCompositeLineMarks } from './elementUtils.js'
 import { setSvgText } from './svgText'
 // Render a Vega-Lite spec (with the chart's svgOverrides applied) to a PNG data URL.
 // Used at "Save to Gallery" time so example thumbnails are a fixed raster with the
@@ -33,7 +34,7 @@ function applySvgOverrides(svg, overrides) {
           continue
         }
         if (k === 'text' && el.tagName.toLowerCase() === 'text') { setSvgText(el, v); continue }
-        const attr = SVG_ATTR_MAP[k]
+        const attr = el.dataset.editorLinePath && ['fill', 'color'].includes(k) ? 'stroke' : SVG_ATTR_MAP[k]
         if (!attr) continue
         if (k === 'strokeDasharray' && v === 'solid') { el.removeAttribute('stroke-dasharray'); continue }
         el.setAttribute(attr, v)
@@ -102,6 +103,7 @@ export async function renderChartPng(spec, { svgOverrides, scale = 2 } = {}) {
     // Overrides present (or exporter unavailable): apply them to the SVG DOM and rasterize.
     const svg = holder.querySelector('svg')
     if (!svg) return null
+    normalizeCompositeLineMarks(svg, spec)
     if (hasOverrides) applySvgOverrides(svg, svgOverrides)
     await new Promise(r => requestAnimationFrame(r))
     return await rasterizeSvg(svg, scale)

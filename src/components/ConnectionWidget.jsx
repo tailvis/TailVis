@@ -77,7 +77,7 @@ function setSpecValueAtPath(spec, path, value) {
   return newSpec
 }
 
-function ConnectionWidget({ chartId, command, widgetTitle, intent, widgetOptions, onOptionChange, conversationHistory, changeType, chartSpec, onContinueChatApply, onPreviewChange }) {
+function ConnectionWidget({ guidedDemo = false, onGuidedRequest, chartId, command, widgetTitle, intent, widgetOptions, onOptionChange, conversationHistory, changeType, chartSpec, onContinueChatApply, onPreviewChange }) {
   const [modifyOpen, setModifyOpen] = useState(true)
   const [chatOpen, setChatOpen] = useState(false)
   const [chatMode, setChatMode] = useState(false) // inline editable chat
@@ -444,8 +444,8 @@ function ConnectionWidget({ chartId, command, widgetTitle, intent, widgetOptions
         )}
         {onContinueChatApply && (
           <div className="widget-section-content">
-            <button className="widget-continue-chat-btn" onClick={(e) => { e.stopPropagation(); setChatMode(true); setChatOpen(true) }}>
-              + Continue editing
+            <button className="widget-continue-chat-btn" onClick={(e) => { e.stopPropagation(); if (guidedDemo) { onGuidedRequest?.(); return } setChatMode(true); setChatOpen(true) }}>
+              {guidedDemo ? 'Try another request' : '+ Continue editing'}
             </button>
           </div>
         )}
@@ -558,8 +558,8 @@ function ConnectionWidget({ chartId, command, widgetTitle, intent, widgetOptions
 
             {/* Continue button (not in chatMode) */}
             {!chatMode && onContinueChatApply && (
-              <button className="widget-continue-chat-btn" onClick={(e) => { e.stopPropagation(); setChatMode(true) }}>
-                + Continue editing
+              <button className="widget-continue-chat-btn" onClick={(e) => { e.stopPropagation(); if (guidedDemo) { onGuidedRequest?.(); return } setChatMode(true) }}>
+                {guidedDemo ? 'Try another request' : '+ Continue editing'}
               </button>
             )}
           </div>

@@ -976,3 +976,5 @@ body {
 .datatable-overlay-panel.resizing {
   user-select: none;
 }
+
+.editor-home { color: #2b414c; text-decoration: none; font-size: 22px; font-weight: 700; margin-right: 16px; }

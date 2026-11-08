@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App.jsx'
+const App = lazy(() => import('./App.jsx'))
+const GuidedDemo = lazy(() => import('./components/GuidedDemo.jsx'))
 import './index.css'
 
 // Read-only example gallery.
@@ -66,7 +67,7 @@ class ErrorBoundary extends React.Component {
           <button
             style={{ marginTop: 16, padding: '8px 24px', fontSize: 14, cursor: 'pointer' }}
             onClick={() => {
-              localStorage.removeItem('chart-authoring-state')
+              localStorage.removeItem(new URLSearchParams(window.location.search).has('demo') ? 'tailvis-guided-demo-v1' : 'chart-authoring-state')
               window.location.reload()
             }}
           >
@@ -81,22 +82,16 @@ class ErrorBoundary extends React.Component {
 
 function Root() {
   const params = new URLSearchParams(window.location.search)
-  if (params.has('gallery')) {
-    const exampleId = params.get('example')
-    if (exampleId) return <GalleryExampleView id={exampleId} />
-    return (
-      <Suspense fallback={<div style={{ padding: 40 }}>Loading gallery…</div>}>
-        <Gallery />
-      </Suspense>
-    )
-  }
-  return <App />
+  if (params.has('demo')) return <GuidedDemo />
+  if (params.has('system')) return <App />
+  if (params.has('gallery') && params.get('example')) return <GalleryExampleView id={params.get('example')} />
+  return <Gallery />
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <Root />
+      <Suspense fallback={<div className="route-loading">Loading TailVis…</div>}><Root /></Suspense>
     </ErrorBoundary>
   </React.StrictMode>,
 )

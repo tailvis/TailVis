@@ -12,7 +12,7 @@ test('real Vega SVG sub-part selection and multiline text editing', async () => 
   try {
     browser = await chromium.launch({ headless: true })
     const page = await browser.newPage()
-    await page.goto(server.resolvedUrls.local[0])
+    await page.goto(server.resolvedUrls.local[0] + '?system')
     const data = Array.from({ length: 32 }, (_, i) => ({
       panel: i < 16 ? 'First' : 'Second', category: i % 16 < 8 ? 'A' : 'B', value: i % 8,
     }))

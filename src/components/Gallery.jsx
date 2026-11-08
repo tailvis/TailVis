@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import vegaEmbed from 'vega-embed'
 import { GALLERY_EXAMPLES } from '../data/galleryExamples.js'
 import './Gallery.css'
 
@@ -89,7 +88,7 @@ function LiveThumbnail({ example }) {
     const spec = JSON.parse(JSON.stringify(chart.spec))
     if (!spec.data?.values?.length) spec.data = { values: chartRows(example, chart) }
     delete spec.width; delete spec.height
-    vegaEmbed(el, spec, { actions: false, renderer: 'svg', config: { background: 'white' } })
+    import('vega-embed').then(({ default: vegaEmbed }) => vegaEmbed(el, spec, { actions: false, renderer: 'svg', config: { background: 'white' } }))
       .then(r => {
         view = r.view
         const svg = el.querySelector('svg')
@@ -106,11 +105,12 @@ function LiveThumbnail({ example }) {
 }
 
 export default function Gallery() {
-  const [examples, setExamples] = useState(loadExamples)
+  const [examples] = useState(loadExamples)
   const total = examples.length
 
   const open = (id) => {
     const params = new URLSearchParams(window.location.search)
+    params.set('gallery', '')
     params.set('example', id)
     window.location.search = '?' + params.toString()
   }
@@ -118,22 +118,29 @@ export default function Gallery() {
   return (
     <div className="gallery-root">
       <div className="gallery-grid-view">
-        <header className="gallery-grid-head">
-          <button
-            className="gallery-system-btn"
-            title="Open the TailVis editor"
-            onClick={() => { window.location.search = '' }}
-          >
-            ← System
-          </button>
-          <div className="gallery-grid-head-text">
-            <h1>TailVis Example Gallery</h1>
-            <p className="gallery-grid-sub">
-              click to open a read-only, selectable view.
-            </p>
+        <nav className="project-nav" aria-label="Main navigation">
+          <a className="project-brand" href="?" aria-label="TailVis home"><span className="brand-mark" aria-hidden="true">▥</span>TailVis</a>
+          <div><a href="#examples">Gallery</a><a href="?demo">Try demo</a><a className="project-system-link" href="?system">System <span aria-hidden="true">↗</span></a></div>
+        </nav>
+        <section className="project-hero" aria-labelledby="project-title">
+          <div>
+            <p className="project-eyebrow">Interactive chart authoring</p>
+            <h1 id="project-title">Refine the details.<br /><em>Keep the data connected.</em></h1>
           </div>
-        </header>
-
+          <div className="project-intro">
+            <p>TailVis brings direct selection, natural-language requests, and reusable widgets into one chart workspace.</p>
+            <p className="project-intro-secondary">Explore an example, try a guided refinement, or open the full system.</p>
+            <div className="project-actions"><a className="project-primary" href="?demo">Try the demo <span aria-hidden="true">→</span></a><a href="?system">Open system ↗</a></div>
+            <small>No API key needed for the guided demo.</small>
+          </div>
+        </section>
+        <div className="project-workflow" aria-label="How TailVis works">
+          <span><b>01</b> Select a chart or element</span><span><b>02</b> Refine with controls and requests</span><span><b>03</b> Revisit and branch your work</span>
+        </div>
+        <section id="examples" className="project-gallery-intro" aria-labelledby="gallery-title">
+          <div><p className="project-eyebrow">Explore the possibilities</p><h2 id="gallery-title">The example gallery</h2></div>
+          <p>Open a chart to explore its refinement history.<br />Select elements and inspect the controls.</p>
+        </section>
         {total === 0 ? (
           <div className="gallery-empty big">
             No examples yet.<br />
@@ -149,7 +156,7 @@ export default function Gallery() {
                   <div className="gallery-card-body">
                     <div className="gallery-card-title">{ex.name || 'Untitled'}</div>
                     <div className="gallery-card-meta">
-                      <span className="gallery-badge">{count} chart{count === 1 ? '' : 's'}</span>
+                      <span className="gallery-badge">{count} chart{count === 1 ? '' : 's'} in the history</span><span className="gallery-card-open" aria-hidden="true">Explore ↗</span>
                     </div>
                   </div>
                 </button>
@@ -157,6 +164,7 @@ export default function Gallery() {
             })}
           </div>
         )}
+        <footer className="project-footer"><span>TailVis · Chart refinement with data-binding integrity</span><a href="https://github.com/tailvis/TailVis" target="_blank" rel="noreferrer">Source code ↗</a></footer>
       </div>
     </div>
   )

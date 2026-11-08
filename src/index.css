@@ -17,3 +17,5 @@ body {
   width: 100vw;
   height: 100vh;
 }
+
+.route-loading { padding: 40px; color: #527568; font-family: sans-serif; }

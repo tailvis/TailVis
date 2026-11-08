@@ -4,7 +4,7 @@
  * scope candidates from narrowest to broadest, for Tab-cycling.
  */
 
-import { detectElementType, extractDatum, getLayerIndex } from './elementUtils.js'
+import { detectElementType, extractDatum, getLayerIndex, detectAxisChannel } from './elementUtils.js'
 import { evaluateTestExpression, formatTestLabel } from './scopeUtils.js'
 
 // ─── Helpers ─────────────────────────────────────────────
@@ -123,18 +123,9 @@ function findAxisElements(svgRoot, axisChannel, subType) {
   // 1. Search inside axis <g> groups (standard Vega structure)
   const axisGroups = svgRoot.querySelectorAll('[aria-roledescription="axis"]')
   for (const axisG of axisGroups) {
-    if (axisChannel) {
-      const domainGroup = axisG.querySelector('.role-axis-domain')
-      const domainLine = domainGroup?.querySelector('line')
-      if (domainLine) {
-        const x1 = parseFloat(domainLine.getAttribute('x1') || 0)
-        const y1 = parseFloat(domainLine.getAttribute('y1') || 0)
-        const x2 = parseFloat(domainLine.getAttribute('x2') || 0)
-        const y2 = parseFloat(domainLine.getAttribute('y2') || 0)
-        const ch = Math.abs(x2 - x1) >= Math.abs(y2 - y1) ? 'x' : 'y'
-        if (ch !== axisChannel) continue
-      }
-    }
+    // Use the same axis identity as element selection. Axes without a domain
+    // line still have label positions that distinguish X from Y.
+    if (axisChannel && detectAxisChannel(axisG) !== axisChannel) continue
     if (subType) {
       const classMap = { label: 'role-axis-label', tick: 'role-axis-tick', grid: 'role-axis-grid', domain: 'role-axis-domain', title: 'role-axis-title' }
       const className = classMap[subType]
@@ -451,7 +442,7 @@ function buildDataMarkHierarchy(elementInfo, datum, spec, svgRoot) {
         .filter(([k, v]) => !k.startsWith('_') && v != null && (typeof v === 'string' || typeof v === 'number'))
         .filter(([k]) => !/^bin_/.test(k) && !k.endsWith('_end'))
         .filter(([, v]) => !(typeof v === 'number' && Math.abs(v) > 1e9))
-        .map(([k, v]) => `${k}=${v}`)
+        .map(([k, v]) => `${k}: ${v}`)
         .slice(0, 2)
         .join(', ')
     : ''
@@ -494,8 +485,8 @@ function buildDataMarkHierarchy(elementInfo, datum, spec, svgRoot) {
       if (matching.length <= 1) continue // skip if only this element matches
       hierarchy.push({
         level: hierarchy.length,
-        label: `All ${field}=${value}`,
-        labelEn: `All ${field}=${value}`,
+        label: `All ${field}: ${value}`,
+        labelEn: `All ${field}: ${value}`,
         elements: matching.map(m => m.element),
         scopeType: 'field-value',
         scopeData: { field, value }
@@ -587,7 +578,8 @@ function buildAxisLabelHierarchy(elementInfo, spec, svgRoot) {
   const hierarchy = []
   const element = elementInfo.element
   const channel = elementInfo.axisChannel
-  const labelText = element?.textContent?.trim() || ''
+  const rawValue = extractDatum(element)?.value
+  const labelText = rawValue != null ? String(rawValue) : element?.textContent?.trim() || ''
 
   // Level 0: This label only
   hierarchy.push({
@@ -603,7 +595,7 @@ function buildAxisLabelHierarchy(elementInfo, spec, svgRoot) {
   const fieldInfo = getAxisEncodingField(spec, channel)
   if (fieldInfo && labelText) {
     const data = spec?.data?.values
-    const mappedValue = reverseMapAxisValue(labelText, fieldInfo.field, spec, data)
+    const mappedValue = rawValue ?? reverseMapAxisValue(labelText, fieldInfo.field, spec, data)
     const allMarks = findAllDataMarks(svgRoot, spec)
     const matching = allMarks.filter(m => {
       if (!m.datum) return false
@@ -613,8 +605,8 @@ function buildAxisLabelHierarchy(elementInfo, spec, svgRoot) {
     if (matching.length > 0) {
       hierarchy.push({
         level: hierarchy.length,
-        label: `${fieldInfo.field}=${mappedValue} Data`,
-        labelEn: `${fieldInfo.field}=${mappedValue} data marks`,
+        label: `${fieldInfo.field}: ${mappedValue} Data`,
+        labelEn: `${fieldInfo.field}: ${mappedValue} data marks`,
         elements: [element, ...matching.map(m => m.element)],
         scopeType: 'field-value',
         scopeData: { field: fieldInfo.field, value: mappedValue }
@@ -783,8 +775,8 @@ function buildLegendSymbolHierarchy(elementInfo, spec, svgRoot) {
     if (matching.length > 0) {
       hierarchy.push({
         level: hierarchy.length,
-        label: `${legendInfo.field}=${legendValue} Data`,
-        labelEn: `${legendInfo.field}=${legendValue} data marks`,
+        label: `${legendInfo.field}: ${legendValue} Data`,
+        labelEn: `${legendInfo.field}: ${legendValue} data marks`,
         elements: [element, ...matching.map(m => m.element)],
         scopeType: 'field-value',
         scopeData: { field: legendInfo.field, value: legendValue }
@@ -853,8 +845,8 @@ function buildLegendLabelHierarchy(elementInfo, spec, svgRoot) {
     if (matching.length > 0) {
       hierarchy.push({
         level: hierarchy.length,
-        label: `${legendInfo.field}=${effectiveValue} Data`,
-        labelEn: `${legendInfo.field}=${effectiveValue} data marks`,
+        label: `${legendInfo.field}: ${effectiveValue} Data`,
+        labelEn: `${legendInfo.field}: ${effectiveValue} data marks`,
         elements: [element, ...matching.map(m => m.element)],
         scopeType: 'field-value',
         scopeData: { field: legendInfo.field, value: effectiveValue }
@@ -948,6 +940,48 @@ function buildFallbackHierarchy(elementInfo) {
  * @returns {Array} Ordered scope candidates from narrowest to broadest
  */
 export function generateScopeHierarchy(selectedElements, spec, svgRoot) {
+  const hierarchy = generateBaseScopeHierarchy(selectedElements, spec, svgRoot)
+  return addKindIntersections(hierarchy, selectedElements, spec, svgRoot)
+}
+
+// Intersect one category with the selected editing kind, preserving broad scopes.
+// DOM tags alone cannot distinguish box bodies, medians, or point/line paths.
+function addKindIntersections(hierarchy, selectedElements, spec, svgRoot) {
+  const selected = selectedElements?.[0]
+  if (!selected || selected.semanticRole !== 'data-mark') return hierarchy
+  const sameKind = info => info?.semanticRole === 'data-mark' && (selected.compositeMarkType
+    ? info.compositeMarkType === selected.compositeMarkType && info.compositeSubPart === selected.compositeSubPart
+    : !info.compositeMarkType && info.type === selected.type && info.markGroup === selected.markGroup)
+  if (!selectedElements.every(sameKind)) return hierarchy
+  const cache = new Map(selectedElements.map(info => [info.element, info]))
+  const infoFor = node => {
+    if (!cache.has(node)) cache.set(node, detectElementType(node, spec, svgRoot))
+    return cache.get(node)
+  }
+  const known = hierarchy.map(entry => new Set(entry.elements))
+  const names = { rect: 'Rect', line: 'Line', point: 'Point', circle: 'Point', path: 'Path', area: 'Area', text: 'Text' }
+  const kind = names[selected.type] || selected.type?.replace(/^./, c => c.toUpperCase()) || 'Mark'
+  const result = []
+  let added = 0
+  for (const entry of hierarchy) {
+    if (added < 2 && entry.scopeType === 'field-value') {
+      const elements = [...new Set(entry.elements.filter(node => sameKind(infoFor(node))))]
+      const redundant = known.some(set => set.size === elements.length && elements.every(node => set.has(node)))
+      if (elements.length > Math.max(1, selectedElements.length) && elements.length < entry.elements.length
+        && selectedElements.every(info => elements.includes(info.element)) && !redundant) {
+        const label = `${kind}: ${entry.scopeData.value}`
+        result.push({ label, labelEn: label, elements, scopeType: 'field-value-kind',
+          scopeData: { ...entry.scopeData, kind: { type: selected.type, markGroup: selected.markGroup,
+            compositeMarkType: selected.compositeMarkType, compositeSubPart: selected.compositeSubPart } } })
+        known.push(new Set(elements)); added++
+      }
+    }
+    result.push(entry)
+  }
+  return result.map((entry, level) => ({ ...entry, level }))
+}
+
+function generateBaseScopeHierarchy(selectedElements, spec, svgRoot) {
   if (!selectedElements || selectedElements.length === 0 || !spec || !svgRoot) return []
 
   // Single element
@@ -1036,8 +1070,8 @@ function buildMultiSelectionHierarchy(selectedElements, spec, svgRoot) {
           const allMarks = findAllDataMarks(svgRoot, spec)
           const matching = allMarks.filter(m => m.datum && m.datum[field] === unique[0])
           sharedScopes.push({
-            label: `All ${field}=${unique[0]}`,
-            labelEn: `All ${field}=${unique[0]}`,
+            label: `All ${field}: ${unique[0]}`,
+            labelEn: `All ${field}: ${unique[0]}`,
             elements: withOriginals(matching.map(m => m.element)),
             scopeType: 'field-value',
             scopeData: { field, value: unique[0] },

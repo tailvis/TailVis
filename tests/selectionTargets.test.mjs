@@ -163,3 +163,16 @@ test('layer detection handles real Vega class lists, facets and nested layers', 
     assert.equal(getLayerIndex(el,root),expected,className)
   }
 })
+
+// Typed category scopes must retain exact SVG targets, even on ordinary marks.
+test('kind/category intersections never collapse into whole-category edits', () => {
+  for (const extra of [{}, {compositeMarkType: 'boxplot', compositeSubPart: 'box'}]) {
+    const selected = [0, 1].map(i => ({...element(i, rows[0], 'field-value-kind', {field: 'category', value: 'A', kind: {type: 'rect'}}), ...extra}))
+    const targets = buildSelectionTargets(selected, 'fill')
+    assert.equal(targets.length, 2)
+    assert.ok(targets.every(target => target.scope.type === 'selected-element'))
+    const result = edit({layer: [unit, unit]}, selected)
+    assert.deepEqual(result.spec, {layer: [unit, unit]})
+    assert.equal(Object.keys(result.svgOverrides).length, 2)
+  }
+})

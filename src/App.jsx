@@ -130,9 +130,9 @@ function injectDataIntoSpec(spec, chartData) {
   return { ...spec, data: { ...(spec.data || {}), values: chartData } }
 }
 
-export function loadFromStorage() {
+export function loadFromStorage(storageKey = STORAGE_KEY) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(storageKey)
     if (!raw) return null
     const parsed = JSON.parse(raw)
     if (!parsed || typeof parsed !== 'object') return null
@@ -178,7 +178,8 @@ export function loadFromStorage() {
   }
 }
 
-function saveToStorage(state) {
+function saveToStorage(state, storageKey = STORAGE_KEY) {
+  let json
   try {
     // Strip inline data from specs to avoid bloating localStorage
     // Only strip if the spec's data fields match the data source fields (safe to restore)
@@ -247,23 +248,20 @@ function saveToStorage(state) {
         return Object.keys(extra).length > 0 ? extra : undefined
       })(),
     }
-    const json = JSON.stringify(cleaned)
-    localStorage.setItem(STORAGE_KEY, json)
+    json = JSON.stringify(cleaned)
+    localStorage.setItem(storageKey, json)
   } catch (e) {
     console.warn('[saveToStorage] failed:', e.name, e.message)
     // If quota exceeded, try saving without currentData (charts still work with embedded data)
     if (e.name === 'QuotaExceededError') {
       try {
         const { currentData, ...minimal } = JSON.parse(json)
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(minimal))
+        localStorage.setItem(storageKey, JSON.stringify(minimal))
         console.warn('[saveToStorage] saved minimal (no data) due to quota')
       } catch (_) { /* truly cannot save */ }
     }
   }
 }
-
-// Latest state ref for beforeunload flush
-let _latestStateForSave = null
 
 // ─── Lineage propagation helpers ───
 // When a parent chart's spec is edited, the same change flows down to all
@@ -467,7 +465,8 @@ export function prepareGalleryExample(example) {
   return { chartObjects: charts, dataSources, nextChartId: (example?.nextChartId || charts.length + 1) }
 }
 
-function App({ readOnly = false, galleryExample = null } = {}) {
+function App({ readOnly = false, galleryExample = null, guidedDemo = null, initialState = null, storageKey = STORAGE_KEY } = {}) {
+  const latestStateForSave = useRef(null)
   useEffect(() => {
     const clearTextSelection = (event) => {
       if (event.button !== 0) return
@@ -485,7 +484,7 @@ function App({ readOnly = false, galleryExample = null } = {}) {
   }, [])
 
   // Read-only gallery mode seeds from a frozen example and NEVER persists (guarded below).
-  const savedState = useRef(readOnly ? null : loadFromStorage()).current
+  const savedState = useRef(readOnly ? null : (loadFromStorage(storageKey) || initialState)).current
   const galleryInit = useRef(readOnly && galleryExample ? prepareGalleryExample(galleryExample) : null).current
 
   // Chart objects on canvas
@@ -649,7 +648,7 @@ function App({ readOnly = false, galleryExample = null } = {}) {
   const [isDraggingRightResize, setIsDraggingRightResize] = useState(false)
 
   // DataTable collapsible panel state
-  const [dataTableOpen, setDataTableOpen] = useState(true)
+  const [dataTableOpen, setDataTableOpen] = useState(!guidedDemo)
   const [dataTableWidth, setDataTableWidth] = useState(340)
   const [isDraggingDataTableResize, setIsDraggingDataTableResize] = useState(false)
 
@@ -688,7 +687,7 @@ function App({ readOnly = false, galleryExample = null } = {}) {
     if (!wrapper) return
     const viewW = wrapper.clientWidth
     const viewH = wrapper.clientHeight
-    const k = canvasTransform.k || 1
+    const k = guidedDemo ? Math.min(1, (viewW - 64) / chartW, (viewH - 64) / chartH) : canvasTransform.k || 1
     const newX = viewW / 2 - (chartX + chartW / 2) * k
     const newY = viewH / 2 - (chartY + chartH / 2) * k
     const newTransform = { x: newX, y: newY, k }
@@ -697,7 +696,7 @@ function App({ readOnly = false, galleryExample = null } = {}) {
     } else {
       setCanvasTransform(newTransform)
     }
-  }, [canvasTransform.k])
+  }, [canvasTransform.k, guidedDemo])
 
   const [previewChart, setPreviewChart] = useState(null)
 
@@ -781,20 +780,20 @@ function App({ readOnly = false, galleryExample = null } = {}) {
       dataSources,
       activeDataSourceId,
     }
-    _latestStateForSave = stateToSave
+    latestStateForSave.current = stateToSave
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     saveTimerRef.current = setTimeout(() => {
-      saveToStorage(stateToSave)
-      _latestStateForSave = null
+      saveToStorage(stateToSave, storageKey)
+      latestStateForSave.current = null
     }, 300)
-  }, [chartObjects, nextChartId, currentData, columnInfos, selectedColumns, dataSourceName, selectedChartType, selectedChartIds, activeDataSourceId])
+  }, [chartObjects, nextChartId, currentData, columnInfos, selectedColumns, dataSourceName, selectedChartType, selectedChartIds, activeDataSourceId, dataSources, readOnly, storageKey])
 
   // Flush save immediately on page unload (refresh / back / close)
   useEffect(() => {
     const flush = () => {
-      if (_latestStateForSave) {
-        saveToStorage(_latestStateForSave)
-        _latestStateForSave = null
+      if (latestStateForSave.current) {
+        saveToStorage(latestStateForSave.current, storageKey)
+        latestStateForSave.current = null
       }
     }
     window.addEventListener('beforeunload', flush)
@@ -1389,6 +1388,9 @@ function App({ readOnly = false, galleryExample = null } = {}) {
           // (setValueAtPath then no-ops, as before).
           const ownWidget = chart.widgetOptions?.find(w => w.id === optionId)
           const candidates = [option.path]
+          // A facet composition moves its original unit under `spec`. Keep
+          // ancestor widgets connected to that same unit after faceting.
+          if (chart.spec.facet && chart.spec.spec) candidates.push(`spec.${option.path}`)
           if (ownWidget?.path && ownWidget.path !== option.path) candidates.push(ownWidget.path)
           if (/^encoding\./.test(option.path) && Array.isArray(chart.spec.layer)) {
             for (let i = 0; i < chart.spec.layer.length; i++) candidates.push(`layer[${i}].${option.path}`)
@@ -2527,6 +2529,7 @@ function App({ readOnly = false, galleryExample = null } = {}) {
   const handleNLSubmit = async (e) => {
     e.preventDefault()
     if (!nlInput.trim() || !selectedChart || isProcessing) return
+    if (guidedDemo) { showToast('Use Try a request to choose a guided example.'); return }
     if (IS_STATIC_DEMO && !hasApiBase()) { setApiKeyOpen(true); showToast('Connect a backend (enter its URL) to use AI features'); return }
 
     setIsProcessing(true)
@@ -2887,6 +2890,7 @@ function App({ readOnly = false, galleryExample = null } = {}) {
 
   // NL-driven encoding: send command + data context to server
   const handleEncodingNLSubmit = useCallback(async (command) => {
+    if (guidedDemo) { showToast('Use Try a request to choose a guided example.'); return }
     if (IS_STATIC_DEMO && !hasApiBase()) { setApiKeyOpen(true); showToast('Connect a backend (enter its URL) to use AI features'); return }
     setIsProcessing(true)
     try {
@@ -3030,7 +3034,7 @@ function App({ readOnly = false, galleryExample = null } = {}) {
   }, [chartObjects, selectedChartIds, dataSources, currentData, nextChartId, showToast])
 
   return (
-    <div className={`app-container${readOnly ? ' readonly-mode' : ''}`}>
+    <div className={`app-container${readOnly ? ' readonly-mode' : ''}${guidedDemo ? ' guided-demo' : ''}`}>
       {/* Header */}
       <header className="app-header">
         {readOnly ? (
@@ -3047,12 +3051,34 @@ function App({ readOnly = false, galleryExample = null } = {}) {
           </div>
         ) : (
           <>
-          <h1>TailVis</h1>
+          <a className="editor-home" href="?">TailVis</a>
+          {guidedDemo && <span className="guided-badge">Guided demo <span>· No API key required</span></span>}
           <div className="header-btns">
+            {guidedDemo && <>
+              <button className="header-btn guided-start" onClick={() => {
+                const chart = selectedChart || chartObjects.at(-1)
+                if (!chart) return
+                setChatInitialMessages(null)
+                setChatElementReferences(null)
+                setChatScopeInfo(null)
+                setChatReferences([])
+                setPreviewChart(null)
+                setChatCanvasPos({ x: chart.x + chart.width + 70, y: chart.y + chart.height / 2 - 200 })
+                setActiveChatId(chart.id)
+                setTimeout(() => panToChart(chart.x, chart.y, chart.width, chart.height), 50)
+              }}>Try a request</button>
+              <button className="header-btn" onClick={() => {
+                latestStateForSave.current = null
+                clearTimeout(saveTimerRef.current)
+                localStorage.removeItem(storageKey)
+                window.location.reload()
+              }}>Reset demo</button>
+              <a className="header-btn" href="?system">System →</a>
+            </>}
             <button className="header-btn" title="Open the example gallery" onClick={() => { window.location.search = '?gallery' }}>
               Gallery
             </button>
-            {IS_STATIC_DEMO && (
+            {IS_STATIC_DEMO && !guidedDemo && (
               <button className="header-btn" title="Connect your backend server" onClick={() => setApiKeyOpen(true)}>
                 <span className={`key-dot${hasApiBase() ? '' : ' off'}`} />
                 Backend
@@ -3280,6 +3306,7 @@ function App({ readOnly = false, galleryExample = null } = {}) {
             onWidgetOptionChange={handleWidgetOptionChange}
             onElementSelect={handleElementSelect}
             activeChatId={activeChatId}
+            guidedDemo={!!guidedDemo}
             onElementReference={handleElementReference}
             elementBadges={chatReferences.map(r => ({ selector: r.selector, number: r.number }))}
             previewChart={previewChart}
@@ -3351,6 +3378,11 @@ function App({ readOnly = false, galleryExample = null } = {}) {
               setActiveChatId(chartId)
               setChatCanvasPos(position)
               setChatInitialMessages(initialMessages || null)
+              if (guidedDemo) {
+                const chart = chartObjects.find(c => c.id === chartId)
+                if (chart) setTimeout(() => panToChart(chart.x, chart.y, chart.width, chart.height), 50)
+                return
+              }
               // Ensure ChatAgent doesn't overflow right edge — pan just enough
               const wrapper = canvasWrapperRef.current
               if (wrapper) {
@@ -3676,6 +3708,8 @@ function App({ readOnly = false, galleryExample = null } = {}) {
       {activeChatId && (
         <ChatAgent
           chartId={activeChatId}
+          requestProvider={guidedDemo?.respond}
+          presetRequests={guidedDemo?.requests}
           chartSpec={chartObjects.find(c => c.id === activeChatId)?.spec}
           elementReferences={chatElementReferences}
           scopeInfo={chatScopeInfo}
@@ -3735,7 +3769,9 @@ function App({ readOnly = false, galleryExample = null } = {}) {
                 const chatAgentX = chatChart.x + chatChart.width + 70
                 const chatAgentY = chatChart.y + chatChart.height / 2 - 200
                 setTimeout(() => {
-                  panToChart(chatAgentX, chatAgentY, 320, 400)
+                  guidedDemo
+                    ? panToChart(sourceChart.x, sourceChart.y, previewX + 560 - sourceChart.x, Math.max(sourceChart.height, 500))
+                    : panToChart(chatAgentX, chatAgentY, 320, 400)
                   chatAgentFocusRef.current?.focus()
                 }, 50)
               }
@@ -3786,6 +3822,7 @@ function App({ readOnly = false, galleryExample = null } = {}) {
             setChartObjects(prev => [...prev, newChart])
             setSelectedChartIds([nextChartId])
             setNextChartId(prev => prev + 1)
+            if (guidedDemo) setTimeout(() => panToChart(newX, newY, 560, 500), 100)
             setActiveChatId(null)
             setChatReferences([])
           }}
@@ -3814,7 +3851,7 @@ function App({ readOnly = false, galleryExample = null } = {}) {
                 setSelectedElements([])
                 setActiveDataSourceId(null)
                 setSelectedChartType(null)
-                localStorage.removeItem('chart-authoring-state')
+                localStorage.removeItem(storageKey)
                 setShowResetConfirm(false)
               }}>Yes</button>
               <button className="confirm-btn confirm-no" onClick={() => setShowResetConfirm(false)}>No</button>

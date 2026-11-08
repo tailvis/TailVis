@@ -57,7 +57,7 @@ export function generateSelector(el, svgElement) {
  * Uses domain line orientation as the primary signal — much more reliable
  * than aria-label text matching which can false-positive on letters like 'x'.
  */
-function detectAxisChannel(axisG) {
+export function detectAxisChannel(axisG) {
   // Strategy 1: Find the domain line via role-axis-domain class (not the longest line,
   // because grid lines can be longer and run perpendicular to the domain).
   const domainGroup = axisG.querySelector('.role-axis-domain')
@@ -207,6 +207,34 @@ function detectCompositeInfo(spec, element) {
     cur = cur.parentElement
   }
   return { compositeMarkType: null, compositeSubPart: null }
+}
+
+/**
+ * Vega emits boxplot medians as filled rectangular paths. Represent those paths
+ * as centerline strokes for the editor, retaining the DOM tag/selector and datum.
+ * This makes standard line controls (color, width and dash) work on the median.
+ */
+export function normalizeCompositeLineMarks(svg, spec) {
+  if (!svg) return
+  for (const node of svg.querySelectorAll('.role-mark path')) {
+    const composite = detectCompositeInfo(spec, node)
+    if (composite.compositeMarkType !== 'boxplot' || composite.compositeSubPart !== 'median') continue
+    if (node.dataset.editorLinePath === node.getAttribute('d')) continue
+    const box = node.getBBox()
+    if (!box.width && !box.height) continue
+    const horizontal = box.width >= box.height
+    const thickness = horizontal ? box.height : box.width
+    const color = resolveColor(node, 'fill', '#ffffff')
+    const d = horizontal
+      ? `M${box.x},${box.y + box.height / 2}H${box.x + box.width}`
+      : `M${box.x + box.width / 2},${box.y}V${box.y + box.height}`
+    node.setAttribute('d', d)
+    node.dataset.editorLinePath = d
+    node.setAttribute('fill', 'none')
+    node.style.setProperty('fill', 'none')
+    node.setAttribute('stroke', color)
+    node.setAttribute('stroke-width', String(thickness || 1))
+  }
 }
 
 /**
@@ -815,6 +843,18 @@ export function detectElementType(element, spec, svgElement) {
       else if (markGroupInfo.markGroup === 'mark-rect' || markGroupInfo.markGroup === 'mark-bar') resolvedType = 'rect'
     }
     const props = buildVisualProperties(element)
+    if (composite.compositeMarkType === 'boxplot' && composite.compositeSubPart === 'median') {
+      resolvedType = 'line'
+      const box = element.getBBox()
+      const normalized = !!element.dataset.editorLinePath
+      Object.assign(props, {
+        stroke: resolveColor(element, normalized ? 'stroke' : 'fill', '#ffffff'),
+        strokeWidth: normalized ? Number(element.getAttribute('stroke-width') ?? 1) : Math.min(box.width, box.height),
+        opacity: Number(element.getAttribute('opacity') ?? 1),
+        strokeDasharray: element.getAttribute('stroke-dasharray') || 'solid',
+      })
+      delete props.fill
+    }
     // Estimate point size from SVG path bounding box (Vega-Lite size = area in px²)
     if (resolvedType === 'point') {
       try {
@@ -824,7 +864,7 @@ export function detectElementType(element, spec, svgElement) {
     }
     return {
       type: resolvedType,
-      elementPath: tagName,
+      elementPath: resolvedType === 'line' ? 'line' : tagName,
       element,
       selector,
       semanticRole,

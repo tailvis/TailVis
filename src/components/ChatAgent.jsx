@@ -77,7 +77,7 @@ function sanitizeChatWidgets(widgets) {
   })
 }
 
-function ChatAgent({ chartId, chartSpec, canvasPos, canvasTransform, canvasWrapperRef, onClose, onApply, onPreviewChange, initialMessages, readOnly, elementReferences, scopeInfo, chatReferences, onChatReferencesChange, focusRef, showToast }) {
+function ChatAgent({ requestProvider, presetRequests, chartId, chartSpec, canvasPos, canvasTransform, canvasWrapperRef, onClose, onApply, onPreviewChange, initialMessages, readOnly, elementReferences, scopeInfo, chatReferences, onChatReferencesChange, focusRef, showToast }) {
   const [messages, setMessages] = useState(initialMessages || [])
   const [input, setInput] = useState('')
   const inputRef = useRef(null)
@@ -103,7 +103,7 @@ function ChatAgent({ chartId, chartSpec, canvasPos, canvasTransform, canvasWrapp
   // Animated loading text
   useEffect(() => {
     if (!isLoading) return
-    const phrase = 'AI is thinking'
+    const phrase = requestProvider ? 'Preparing preview' : 'AI is thinking'
     let dotCount = 0
     setLoadingText(phrase + '.')
     const timer = setInterval(() => {
@@ -164,7 +164,7 @@ function ChatAgent({ chartId, chartSpec, canvasPos, canvasTransform, canvasWrapp
   const dragStartRef = useRef({ mouseX: 0, mouseY: 0, cx: 0, cy: 0, k: 1 })
 
   // Resizing state
-  const [size, setSize] = useState({ width: 320, height: 400 })
+  const [size, setSize] = useState({ width: 320, height: requestProvider ? 560 : 400 })
   const [isResizing, setIsResizing] = useState(false)
   const resizeStart = useRef({ x: 0, y: 0, width: 0, height: 0 })
 
@@ -172,9 +172,9 @@ function ChatAgent({ chartId, chartSpec, canvasPos, canvasTransform, canvasWrapp
   const wrapperRect = canvasWrapperRef?.current?.getBoundingClientRect()
   const wrapperOffsetX = wrapperRect?.left || 0
   const wrapperOffsetY = wrapperRect?.top || 0
-  const screenX = canvasXY.x * t.k + t.x + wrapperOffsetX
-  const screenY = canvasXY.y * t.k + t.y + wrapperOffsetY
-  const screenScale = t.k
+  const screenX = requestProvider ? Math.max(12, window.innerWidth - size.width - 16) : canvasXY.x * t.k + t.x + wrapperOffsetX
+  const screenY = requestProvider ? 80 : canvasXY.y * t.k + t.y + wrapperOffsetY
+  const screenScale = requestProvider ? 1 : t.k
 
   // Auto scroll to bottom
   useEffect(() => {
@@ -186,7 +186,7 @@ function ChatAgent({ chartId, chartSpec, canvasPos, canvasTransform, canvasWrapp
     if (!initialMessages || initialMessages.length === 0) {
       setMessages([{
         role: 'agent',
-        content: 'Describe your modification.',
+        content: requestProvider ? 'Choose a request below. You can adjust the preview, apply it, and branch from any chart.' : 'Describe your modification.',
         timestamp: Date.now()
       }])
     }
@@ -315,13 +315,15 @@ function ChatAgent({ chartId, chartSpec, canvasPos, canvasTransform, canvasWrapp
     return () => el.removeEventListener('wheel', handleWheel)
   }, [])
 
-  const sendMessage = async () => {
-    if (!input.trim() || isLoading) return
-    if (IS_STATIC_DEMO && !hasApiBase()) { showToast?.('Connect a backend (Backend button) to use AI features'); return }
+  const sendMessage = async (request) => {
+    const preset = request?.id ? request : null
+    const content = preset?.label || input.trim()
+    if (!content || isLoading) return
+    if (!requestProvider && IS_STATIC_DEMO && !hasApiBase()) { showToast?.('Connect a backend (Backend button) to use AI features'); return }
 
     const userMessage = {
       role: 'user',
-      content: input.trim(),
+      content,
       timestamp: Date.now(),
       elementRefs: elemRefs || null,
       scopeInfo: scopeRef || null
@@ -335,53 +337,57 @@ function ChatAgent({ chartId, chartSpec, canvasPos, canvasTransform, canvasWrapp
     const sendTimestamp = Date.now()
 
     try {
-      const response = await fetch(apiUrl('/api/chat-agent'), {
-        method: 'POST',
-        headers: withApiKey({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({
-          chartSpec,
-          message: userMessage.content,
-          conversationHistory: messages.map(m => ({
-            role: m.role === 'agent' ? 'assistant' : 'user',
-            content: m.content
-          })),
-          elementReferences: scopeRef
-            ? [{
-                ref: 1,
-                scopeType: scopeRef.scopeType,
-                scopeLabel: scopeRef.labelEn,
-                scopeData: scopeRef.scopeData,
-                elementCount: scopeRef.elementCount,
-                markType: elemRefs?.[0]?.markType || 'unknown',
-                datum: elemRefs?.[0]?.datum || null,
-                properties: elemRefs?.[0]?.properties || {},
-                label: scopeRef.labelEn
-              }]
-            : elemRefs || null,
-          numberedReferences: chatReferences && chatReferences.length > 0
-            ? chatReferences.map(r => ({
-                ref: r.number, markType: r.markType, datum: r.datum,
-                properties: r.properties, selector: r.selector, label: r.label
-              }))
-            : null
-        })
-      })
-
-      const text = await response.text()
-      if (!text) {
-        throw new Error('Received empty response from server')
-      }
-
       let data
-      try {
-        data = JSON.parse(text)
-      } catch (parseError) {
-        console.error('Server response:', text)
-        throw new Error(`Failed to parse server response: ${text.substring(0, 200)}`)
-      }
+      if (requestProvider) {
+        data = await requestProvider({ chartSpec: currentPreviewSpec || chartSpec, requestId: preset?.id })
+      } else {
+        const response = await fetch(apiUrl('/api/chat-agent'), {
+          method: 'POST',
+          headers: withApiKey({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({
+            chartSpec,
+            message: userMessage.content,
+            conversationHistory: messages.map(m => ({
+              role: m.role === 'agent' ? 'assistant' : 'user',
+              content: m.content
+            })),
+            elementReferences: scopeRef
+              ? [{
+                  ref: 1,
+                  scopeType: scopeRef.scopeType,
+                  scopeLabel: scopeRef.labelEn,
+                  scopeData: scopeRef.scopeData,
+                  elementCount: scopeRef.elementCount,
+                  markType: elemRefs?.[0]?.markType || 'unknown',
+                  datum: elemRefs?.[0]?.datum || null,
+                  properties: elemRefs?.[0]?.properties || {},
+                  label: scopeRef.labelEn
+                }]
+              : elemRefs || null,
+            numberedReferences: chatReferences && chatReferences.length > 0
+              ? chatReferences.map(r => ({
+                  ref: r.number, markType: r.markType, datum: r.datum,
+                  properties: r.properties, selector: r.selector, label: r.label
+                }))
+              : null
+          })
+        })
 
-      if (!response.ok) {
-        throw new Error(data.error || 'API request failed')
+        const text = await response.text()
+        if (!text) {
+          throw new Error('Received empty response from server')
+        }
+
+        try {
+          data = JSON.parse(text)
+        } catch (parseError) {
+          console.error('Server response:', text)
+          throw new Error(`Failed to parse server response: ${text.substring(0, 200)}`)
+        }
+
+        if (!response.ok) {
+          throw new Error(data.error || 'API request failed')
+        }
       }
 
       // Show toast if server retried due to invalid spec
@@ -822,6 +828,7 @@ function ChatAgent({ chartId, chartSpec, canvasPos, canvasTransform, canvasWrapp
         top: screenY,
         width: size.width,
         height: size.height,
+        maxHeight: requestProvider ? 'calc(100dvh - 100px)' : undefined,
         transformOrigin: '0 0',
         transform: `scale(${screenScale})`
       }}
@@ -847,7 +854,15 @@ function ChatAgent({ chartId, chartSpec, canvasPos, canvasTransform, canvasWrapp
         <div ref={messagesEndRef} />
       </div>
 
-      {!readOnly && (
+      {!readOnly && presetRequests && (
+        <div className="guided-requests">
+          <p>Choose a request · no AI connection needed</p>
+          {presetRequests.map(request => <button key={request.id} disabled={isLoading} onClick={() => sendMessage(request)}>
+            {request.label}<span>{request.hint}</span>
+          </button>)}
+        </div>
+      )}
+      {!readOnly && !presetRequests && (
         <div className="chat-input-area">
           {(elemRefs?.length > 0 || chatReferences?.length > 0) && (
             <div className="ref-token-strip">

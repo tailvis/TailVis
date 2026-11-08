@@ -1,0 +1,429 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "width": 445,
+  "height": 300,
+  "mark": {
+    "type": "boxplot",
+    "size": 38,
+    "median": {
+      "color": "white",
+      "thickness": 2,
+      "opacity": 1
+    }
+  },
+  "encoding": {
+    "x": {
+      "field": "method",
+      "type": "nominal",
+      "axis": {
+        "labelAngle": 0,
+        "title": null,
+        "labelExpr": "split(datum.label, ' ')",
+        "labelLineHeight": 15,
+        "labelPadding": 12,
+        "labelFontSize": 12,
+        "domain": false,
+        "ticks": false,
+        "labelColor": "#556b73"
+      },
+      "sort": [
+        "Element Select",
+        "Scope Confirm",
+        "NL Prompt",
+        "Dynamic Widget",
+        "Property Widget"
+      ]
+    },
+    "y": {
+      "field": "percentage",
+      "type": "quantitative",
+      "scale": {
+        "zero": false
+      },
+      "axis": {
+        "title": "Percentage (%)",
+        "titleFontWeight": 400,
+        "titleColor": "#7b888d",
+        "titlePadding": 12,
+        "domain": false,
+        "ticks": false,
+        "gridColor": "#e8edef",
+        "labelPadding": 8,
+        "labelFontSize": 11,
+        "labelColor": "#87979d"
+      }
+    },
+    "color": {
+      "field": "method",
+      "type": "nominal",
+      "legend": null,
+      "scale": {
+        "domain": [
+          "Element Select",
+          "Scope Confirm",
+          "NL Prompt",
+          "Dynamic Widget",
+          "Property Widget"
+        ],
+        "range": [
+          "#4c78a8",
+          "#f58518",
+          "#54a24b",
+          "#e45756",
+          "#b279a2"
+        ]
+      }
+    }
+  },
+  "data": {
+    "values": [
+      {
+        "method": "Element Select",
+        "percentage": 60.3,
+        "panel": "Input Modality",
+        "record_id": "element-select_record_01"
+      },
+      {
+        "method": "Element Select",
+        "percentage": 67.4,
+        "panel": "Input Modality",
+        "record_id": "element-select_record_02"
+      },
+      {
+        "method": "Element Select",
+        "percentage": 50.6,
+        "panel": "Input Modality",
+        "record_id": "element-select_record_03"
+      },
+      {
+        "method": "Element Select",
+        "percentage": 53.2,
+        "panel": "Input Modality",
+        "record_id": "element-select_record_04"
+      },
+      {
+        "method": "Element Select",
+        "percentage": 70.6,
+        "panel": "Input Modality",
+        "record_id": "element-select_record_05"
+      },
+      {
+        "method": "Element Select",
+        "percentage": 44.2,
+        "panel": "Input Modality",
+        "record_id": "element-select_record_06"
+      },
+      {
+        "method": "Element Select",
+        "percentage": 50,
+        "panel": "Input Modality",
+        "record_id": "element-select_record_07"
+      },
+      {
+        "method": "Element Select",
+        "percentage": 46.9,
+        "panel": "Input Modality",
+        "record_id": "element-select_record_08"
+      },
+      {
+        "method": "Element Select",
+        "percentage": 57.3,
+        "panel": "Input Modality",
+        "record_id": "element-select_record_09"
+      },
+      {
+        "method": "Element Select",
+        "percentage": 77.4,
+        "panel": "Input Modality",
+        "record_id": "element-select_record_10"
+      },
+      {
+        "method": "Element Select",
+        "percentage": 58.6,
+        "panel": "Input Modality",
+        "record_id": "element-select_record_11"
+      },
+      {
+        "method": "Scope Confirm",
+        "percentage": 25,
+        "panel": "Input Modality",
+        "record_id": "scope-confirm_record_01"
+      },
+      {
+        "method": "Scope Confirm",
+        "percentage": 22.5,
+        "panel": "Input Modality",
+        "record_id": "scope-confirm_record_02"
+      },
+      {
+        "method": "Scope Confirm",
+        "percentage": 23.5,
+        "panel": "Input Modality",
+        "record_id": "scope-confirm_record_03"
+      },
+      {
+        "method": "Scope Confirm",
+        "percentage": 29.8,
+        "panel": "Input Modality",
+        "record_id": "scope-confirm_record_04"
+      },
+      {
+        "method": "Scope Confirm",
+        "percentage": 19.3,
+        "panel": "Input Modality",
+        "record_id": "scope-confirm_record_05"
+      },
+      {
+        "method": "Scope Confirm",
+        "percentage": 28.8,
+        "panel": "Input Modality",
+        "record_id": "scope-confirm_record_06"
+      },
+      {
+        "method": "Scope Confirm",
+        "percentage": 30.3,
+        "panel": "Input Modality",
+        "record_id": "scope-confirm_record_07"
+      },
+      {
+        "method": "Scope Confirm",
+        "percentage": 35.9,
+        "panel": "Input Modality",
+        "record_id": "scope-confirm_record_08"
+      },
+      {
+        "method": "Scope Confirm",
+        "percentage": 33,
+        "panel": "Input Modality",
+        "record_id": "scope-confirm_record_09"
+      },
+      {
+        "method": "Scope Confirm",
+        "percentage": 8.1,
+        "panel": "Input Modality",
+        "record_id": "scope-confirm_record_10"
+      },
+      {
+        "method": "Scope Confirm",
+        "percentage": 19,
+        "panel": "Input Modality",
+        "record_id": "scope-confirm_record_11"
+      },
+      {
+        "method": "NL Prompt",
+        "percentage": 14.7,
+        "panel": "Input Modality",
+        "record_id": "nl-prompt_record_01"
+      },
+      {
+        "method": "NL Prompt",
+        "percentage": 10.1,
+        "panel": "Input Modality",
+        "record_id": "nl-prompt_record_02"
+      },
+      {
+        "method": "NL Prompt",
+        "percentage": 25.9,
+        "panel": "Input Modality",
+        "record_id": "nl-prompt_record_03"
+      },
+      {
+        "method": "NL Prompt",
+        "percentage": 17,
+        "panel": "Input Modality",
+        "record_id": "nl-prompt_record_04"
+      },
+      {
+        "method": "NL Prompt",
+        "percentage": 10.1,
+        "panel": "Input Modality",
+        "record_id": "nl-prompt_record_05"
+      },
+      {
+        "method": "NL Prompt",
+        "percentage": 26.9,
+        "panel": "Input Modality",
+        "record_id": "nl-prompt_record_06"
+      },
+      {
+        "method": "NL Prompt",
+        "percentage": 19.7,
+        "panel": "Input Modality",
+        "record_id": "nl-prompt_record_07"
+      },
+      {
+        "method": "NL Prompt",
+        "percentage": 17.2,
+        "panel": "Input Modality",
+        "record_id": "nl-prompt_record_08"
+      },
+      {
+        "method": "NL Prompt",
+        "percentage": 9.7,
+        "panel": "Input Modality",
+        "record_id": "nl-prompt_record_09"
+      },
+      {
+        "method": "NL Prompt",
+        "percentage": 14.5,
+        "panel": "Input Modality",
+        "record_id": "nl-prompt_record_10"
+      },
+      {
+        "method": "NL Prompt",
+        "percentage": 22.4,
+        "panel": "Input Modality",
+        "record_id": "nl-prompt_record_11"
+      },
+      {
+        "method": "Dynamic Widget",
+        "percentage": 40.6,
+        "panel": "Modification Strategy",
+        "record_id": "dynamic-widget_record_01"
+      },
+      {
+        "method": "Dynamic Widget",
+        "percentage": 25,
+        "panel": "Modification Strategy",
+        "record_id": "dynamic-widget_record_02"
+      },
+      {
+        "method": "Dynamic Widget",
+        "percentage": 31.6,
+        "panel": "Modification Strategy",
+        "record_id": "dynamic-widget_record_03"
+      },
+      {
+        "method": "Dynamic Widget",
+        "percentage": 43.4,
+        "panel": "Modification Strategy",
+        "record_id": "dynamic-widget_record_04"
+      },
+      {
+        "method": "Dynamic Widget",
+        "percentage": 12.1,
+        "panel": "Modification Strategy",
+        "record_id": "dynamic-widget_record_05"
+      },
+      {
+        "method": "Dynamic Widget",
+        "percentage": 36.7,
+        "panel": "Modification Strategy",
+        "record_id": "dynamic-widget_record_06"
+      },
+      {
+        "method": "Dynamic Widget",
+        "percentage": 41.9,
+        "panel": "Modification Strategy",
+        "record_id": "dynamic-widget_record_07"
+      },
+      {
+        "method": "Dynamic Widget",
+        "percentage": 34.1,
+        "panel": "Modification Strategy",
+        "record_id": "dynamic-widget_record_08"
+      },
+      {
+        "method": "Dynamic Widget",
+        "percentage": 35.4,
+        "panel": "Modification Strategy",
+        "record_id": "dynamic-widget_record_09"
+      },
+      {
+        "method": "Dynamic Widget",
+        "percentage": 32.1,
+        "panel": "Modification Strategy",
+        "record_id": "dynamic-widget_record_10"
+      },
+      {
+        "method": "Dynamic Widget",
+        "percentage": 20,
+        "panel": "Modification Strategy",
+        "record_id": "dynamic-widget_record_11"
+      },
+      {
+        "method": "Property Widget",
+        "percentage": 59.4,
+        "panel": "Modification Strategy",
+        "record_id": "property-widget_record_01"
+      },
+      {
+        "method": "Property Widget",
+        "percentage": 75,
+        "panel": "Modification Strategy",
+        "record_id": "property-widget_record_02"
+      },
+      {
+        "method": "Property Widget",
+        "percentage": 68.4,
+        "panel": "Modification Strategy",
+        "record_id": "property-widget_record_03"
+      },
+      {
+        "method": "Property Widget",
+        "percentage": 56.6,
+        "panel": "Modification Strategy",
+        "record_id": "property-widget_record_04"
+      },
+      {
+        "method": "Property Widget",
+        "percentage": 87.9,
+        "panel": "Modification Strategy",
+        "record_id": "property-widget_record_05"
+      },
+      {
+        "method": "Property Widget",
+        "percentage": 63.3,
+        "panel": "Modification Strategy",
+        "record_id": "property-widget_record_06"
+      },
+      {
+        "method": "Property Widget",
+        "percentage": 58.1,
+        "panel": "Modification Strategy",
+        "record_id": "property-widget_record_07"
+      },
+      {
+        "method": "Property Widget",
+        "percentage": 65.9,
+        "panel": "Modification Strategy",
+        "record_id": "property-widget_record_08"
+      },
+      {
+        "method": "Property Widget",
+        "percentage": 64.6,
+        "panel": "Modification Strategy",
+        "record_id": "property-widget_record_09"
+      },
+      {
+        "method": "Property Widget",
+        "percentage": 67.9,
+        "panel": "Modification Strategy",
+        "record_id": "property-widget_record_10"
+      },
+      {
+        "method": "Property Widget",
+        "percentage": 80,
+        "panel": "Modification Strategy",
+        "record_id": "property-widget_record_11"
+      }
+    ]
+  },
+  "padding": 22,
+  "title": {
+    "text": "User Interaction Patterns",
+    "anchor": "start",
+    "font": "Avenir",
+    "fontSize": 22,
+    "fontWeight": 700,
+    "color": "#243d46",
+    "offset": 22
+  },
+  "config": {
+    "font": "Avenir",
+    "view": {
+      "stroke": null
+    },
+    "background": "#ffffff"
+  }
+}

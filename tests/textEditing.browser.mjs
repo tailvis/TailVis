@@ -24,7 +24,7 @@ test('editing actual facet labels keeps whitespace and isolates selection change
       _storageVersion: 10, chartObjects: [{ id: 64, x: 30, y: 30, width: 650, height: 450, spec }],
       nextChartId: 65, currentData: values,
     })
-    await page.goto(server.resolvedUrls.local[0])
+    await page.goto(server.resolvedUrls.local[0] + '?system')
     const chart = page.locator('#vega-chart-64')
     await chart.locator('.role-axis-label text').first().waitFor()
     const label = name => chart.locator('.role-axis-label text').filter({ hasText: new RegExp(`^${name}$`) })

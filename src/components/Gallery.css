@@ -217,3 +217,41 @@
   .gallery-detail-body { grid-template-columns: 1fr; }
   .gallery-detail-side { position: static; }
 }
+
+/* Project home: the gallery is part of the first visit, rather than hidden in the editor. */
+.gallery-root { height: 100dvh; overflow-y: auto; background: #f6f7f4; color: #213a3c; font-family: Avenir, 'Segoe UI', sans-serif; scroll-behavior: smooth; }
+.gallery-grid-view { max-width: 1280px; padding: 0 48px 32px; }
+.project-nav { display: flex; align-items: center; justify-content: space-between; min-height: 88px; border-bottom: 1px solid #d7dfd9; }
+.project-nav a,.project-actions a,.project-footer a { color: inherit; text-decoration: none; }
+.project-brand { display: flex; gap: 10px; align-items: center; font-size: 26px; font-weight: 800; letter-spacing: -.8px; }
+.brand-mark { color: #1b7e70; font-size: 32px; }
+.project-nav > div { display: flex; gap: 32px; align-items: center; font-size: 14px; font-weight: 600; }
+.project-system-link { padding: 9px 15px; border: 1px solid #bccdc4; }
+.project-hero { display: grid; grid-template-columns: 1.25fr 1fr; gap: 70px; padding: 48px 0 38px; align-items: center; }
+.project-eyebrow { font-size: 11px; letter-spacing: .13em; text-transform: uppercase; color: #557368; font-weight: 700; margin-bottom: 14px; }
+.project-hero h1 { font-family: Georgia, serif; font-size: clamp(36px, 3.4vw, 49px); line-height: 1.14; letter-spacing: -1.6px; font-weight: 400; }
+.project-hero h1 em { font-style: normal; color: #1b7e70; }
+.project-intro > p { font-size: 16px; line-height: 1.6; }
+.project-intro .project-intro-secondary { font-size: 14px; color: #65756b; margin-top: 10px; }
+.project-actions { display: flex; gap: 24px; align-items: center; margin: 22px 0 10px; font-size: 14px; font-weight: 600; }
+.project-actions .project-primary { display: inline-flex; align-items: center; gap: 30px; padding: 12px 18px; color: white; background: #236b5e; }
+.project-primary:hover { background: #175144; }
+.project-intro small { font-size: 11px; color: #728078; }
+.project-workflow { display: flex; justify-content: space-between; gap: 20px; border-top: 1px solid #d7dfd9; border-bottom: 1px solid #d7dfd9; padding: 17px 0; font-size: 12px; }
+.project-workflow b { font-size: 10px; margin-right: 8px; color: #879b8e; }
+.project-gallery-intro { display: flex; justify-content: space-between; align-items: end; gap: 20px; padding: 32px 0 20px; scroll-margin-top: 20px; }
+.project-gallery-intro .project-eyebrow { margin-bottom: 6px; }
+.project-gallery-intro h2 { font-family: Georgia, serif; font-size: 30px; font-weight: 400; letter-spacing: -.5px; }
+.project-gallery-intro > p { font-size: 12px; color: #65756b; line-height: 1.6; }
+.gallery-grid { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 22px; }
+.gallery-card { border-radius: 0; border-color: #dce2dc; }
+.gallery-mini { height: 205px; padding: 18px; border-bottom-color: #eef1ed; }
+.gallery-mini svg,.gallery-thumb-img { max-height: 170px; }
+.gallery-card-body { padding: 16px 18px; }
+.gallery-card-title { font-size: 17px; color: #213a3c; margin-bottom: 9px; }
+.gallery-badge { background: none; padding: 0; color: #6d8075; font-weight: 400; font-size: 11px; }
+.gallery-card-open { margin-left: auto; font-size: 11px; color: #1b7e70; }
+.project-footer { display: flex; justify-content: space-between; gap: 20px; margin-top: 45px; padding-top: 20px; border-top: 1px solid #d7dfd9; font-size: 11px; color: #728078; }
+.gallery-root a:focus-visible,.gallery-card:focus-visible { outline: 3px solid #20a78a; outline-offset: 4px; }
+@media(max-width: 850px) { .gallery-grid-view { padding: 0 24px 25px; } .project-hero { gap: 30px; grid-template-columns: 1fr; padding: 32px 0; } .project-hero h1 { font-size: 40px; } .project-workflow { flex-wrap: wrap; justify-content: start; } .gallery-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media(max-width: 520px) { .project-nav > div { gap: 12px; font-size: 12px; } .project-system-link { padding: 7px; } .project-brand { font-size: 22px; } .project-hero h1 { font-size: 35px; } .gallery-grid { grid-template-columns: 1fr; } .project-gallery-intro { display: block; } .project-gallery-intro > p { margin-top: 12px; } .project-footer { flex-direction: column; } }

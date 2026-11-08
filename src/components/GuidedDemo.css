@@ -1,0 +1,16 @@
+.header-btns a.header-btn { text-decoration: none; display: inline-flex; align-items: center; }
+.guided-badge { font-size: 12px; color: #247263; background: #edf6f1; padding: 5px 9px; }
+.guided-badge span { color: #617f72; }
+.guided-demo .header-btns { margin-left: auto; }
+.guided-demo .guided-start { color: white; background: #277b69; border-color: #277b69; }
+.guided-requests { border-top: 1px solid #dce6e1; padding: 12px; background: #f4f8f5; overflow-y: auto; max-height: 245px; flex-shrink: 0; }
+.guided-requests > p { color: #688376; font-size: 11px; margin: 0 0 8px; }
+.guided-requests button { display: block; width: 100%; text-align: left; background: white; border: 1px solid #d2e2d7; border-radius: 4px; color: #245647; padding: 9px 11px; margin-top: 7px; font: inherit; font-size: 12px; cursor: pointer; }
+.guided-requests button span { display: block; color: #778a7e; font-size: 10px; line-height: 1.5; margin-top: 2px; }
+.guided-requests button:hover { border-color: #23826a; background: #edf7f1; }
+.guided-requests button:disabled { opacity: .5; cursor: wait; }
+.guided-requests button:focus-visible { outline: 2px solid #23826a; outline-offset: 2px; }
+.guided-demo .chat-agent { min-height: 460px; }
+.guided-demo .encoding-bar { display: none; }
+@media(max-width: 780px) { .guided-badge span { display: none; } .guided-demo .header-btn { padding: 5px 7px; font-size: 11px; } .guided-badge { font-size: 10px; } }
+.guided-demo .chat-agent { z-index: 1100; }

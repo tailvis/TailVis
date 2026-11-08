@@ -4,7 +4,7 @@ import * as d3 from 'd3'
 import vegaEmbed from 'vega-embed'
 import ConnectionWidget from './ConnectionWidget'
 import ModificationPanel from './ModificationPanel'
-import { detectElementType, extractDatum, getLayerIndex } from '../utils/elementUtils'
+import { detectElementType, extractDatum, getLayerIndex, normalizeCompositeLineMarks } from '../utils/elementUtils'
 import { inferSelectionIntent, findMatchingElements } from '../utils/selectionInference'
 import { isAnnotationLayer, analyzeLayerContext, classifyLayer } from '../utils/scopeUtils'
 import { generateScopeHierarchy } from '../utils/scopeHierarchy'
@@ -78,7 +78,7 @@ const ARROW_LEN_ACTIVE = 9             // …and in the highlighted chain
 const ARROW_HALF_ACTIVE = 5
 const HANDLE_SIZE = 8
 
-function Canvas({
+function Canvas({ guidedDemo = false,
   chartObjects,
   readOnly = false,
   selectedChartIds,
@@ -1166,7 +1166,7 @@ function Canvas({
               return
             }
 
-            const attrName = svgAttrMap[propName]
+            const attrName = el.dataset.editorLinePath && ['fill', 'color'].includes(propName) ? 'stroke' : svgAttrMap[propName]
             if (attrName) {
               if (propName === 'strokeDasharray' && value === 'solid') {
                 el.removeAttribute('stroke-dasharray')
@@ -1224,6 +1224,7 @@ function Canvas({
 
       // Add click handlers to SVG elements for property editing
       const svgElement = container.querySelector('svg')
+      normalizeCompositeLineMarks(svgElement, spec)
 
       if (svgElement && svgOverrides && Object.keys(svgOverrides).length > 0) {
         applySvgOverrides(svgElement, svgOverrides)
@@ -2844,6 +2845,11 @@ function Canvas({
             }}
           >
             <ConnectionWidget
+              guidedDemo={guidedDemo}
+              onGuidedRequest={() => {
+                const chart = chartObjects.find(c => c.id === widget.chartId)
+                if (chart) onOpenChat?.(chart.id, { x: chart.x + chart.width + 70, y: chart.y + chart.height / 2 - 200 })
+              }}
               chartId={widget.chartId}
               command={widget.command}
               widgetTitle={widget.widgetTitle}
