@@ -79,6 +79,8 @@ function sanitizeChatWidgets(widgets) {
 
 function ChatAgent({ requestProvider, presetRequests, chartId, chartSpec, canvasPos, canvasTransform, canvasWrapperRef, onClose, onApply, onPreviewChange, initialMessages, readOnly, elementReferences, scopeInfo, chatReferences, onChatReferencesChange, focusRef, showToast }) {
   const [messages, setMessages] = useState(initialMessages || [])
+  const requestVersion = useRef(0)
+  useEffect(() => () => { requestVersion.current++ }, [])
   const [input, setInput] = useState('')
   const inputRef = useRef(null)
   // Expose focus method to parent via focusRef
@@ -183,10 +185,10 @@ function ChatAgent({ requestProvider, presetRequests, chartId, chartSpec, canvas
 
   // Initial greeting (only if no initial messages)
   useEffect(() => {
-    if (!initialMessages || initialMessages.length === 0) {
+    if ((!initialMessages || initialMessages.length === 0) && !requestProvider) {
       setMessages([{
         role: 'agent',
-        content: requestProvider ? 'Choose a request below. You can adjust the preview, apply it, and branch from any chart.' : 'Describe your modification.',
+        content: 'Describe your modification.',
         timestamp: Date.now()
       }])
     }
@@ -315,12 +317,17 @@ function ChatAgent({ requestProvider, presetRequests, chartId, chartSpec, canvas
     return () => el.removeEventListener('wheel', handleWheel)
   }, [])
 
+  const availableRequests = typeof presetRequests === 'function'
+    ? presetRequests(currentPreviewSpec || chartSpec)
+    : presetRequests || []
+
   const sendMessage = async (request) => {
     const preset = request?.id ? request : null
     const content = preset?.label || input.trim()
     if (!content || isLoading) return
     if (!requestProvider && IS_STATIC_DEMO && !hasApiBase()) { showToast?.('Connect a backend (Backend button) to use AI features'); return }
 
+    const version = ++requestVersion.current
     const userMessage = {
       role: 'user',
       content,
@@ -390,6 +397,8 @@ function ChatAgent({ requestProvider, presetRequests, chartId, chartSpec, canvas
         }
       }
 
+      if (requestVersion.current !== version) return
+
       // Show toast if server retried due to invalid spec
       if (data.retried && showToast) {
         showToast('Invalid spec generated, retrying')
@@ -419,6 +428,7 @@ function ChatAgent({ requestProvider, presetRequests, chartId, chartSpec, canvas
       }
 
     } catch (error) {
+      if (requestVersion.current !== version) return
       logEvent('nli_response', { responseTimeMs: Date.now() - sendTimestamp, success: false, error: error.message })
       console.error('Chat error:', error)
       setMessages(prev => [...prev, {
@@ -428,7 +438,7 @@ function ChatAgent({ requestProvider, presetRequests, chartId, chartSpec, canvas
         isError: true
       }])
     } finally {
-      setIsLoading(false)
+      if (requestVersion.current === version) setIsLoading(false)
     }
   }
 
@@ -856,9 +866,8 @@ function ChatAgent({ requestProvider, presetRequests, chartId, chartSpec, canvas
 
       {!readOnly && presetRequests && (
         <div className="guided-requests">
-          <p>Choose a request · no AI connection needed</p>
-          {presetRequests.map(request => <button key={request.id} disabled={isLoading} onClick={() => sendMessage(request)}>
-            {request.label}<span>{request.hint}</span>
+          {availableRequests.map(request => <button key={request.id} disabled={isLoading} onClick={() => sendMessage(request)}>
+            {request.label}
           </button>)}
         </div>
       )}

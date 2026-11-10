@@ -1,3 +1,4 @@
+import { applySvgTransformOverrides } from '../utils/svgTransform'
 import { setSvgText } from '../utils/svgText'
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import * as d3 from 'd3'
@@ -662,7 +663,7 @@ function Canvas({ guidedDemo = false,
       if (elementInfo) {
         elementInfo.datum = extractDatum(target)
         elementInfo.element = target
-        elementInfo.layerIndex = getLayerIndex(target, svgEl)
+        elementInfo.layerIndex = getLayerIndex(target, svgEl, chartObj?.spec)
 
         // Detect layer context (annotation / highlight / data-mark)
         if (chartObj?.spec?.layer && elementInfo.layerIndex != null) {
@@ -739,7 +740,7 @@ function Canvas({ guidedDemo = false,
           if (elementInfo) {
             elementInfo.datum = extractDatum(el)
             elementInfo.element = el
-            elementInfo.layerIndex = getLayerIndex(el, svgEl)
+            elementInfo.layerIndex = getLayerIndex(el, svgEl, chartObj?.spec)
           }
           newEntries.push({ chartId, element: el, selector: sel, elementInfo: elementInfo || externalSelectedElement })
         }
@@ -827,7 +828,7 @@ function Canvas({ guidedDemo = false,
             if (elInfo && elInfo.selector && !existingSelectors.has(elInfo.selector)) {
               elInfo.datum = extractDatum(el)
               elInfo.element = el
-              elInfo.layerIndex = getLayerIndex(el, svgEl)
+              elInfo.layerIndex = getLayerIndex(el, svgEl, chartObj?.spec)
               selectedElementsRef.current.push({ chartId, element: el, selector: elInfo.selector, elementInfo: elInfo })
               existingSelectors.add(elInfo.selector)
             }
@@ -865,7 +866,7 @@ function Canvas({ guidedDemo = false,
           if (elInfo) {
             elInfo.datum = extractDatum(firstEl)
             elInfo.element = firstEl
-            elInfo.layerIndex = getLayerIndex(firstEl, svgEl)
+            elInfo.layerIndex = getLayerIndex(firstEl, svgEl, chartObj?.spec)
             const allInfos = []
             const allSelectors = []
             for (const el2 of scopeEntry.elements) {
@@ -874,7 +875,7 @@ function Canvas({ guidedDemo = false,
                 if (info2 && info2.selector) {
                   info2.datum = extractDatum(el2)
                   info2.element = el2
-                  info2.layerIndex = getLayerIndex(el2, svgEl)
+                  info2.layerIndex = getLayerIndex(el2, svgEl, chartObj?.spec)
                   info2._scopeType = scopeEntry.scopeType
                   info2._scopeData = scopeEntry.scopeData
                   info2._scopeLabel = scopeEntry.label
@@ -1071,11 +1072,9 @@ function Canvas({ guidedDemo = false,
       try {
         const elements = svgElement.querySelectorAll(selector)
         elements.forEach(el => {
+          applySvgTransformOverrides(el, props)
           Object.entries(props).forEach(([propName, value]) => {
-            if (propName === 'transform') {
-              el.setAttribute('transform', value)
-              return
-            }
+            if (['transform', 'angle', 'dx', 'dy'].includes(propName)) return
 
             // Symbol size has no SVG attribute: scale the selected glyph around
             // its existing origin instead of silently dropping a grouped size edit.
@@ -1086,31 +1085,6 @@ function Canvas({ guidedDemo = false,
                   el.dataset.origSizeTransform = el.getAttribute('transform') || ''
                 }
                 el.setAttribute('transform', `${el.dataset.origSizeTransform} scale(${Math.sqrt(Number(value) / originalSize)})`)
-              }
-              return
-            }
-
-            if (propName === 'angle' && el.tagName?.toLowerCase() === 'text') {
-              if (el.dataset.origAngleTransform == null) {
-                el.dataset.origAngleTransform = (el.getAttribute('transform') || '').replace(/rotate\([^)]*\)/g, '').trim()
-              }
-              el.setAttribute('transform', `${el.dataset.origAngleTransform} rotate(${Number(value) || 0})`)
-              return
-            }
-
-            // dx/dy → translate offset (preserves original Vega transform)
-            if (propName === 'dx' || propName === 'dy') {
-              // Save original transform on first encounter (lost on Vega re-render, which is fine)
-              if (el.dataset.origTransform == null) {
-                el.dataset.origTransform = el.getAttribute('transform') || ''
-              }
-              const orig = el.dataset.origTransform
-              const dx = parseFloat(props.dx) || 0
-              const dy = parseFloat(props.dy) || 0
-              if (dx !== 0 || dy !== 0) {
-                el.setAttribute('transform', `${orig} translate(${dx},${dy})`.trim())
-              } else {
-                el.setAttribute('transform', orig)
               }
               return
             }
@@ -2020,7 +1994,7 @@ function Canvas({ guidedDemo = false,
               if (elInfo) {
                 elInfo.datum = extractDatum(newEl)
                 elInfo.element = newEl
-                elInfo.layerIndex = getLayerIndex(newEl, svgEl)
+                elInfo.layerIndex = getLayerIndex(newEl, svgEl, chartObj?.spec)
                 // Restore layer classification for annotation detection
                 if (elInfo.layerIndex != null && chartObj.spec?.layer?.[elInfo.layerIndex]) {
                   const dataValues = chartObj.dataSourceId && dataSources?.[chartObj.dataSourceId]

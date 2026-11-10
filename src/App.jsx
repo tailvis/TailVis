@@ -1,3 +1,4 @@
+import { timeUnitMatch } from './utils/dataHighlight'
 import { stabilizeChartSelectors } from './utils/stableSelectors'
 import { setSvgText } from './utils/svgText'
 import { useState, useRef, useCallback, useEffect, useMemo, lazy, Suspense } from 'react'
@@ -484,14 +485,18 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
   }, [])
 
   // Read-only gallery mode seeds from a frozen example and NEVER persists (guarded below).
-  const savedState = useRef(readOnly ? null : (loadFromStorage(storageKey) || initialState)).current
+  const [savedState] = useState(() => {
+    if (readOnly) return null
+    const stored = loadFromStorage(storageKey) || initialState
+    return guidedDemo?.restore ? guidedDemo.restore(stored) : stored
+  })
   const galleryInit = useRef(readOnly && galleryExample ? prepareGalleryExample(galleryExample) : null).current
 
   // Chart objects on canvas
   const [chartObjects, setChartObjects] = useState(
     readOnly ? (galleryInit?.chartObjects || []) : (savedState?.chartObjects || [])
   )
-  const [selectedChartIds, setSelectedChartIds] = useState([])
+  const [selectedChartIds, setSelectedChartIds] = useState(guidedDemo && savedState?.lastSelectedChartId ? [savedState.lastSelectedChartId] : [])
   const [nextChartId, setNextChartId] = useState((readOnly ? galleryInit?.nextChartId : savedState?.nextChartId) || 1)
 
   // Undo/Redo history
@@ -1392,8 +1397,12 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
           // ancestor widgets connected to that same unit after faceting.
           if (chart.spec.facet && chart.spec.spec) candidates.push(`spec.${option.path}`)
           if (ownWidget?.path && ownWidget.path !== option.path) candidates.push(ownWidget.path)
-          if (/^encoding\./.test(option.path) && Array.isArray(chart.spec.layer)) {
-            for (let i = 0; i < chart.spec.layer.length; i++) candidates.push(`layer[${i}].${option.path}`)
+          if (/^(encoding|mark)\./.test(option.path)) {
+            for (const [prefix, host] of [['', chart.spec], ['spec.', chart.spec.spec]]) {
+              if (Array.isArray(host?.layer)) {
+                for (let i = 0; i < host.layer.length; i++) candidates.push(`${prefix}layer[${i}].${option.path}`)
+              }
+            }
           }
           const applyPath = candidates.find(p => getValueAtPath(chart.spec, p) !== undefined) || option.path
 
@@ -1522,7 +1531,7 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
     elementInfo.datum = extractDatum(el)
     elementInfo.layerId = layer.id
     elementInfo.element = el
-    elementInfo.layerIndex = getLayerIndex(el, svgElement)
+    elementInfo.layerIndex = getLayerIndex(el, svgElement, spec)
 
     // Set layer classification for annotation detection
     if (elementInfo.layerIndex != null && spec?.layer?.[elementInfo.layerIndex]) {
@@ -1585,7 +1594,7 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
   // Right panel split handlers removed — now using tab view
 
   // Horizontal panel resize handlers
-  const ICON_SIDEBAR_WIDTH = 48
+  const ICON_SIDEBAR_WIDTH = SHOW_LAYER_PANEL ? 48 : 0
 
   const handleRightResizeMouseDown = useCallback((e) => {
     e.preventDefault()
@@ -1630,13 +1639,14 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
         setChartObjects(prev => prev.map(c => {
           if (c.id !== elementChartId) return c
           const svgOverrides = { ...(c.svgOverrides || {}) }
+          const baseSvgOverrides = { ...(c.baseSvgOverrides ?? c.svgOverrides ?? {}) }
           for (const el of overrides.groupElements) {
             const sel = el.selector
             if (!sel) continue
-            if (!svgOverrides[sel]) svgOverrides[sel] = {}
-            svgOverrides[sel][propName] = value
+            svgOverrides[sel] = { ...svgOverrides[sel], [propName]: value }
+            baseSvgOverrides[sel] = { ...baseSvgOverrides[sel], [propName]: value }
           }
-          return { ...c, svgOverrides }
+          return { ...c, svgOverrides, baseSvgOverrides }
         }))
         return
       }
@@ -1691,10 +1701,10 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
       const selector = effectiveElement.selector
       setChartObjects(prev => prev.map(c => {
         if (c.id !== elementChartId) return c
-        const svgOverrides = { ...(c.svgOverrides || {}) }
-        if (!svgOverrides[selector]) svgOverrides[selector] = {}
-        svgOverrides[selector][propName] = value
-        return { ...c, svgOverrides }
+        const svgOverrides = { ...c.svgOverrides, [selector]: { ...c.svgOverrides?.[selector], [propName]: value } }
+        const base = c.baseSvgOverrides ?? c.svgOverrides ?? {}
+        const baseSvgOverrides = { ...base, [selector]: { ...base[selector], [propName]: value } }
+        return { ...c, svgOverrides, baseSvgOverrides }
       }))
       return
     }
@@ -3039,12 +3049,8 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
       <header className="app-header">
         {readOnly ? (
           <div className="readonly-header">
-            <button
-              className="readonly-back-btn"
-              onClick={() => { window.location.search = '?gallery' }}
-            >
-              ← Gallery
-            </button>
+            <a className="readonly-back-link" href="?gallery"><span aria-hidden="true">←</span> Gallery</a>
+            <span className="readonly-header-divider" aria-hidden="true" />
             <div className="readonly-title-wrap">
               <h1 className="readonly-title">{galleryExample?.name || 'Example'}</h1>
             </div>
@@ -3052,11 +3058,11 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
         ) : (
           <>
           <a className="editor-home" href="?">TailVis</a>
-          {guidedDemo && <span className="guided-badge">Guided demo <span>· No API key required</span></span>}
+
           <div className="header-btns">
             {guidedDemo && <>
               <button className="header-btn guided-start" onClick={() => {
-                const chart = selectedChart || chartObjects.at(-1)
+                const chart = selectedChart || chartObjects.find(c => !c.parentId && c.dataSourceId === activeDataSourceId) || chartObjects[0]
                 if (!chart) return
                 setChatInitialMessages(null)
                 setChatElementReferences(null)
@@ -3067,13 +3073,13 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
                 setActiveChatId(chart.id)
                 setTimeout(() => panToChart(chart.x, chart.y, chart.width, chart.height), 50)
               }}>Try a request</button>
-              <button className="header-btn" onClick={() => {
+              <button className="header-btn guided-reset" onClick={() => {
                 latestStateForSave.current = null
                 clearTimeout(saveTimerRef.current)
                 localStorage.removeItem(storageKey)
                 window.location.reload()
               }}>Reset demo</button>
-              <a className="header-btn" href="?system">System →</a>
+              <a className="header-btn guided-system" href="?system">System ↗</a>
             </>}
             <button className="header-btn" title="Open the example gallery" onClick={() => { window.location.search = '?gallery' }}>
               Gallery
@@ -3104,8 +3110,8 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
           handlePanelResizeMouseUp()
         }}
       >
-        {/* Icon Sidebar */}
-        <div className="icon-sidebar">
+        {/* Only show the sidebar when layer browsing is enabled. */}
+        {SHOW_LAYER_PANEL && <div className="icon-sidebar">
           {SHOW_LAYER_PANEL && <button
             className={`sidebar-icon-btn ${layerPanelOpen ? 'active' : ''}`}
             onClick={() => setLayerPanelOpen(prev => !prev)}
@@ -3114,15 +3120,8 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
             <span className="sidebar-icon">🗂</span>
             <span className="sidebar-label">Layers</span>
           </button>}
-          <button
-            className={`sidebar-icon-btn ${dataTableOpen ? 'active' : ''}`}
-            onClick={() => setDataTableOpen(prev => !prev)}
-            title={dataTableOpen ? 'Hide Data Table' : 'Show Data Table'}
-          >
-            <span className="sidebar-icon">📊</span>
-            <span className="sidebar-label">Data</span>
-          </button>
-        </div>
+
+        </div>}
 
         {/* Layer Panel (collapsible) */}
         {SHOW_LAYER_PANEL && layerPanelOpen && (
@@ -3244,27 +3243,34 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
                       labelValue = el.element.textContent.trim()
                     }
                     if (labelValue == null) return null
+                    const timeMatch = timeUnitMatch(allEnc[ch], null, labelValue)
                     const normalized = normalizeValue(labelValue, field)
                     return {
+                      ...(timeMatch ? { timeUnitMatches: [timeMatch] } : {}),
                       elementType: 'axis-label',
                       matchFields: [field],
-                      matchValues: { [field]: normalized },
+                      matchValues: timeMatch ? {} : { [field]: normalized },
                     }
                   }
 
                   if (role === 'data-mark' && datum) {
-                    // Use ALL encoded fields (including quantitative) to match the exact row
+                    // Match retained fields and time-unit groups to contributing source rows.
                     const allFields = []
                     const allMatchVals = {}
+                    const timeUnitMatches = []
                     for (const ch of Object.keys(allEnc)) {
                       const f = allEnc[ch].field
-                      if (f && datum[f] != null) {
+                      const timeMatch = timeUnitMatch(allEnc[ch], datum)
+                      if (timeMatch) {
+                        allFields.push(f)
+                        timeUnitMatches.push(timeMatch)
+                      } else if (f && datum[f] != null) {
                         allFields.push(f)
                         allMatchVals[f] = normalizeValue(datum[f], f)
                       }
                     }
                     if (allFields.length > 0) {
-                      return { elementType: 'data-mark', matchFields: allFields, matchValues: allMatchVals }
+                      return { elementType: 'data-mark', matchFields: [...new Set(allFields)], matchValues: allMatchVals, timeUnitMatches }
                     }
                   }
 
@@ -3707,6 +3713,7 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
       {/* Chat Agent — fixed overlay, outside flex layout to prevent layout shifts */}
       {activeChatId && (
         <ChatAgent
+          key={activeChatId}
           chartId={activeChatId}
           requestProvider={guidedDemo?.respond}
           presetRequests={guidedDemo?.requests}

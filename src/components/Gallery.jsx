@@ -1,6 +1,8 @@
+import { applySvgTransformOverrides } from '../utils/svgTransform'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { GALLERY_EXAMPLES } from '../data/galleryExamples.js'
 import './Gallery.css'
+import FeatureIllustrations from './FeatureIllustrations'
 
 // ──────────────────────────────────────────────────────────────────────────
 // Example gallery — a grid of FROZEN examples (saved from the editor via
@@ -46,6 +48,7 @@ function applySvgOverrides(svg, overrides) {
     let els
     try { els = svg.querySelectorAll(selector) } catch { continue }
     els.forEach(el => {
+      applySvgTransformOverrides(el, props)
       for (const [k, v] of Object.entries(props)) {
         if (k === 'childrenFont') {
           el.querySelectorAll('text').forEach(text => {
@@ -54,7 +57,7 @@ function applySvgOverrides(svg, overrides) {
           })
           continue
         }
-        if (k === 'transform') { el.setAttribute('transform', v); continue }
+        if (['transform', 'angle', 'dx', 'dy'].includes(k)) continue
         if (k === 'text' && el.tagName.toLowerCase() === 'text') { el.textContent = v; continue }
         const attr = SVG_ATTR_MAP[k]
         if (!attr) continue
@@ -119,27 +122,36 @@ export default function Gallery() {
     <div className="gallery-root">
       <div className="gallery-grid-view">
         <nav className="project-nav" aria-label="Main navigation">
-          <a className="project-brand" href="?" aria-label="TailVis home"><span className="brand-mark" aria-hidden="true">▥</span>TailVis</a>
-          <div><a href="#examples">Gallery</a><a href="?demo">Try demo</a><a className="project-system-link" href="?system">System <span aria-hidden="true">↗</span></a></div>
+          <a className="project-wordmark" href="?gallery">TailVis</a>
+          <div><a href="#overview">Overview</a><a href="#examples">Gallery</a><a href="?demo">Try demo <span aria-hidden="true">↗</span></a></div>
         </nav>
         <section className="project-hero" aria-labelledby="project-title">
-          <div>
-            <p className="project-eyebrow">Interactive chart authoring</p>
-            <h1 id="project-title">Refine the details.<br /><em>Keep the data connected.</em></h1>
-          </div>
+          <h1 id="project-title">TailVis: Expressive Chart Refinement<br /><span>Preserving Data-Binding Integrity</span></h1>
           <div className="project-intro">
-            <p>TailVis brings direct selection, natural-language requests, and reusable widgets into one chart workspace.</p>
-            <p className="project-intro-secondary">Explore an example, try a guided refinement, or open the full system.</p>
-            <div className="project-actions"><a className="project-primary" href="?demo">Try the demo <span aria-hidden="true">→</span></a><a href="?system">Open system ↗</a></div>
-            <small>No API key needed for the guided demo.</small>
+            <p>Refine charts through direct selection, natural-language requests, and reusable widgets while preserving their connection to the data.</p>
+            <div className="project-actions">
+              <div className="project-action">
+                <a className="project-primary" href="?demo">Try demo</a>
+                <p>Try hands-on refinement with prepared requests.</p>
+              </div>
+            </div>
           </div>
         </section>
-        <div className="project-workflow" aria-label="How TailVis works">
-          <span><b>01</b> Select a chart or element</span><span><b>02</b> Refine with controls and requests</span><span><b>03</b> Revisit and branch your work</span>
-        </div>
+        <section id="overview" className="project-overview" aria-labelledby="overview-title">
+          <div className="project-video">
+            <video controls playsInline preload="metadata" aria-label="TailVis demonstration">
+              <source src={`${import.meta.env.BASE_URL}media/tailvis-demo.mp4`} type="video/mp4" />
+              Your browser does not support embedded video.
+            </video>
+          </div>
+          <div className="project-overview-copy">
+            <h2 id="overview-title">How TailVis works</h2>
+            <FeatureIllustrations />
+          </div>
+        </section>
         <section id="examples" className="project-gallery-intro" aria-labelledby="gallery-title">
-          <div><p className="project-eyebrow">Explore the possibilities</p><h2 id="gallery-title">The example gallery</h2></div>
-          <p>Open a chart to explore its refinement history.<br />Select elements and inspect the controls.</p>
+          <h2 id="gallery-title">Gallery</h2>
+          <p>Browse finished examples and follow their refinement histories.<br />Select a chart below to explore it in a read-only view.</p>
         </section>
         {total === 0 ? (
           <div className="gallery-empty big">
@@ -164,7 +176,19 @@ export default function Gallery() {
             })}
           </div>
         )}
-        <footer className="project-footer"><span>TailVis · Chart refinement with data-binding integrity</span><a href="https://github.com/tailvis/TailVis" target="_blank" rel="noreferrer">Source code ↗</a></footer>
+        <section id="full-system" className="project-full-system" aria-labelledby="system-title">
+          <div>
+            <span className="project-eyebrow">Go further</span>
+            <h2 id="system-title">Work with your own charts.</h2>
+            <p>Open the full editor to use your own data and explore free-form refinement.</p>
+            <p className="project-system-note">AI features require a connected backend with an Anthropic API key.</p>
+          </div>
+          <a href="?system">Open full system <span aria-hidden="true">↗</span></a>
+        </section>
+        <footer className="project-footer">
+          <div><span>TailVis</span><p className="project-paper"><a href="https://arxiv.org/abs/2607.25386" target="_blank" rel="noreferrer">Paper ↗</a> · Expressive Chart Refinement Preserving Data-Binding Integrity</p></div>
+          <a href="https://github.com/tailvis/TailVis" target="_blank" rel="noreferrer">Source code ↗</a>
+        </footer>
       </div>
     </div>
   )

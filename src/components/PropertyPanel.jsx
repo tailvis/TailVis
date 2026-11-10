@@ -3,6 +3,38 @@ import { inferColumnType } from '../utils/dataUtils'
 import { evaluateTestExpression, extractConditions, deleteCondition, updateConditionValue, updateConditionTest, parseTestExpression, buildTestExpression, extractColorMapping } from '../utils/scopeUtils'
 import './PropertyPanel.css'
 import FontSelect from './FontSelect'
+import { selectionKey } from '../utils/selectionTargets'
+
+// Vega re-renders asynchronously. Keep the latest numeric input visible while
+// the selected SVG nodes still report the previous render's properties. Drop a
+// draft once that value is acknowledged, or immediately when targets change.
+function useNumericPropertyDraft(merged, targetKey) {
+  const [draft, setDraft] = useState({ targetKey, values: {} })
+  useEffect(() => {
+    setDraft(current => {
+      if (current.targetKey !== targetKey) return { targetKey, values: {} }
+      const values = { ...current.values }
+      let changed = false
+      for (const [key, value] of Object.entries(values)) {
+        const actual = merged[key]
+        if (actual && !actual.isMixed && Number(actual.value) === value) {
+          delete values[key]
+          changed = true
+        }
+      }
+      return changed ? { targetKey, values } : current
+    })
+  }, [merged, targetKey])
+  return {
+    values: draft.targetKey === targetKey ? draft.values : {},
+    stage(key, value) {
+      if (typeof value !== 'number' || !Number.isFinite(value)) return
+      setDraft(current => ({ targetKey, values: {
+        ...(current.targetKey === targetKey ? current.values : {}), [key]: value,
+      } }))
+    },
+  }
+}
 
 // Number input that allows typing freely (local string state) and commits on blur/Enter
 function NumInput({ value, onChange, min, max, step, ...rest }) {
@@ -2516,10 +2548,10 @@ function PropertyPanel({ readOnly = false, selectedElement, selectedElements, ch
             onGroupPropertyChange={(propName, value) => onPropertyChange('group', propName, value)}
           />
         )}
-        {/* Position offset — for NON-data elements only (axis title/ticks/grid, legend,
-            text, annotations). Data marks are excluded: moving them misrepresents the data. */}
+        {/* Text labels may move relative to their data anchor; geometric marks
+            keep their encoded positions. */}
         {selector && type !== 'group' && type !== 'mark' &&
-          (semanticRole === 'axis' || semanticRole === 'legend' || semanticRole === 'text' || selectedElement.isAnnotation) && (
+          (type === 'text' || semanticRole === 'axis' || semanticRole === 'legend' || semanticRole === 'text' || selectedElement.isAnnotation) && (
           <div className="property-group">
             <h3>Position</h3>
             <div className="property-row">
@@ -2527,15 +2559,13 @@ function PropertyPanel({ readOnly = false, selectedElement, selectedElements, ch
               <div className="transform-inputs">
                 <div className="transform-field">
                   <span className="transform-label">X</span>
-                  <input type="number"
-                    value={selectedChart?.svgOverrides?.[selector]?.dx ?? 0}
-                    onChange={(e) => { const v = parseFloat(e.target.value); if (!isNaN(v)) handleChange('dx', v) }} />
+                  <NumInput aria-label="X offset" value={selectedChart?.svgOverrides?.[selector]?.dx ?? 0}
+                    onChange={value => handleChange('dx', value)} />
                 </div>
                 <div className="transform-field">
                   <span className="transform-label">Y</span>
-                  <input type="number"
-                    value={selectedChart?.svgOverrides?.[selector]?.dy ?? 0}
-                    onChange={(e) => { const v = parseFloat(e.target.value); if (!isNaN(v)) handleChange('dy', v) }} />
+                  <NumInput aria-label="Y offset" value={selectedChart?.svgOverrides?.[selector]?.dy ?? 0}
+                    onChange={value => handleChange('dy', value)} />
                 </div>
               </div>
             </div>
@@ -2564,6 +2594,7 @@ function PropertyPanel({ readOnly = false, selectedElement, selectedElements, ch
 // Sub-group panel for a single type within multi-select
 function SubGroupPanel({ elements, mergeResult, selectedChart, onPropertyChange }) {
   const { merged, commonType, commonSemanticRole, allLine, allAnnotation } = mergeResult
+  const numericDraft = useNumericPropertyDraft(merged, `${selectedChart?.id}:${selectionKey(elements)}`)
 
   const isAllText = elements.every(e =>
     e.type === 'text' || e.semanticRole === 'text' ||
@@ -2598,6 +2629,7 @@ function SubGroupPanel({ elements, mergeResult, selectedChart, onPropertyChange 
   const editableProps = getEditableProps()
 
   const handleBatchChange = (propName, value) => {
+    numericDraft.stage(propName, value)
     const groupElements = elements.map(el => ({
       elementPath: el.elementPath || el.type,
       selector: el.selector, datum: el.datum,
@@ -2621,8 +2653,9 @@ function SubGroupPanel({ elements, mergeResult, selectedChart, onPropertyChange 
       )}
       {editableProps.map(prop => {
         const m = merged[prop.key]
-        const isMixed = m?.isMixed
-        const val = m?.value
+        const pendingValue = numericDraft.values[prop.key]
+        const isMixed = pendingValue === undefined && m?.isMixed
+        const val = pendingValue ?? m?.value
         return (
           <div className="property-row" key={prop.key}>
             <label>{prop.label}</label>
@@ -2663,9 +2696,15 @@ function SubGroupPanel({ elements, mergeResult, selectedChart, onPropertyChange 
 function MultiSelectPanel({ elements, chartId, selectedChart, onPropertyChange, onDeleteElement, onDeselectType, onClose }) {
   const [focusedType, setFocusedType] = useState(null)
   const mergeResult = mergeElementProperties(elements)
+  const numericDraft = useNumericPropertyDraft(mergeResult?.merged || {}, `${chartId}:${selectionKey(elements || [])}`)
   if (!mergeResult) return null
 
   const { merged, commonType, commonSemanticRole, count, allLine, allAnnotation, anyNonData } = mergeResult
+
+  const commonOffset = property => {
+    const values = elements.map(el => selectedChart?.svgOverrides?.[el.selector]?.[property] ?? 0)
+    return values.every(value => value === values[0]) ? values[0] : ''
+  }
 
   // Group elements by type for mixed-type display
   const typeGroups = useMemo(() => {
@@ -2840,6 +2879,7 @@ function MultiSelectPanel({ elements, chartId, selectedChart, onPropertyChange, 
   const editableProps = getEditableProps()
 
   const handleBatchChange = (propName, value) => {
+    numericDraft.stage(propName, value)
     // Send all elements as a single grouped modification
     const groupElements = elements.map(el => ({
       elementPath: el.elementPath || el.type,
@@ -2883,8 +2923,9 @@ function MultiSelectPanel({ elements, chartId, selectedChart, onPropertyChange, 
 
           {editableProps.map(prop => {
             const m = merged[prop.key]
-            const isMixed = m?.isMixed
-            const val = m?.value
+            const pendingValue = numericDraft.values[prop.key]
+            const isMixed = pendingValue === undefined && m?.isMixed
+            const val = pendingValue ?? m?.value
 
             return (
               <div className="property-row" key={prop.key}>
@@ -2969,8 +3010,8 @@ function MultiSelectPanel({ elements, chartId, selectedChart, onPropertyChange, 
           })}
         </div>
 
-        {/* Position offset (X/Y) for NON-data multi-selections (text/axis/legend/annotation) */}
-        {elements.length > 0 && elements.every(el => ['axis', 'legend', 'text'].includes(el.semanticRole) || el.isAnnotation) && (
+        {/* Relative offsets for labels and other presentation elements. */}
+        {elements.length > 0 && elements.every(el => el.type === 'text' || ['axis', 'legend', 'text'].includes(el.semanticRole) || el.isAnnotation) && (
           <div className="property-group">
             <h3>Position</h3>
             <div className="property-row">
@@ -2978,13 +3019,13 @@ function MultiSelectPanel({ elements, chartId, selectedChart, onPropertyChange, 
               <div className="transform-inputs">
                 <div className="transform-field">
                   <span className="transform-label">X</span>
-                  <input type="number" defaultValue={0}
-                    onChange={(e) => { const v = parseFloat(e.target.value); if (!isNaN(v)) handleBatchChange('dx', v) }} />
+                  <NumInput aria-label="X offset" value={commonOffset('dx')} placeholder="Mixed"
+                    onChange={value => handleBatchChange('dx', value)} />
                 </div>
                 <div className="transform-field">
                   <span className="transform-label">Y</span>
-                  <input type="number" defaultValue={0}
-                    onChange={(e) => { const v = parseFloat(e.target.value); if (!isNaN(v)) handleBatchChange('dy', v) }} />
+                  <NumInput aria-label="Y offset" value={commonOffset('dy')} placeholder="Mixed"
+                    onChange={value => handleBatchChange('dy', value)} />
                 </div>
               </div>
             </div>

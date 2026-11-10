@@ -413,14 +413,14 @@
   "title": {
     "text": "User Interaction Patterns",
     "anchor": "start",
-    "font": "Avenir",
+    "font": "sans-serif",
     "fontSize": 22,
     "fontWeight": 700,
     "color": "#243d46",
     "offset": 22
   },
   "config": {
-    "font": "Avenir",
+    "font": "sans-serif",
     "view": {
       "stroke": null
     },

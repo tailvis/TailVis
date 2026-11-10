@@ -466,14 +466,14 @@ body {
 .canvas-gallery-btn:hover { color: #0d99ff; border-color: #0d99ff; background: #f0f8ff; }
 
 /* ── Read-only gallery mode ─────────────────────────────────────────── */
-.readonly-header { display: flex; align-items: center; gap: 16px; }
-.readonly-back-btn {
-  border: 1px solid #d0d5dd; background: #fff; border-radius: 8px;
-  padding: 6px 14px; font-size: 13px; font-weight: 600; color: #1f2328; cursor: pointer;
-}
-.readonly-back-btn:hover { background: #f1f3f5; }
-.readonly-title-wrap { display: flex; align-items: center; }
-.readonly-title { font-size: 20px; font-weight: 600; color: #333; margin: 0; }
+.readonly-mode .app-header { min-height: 64px; padding: 12px 24px; border-bottom-color: #e6ecf3; }
+.readonly-header { display: flex; align-items: center; gap: 20px; min-width: 0; }
+.readonly-back-link { display: inline-flex; align-items: center; gap: 8px; padding: 5px 0; color: #66809c; font-size: 13px; font-weight: 400; text-decoration: none; white-space: nowrap; }
+.readonly-back-link:hover { color: #346da8; }
+.readonly-back-link:focus-visible { outline: 2px solid #346da8; outline-offset: 5px; border-radius: 2px; }
+.readonly-header-divider { width: 1px; height: 18px; background: #e0e7ef; flex-shrink: 0; }
+.readonly-title-wrap { display: flex; align-items: center; min-width: 0; }
+.readonly-mode .app-header .readonly-title { font-size: 16px; font-weight: 500; color: #2d4055; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Disable edit controls in read-only mode — display + scroll + canvas selection stay. */
 .readonly-mode .right-panel-content input,

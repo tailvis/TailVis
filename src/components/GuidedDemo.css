@@ -1,16 +1,28 @@
 .header-btns a.header-btn { text-decoration: none; display: inline-flex; align-items: center; }
-.guided-badge { font-size: 12px; color: #247263; background: #edf6f1; padding: 5px 9px; }
-.guided-badge span { color: #617f72; }
-.guided-demo .header-btns { margin-left: auto; }
-.guided-demo .guided-start { color: white; background: #277b69; border-color: #277b69; }
-.guided-requests { border-top: 1px solid #dce6e1; padding: 12px; background: #f4f8f5; overflow-y: auto; max-height: 245px; flex-shrink: 0; }
-.guided-requests > p { color: #688376; font-size: 11px; margin: 0 0 8px; }
-.guided-requests button { display: block; width: 100%; text-align: left; background: white; border: 1px solid #d2e2d7; border-radius: 4px; color: #245647; padding: 9px 11px; margin-top: 7px; font: inherit; font-size: 12px; cursor: pointer; }
-.guided-requests button span { display: block; color: #778a7e; font-size: 10px; line-height: 1.5; margin-top: 2px; }
-.guided-requests button:hover { border-color: #23826a; background: #edf7f1; }
+.guided-demo .app-header { min-height: 64px; padding: 12px 24px; border-bottom-color: #e6ecf3; }
+.guided-demo .header-btns { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+.guided-demo .header-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 35px; padding: 8px 13px; border: 1px solid transparent;
+  border-radius: 5px; background: transparent; color: #52677e;
+  font-family: inherit; font-size: 13px; font-weight: 500; line-height: 1.2;
+  box-shadow: none; cursor: pointer; transition: background .15s, color .15s;
+}
+.guided-demo .header-btn:hover { color: #285b8e; background: #f0f5fb; }
+.guided-demo .header-btn.guided-start { padding-inline: 17px; color: white; background: #346da8; border-color: #346da8; }
+.guided-demo .header-btn.guided-start:hover { background: #285b8e; border-color: #285b8e; }
+.guided-demo .header-btn.guided-system { margin-left: 12px; background: #f0f5fb; border-color: #dfe8f2; color: #346da8; }
+.guided-demo .header-btn.guided-system:hover { background: #e5eef9; }
+.guided-demo .header-btn.guided-reset { color: #718093; }
+.guided-demo .header-btn:focus-visible { outline: 2px solid #346da8; outline-offset: 3px; }
+.guided-requests { border-top: 1px solid #e2eaf3; padding: 12px; background: #f7faff; overflow-y: auto; max-height: 245px; flex-shrink: 0; }
+.guided-requests button { display: block; width: 100%; text-align: left; background: white; border: 1px solid #d9e3ef; border-radius: 4px; color: #365b83; padding: 9px 11px; margin-top: 7px; font: inherit; font-size: 12px; cursor: pointer; }
+.guided-requests button:hover { border-color: #88a9cd; background: #edf4fc; }
 .guided-requests button:disabled { opacity: .5; cursor: wait; }
-.guided-requests button:focus-visible { outline: 2px solid #23826a; outline-offset: 2px; }
+.guided-requests button:focus-visible { outline: 2px solid #346da8; outline-offset: 2px; }
 .guided-demo .chat-agent { min-height: 460px; }
 .guided-demo .encoding-bar { display: none; }
-@media(max-width: 780px) { .guided-badge span { display: none; } .guided-demo .header-btn { padding: 5px 7px; font-size: 11px; } .guided-badge { font-size: 10px; } }
+@media(max-width: 780px) { .guided-demo .header-btn { padding: 5px 7px; font-size: 11px; } }
 .guided-demo .chat-agent { z-index: 1100; }
+
+.guided-requests button:first-child { margin-top: 0; }

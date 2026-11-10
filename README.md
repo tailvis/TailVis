@@ -13,8 +13,9 @@ The home page introduces TailVis and shows the example gallery. This checkout ha
 three views, using query parameters that also work on GitHub Pages:
 
 - **Home / Gallery**: `/` or `?gallery` — browse frozen examples and their histories.
-- **Try Demo**: `?demo` — choose from three guided requests (colors, panels, median
-  labels), adjust the real widget preview, and apply or branch a refinement. These
+- **Try Demo**: `?demo` — choose a boxplot, bar chart, or line chart, then use requests matched to
+  the current branch. Completed requests disappear and follow-up refinements become
+  available. Adjust the real widget preview and apply or branch a refinement. These
   requests use local presets; no backend or API key is needed. Demo work is saved
   separately from the full editor; **Reset demo** clears only the demo.
 - **System**: `?system` — the full editor, including free-form AI requests when a

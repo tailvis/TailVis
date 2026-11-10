@@ -1,3 +1,4 @@
+import { applySvgTransformOverrides } from './svgTransform.js'
 import { normalizeCompositeLineMarks } from './elementUtils.js'
 import { setSvgText } from './svgText'
 // Render a Vega-Lite spec (with the chart's svgOverrides applied) to a PNG data URL.
@@ -18,6 +19,7 @@ function applySvgOverrides(svg, overrides) {
     let els
     try { els = svg.querySelectorAll(selector) } catch { continue }
     els.forEach(el => {
+      applySvgTransformOverrides(el, props)
       for (const [k, v] of Object.entries(props)) {
         if (k === 'childrenFont') {
           el.querySelectorAll('text').forEach(text => {
@@ -26,13 +28,7 @@ function applySvgOverrides(svg, overrides) {
           })
           continue
         }
-        if (k === 'transform') { el.setAttribute('transform', v); continue }
-        if (k === 'dx' || k === 'dy') {
-          if (el.dataset.origTransform == null) el.dataset.origTransform = el.getAttribute('transform') || ''
-          const dx = parseFloat(props.dx) || 0, dy = parseFloat(props.dy) || 0
-          el.setAttribute('transform', (dx || dy) ? `${el.dataset.origTransform} translate(${dx},${dy})`.trim() : el.dataset.origTransform)
-          continue
-        }
+        if (['transform', 'angle', 'dx', 'dy'].includes(k)) continue
         if (k === 'text' && el.tagName.toLowerCase() === 'text') { setSvgText(el, v); continue }
         const attr = el.dataset.editorLinePath && ['fill', 'color'].includes(k) ? 'stroke' : SVG_ATTR_MAP[k]
         if (!attr) continue

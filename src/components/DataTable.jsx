@@ -1,3 +1,4 @@
+import { matchesTimeUnit } from '../utils/dataHighlight'
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { parseCSV, analyzeColumns } from '../utils/dataUtils'
 import { SAMPLE_DATASETS, DEFAULT_SAMPLE_DATASET_IDS } from '../data/sampleDatasets'
@@ -685,7 +686,13 @@ function DataTable({ data, columnInfos, onSelectionChange, onColumnInfoChange, o
       const indices = []
       displayData.forEach((row, idx) => {
         if (idx >= visibleRows) return
-        if (matchFields.every(field => valuesMatch(matchValues[field], row[field]))) indices.push(idx)
+        if (matchFields.every(field => {
+          const groups = highlightDatum.timeUnitMatches?.filter(match => match.field === field) || []
+          const hasValue = Object.prototype.hasOwnProperty.call(matchValues, field)
+          return (hasValue || groups.length > 0)
+            && (!hasValue || valuesMatch(matchValues[field], row[field]))
+            && groups.every(match => matchesTimeUnit(row, match))
+        })) indices.push(idx)
       })
       return indices
     }

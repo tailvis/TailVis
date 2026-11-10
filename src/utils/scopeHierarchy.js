@@ -76,7 +76,7 @@ function getLegendEncodingField(spec) {
  * Find all SVG data mark elements in the chart.
  */
 function findAllDataMarks(svgRoot, spec) {
-  const tags = ['rect', 'circle', 'ellipse', 'line', 'path', 'polyline', 'polygon']
+  const tags = ['rect', 'circle', 'ellipse', 'line', 'path', 'polyline', 'polygon', 'text']
   const results = []
   const all = svgRoot.querySelectorAll(tags.join(','))
   for (const el of all) {
@@ -321,6 +321,7 @@ function inferMarkGroupLabel(element, markGroup, siblings) {
   if (cls.includes("mark-bar") || cls.includes("mark-rect")) return "bar"
   if (cls.includes("mark-area")) return "area"
   if (cls.includes("mark-circle")) return "point"
+  if (cls.includes("mark-text") || element.tagName?.toLowerCase() === "text") return "text"
 
   // Heuristic: many siblings of same tag => likely point symbols
   if (siblings.length > 3) {
@@ -346,13 +347,13 @@ function buildConditionScopes(spec, datum, allMarks, svgRoot, elementInfo) {
   const checkedChannels = new Set()
 
   const inner = spec?.facet && spec.spec ? spec.spec : spec
-  const selectedLayer = elementInfo?.layerIndex
+  const selectedLayer = getLayerIndex(elementInfo?.element, svgRoot, spec) ?? elementInfo?.layerIndex
   const effectiveEncoding = (layerIndex) => ({
     ...inner?.encoding, ...(layerIndex != null ? inner?.layer?.[layerIndex]?.encoding : {}),
   })
   const encodingSources = [effectiveEncoding(selectedLayer)]
   const winningTest = (mark, channel) => {
-    const enc = effectiveEncoding(getLayerIndex(mark.element, svgRoot))[channel]
+    const enc = effectiveEncoding(getLayerIndex(mark.element, svgRoot, spec))[channel]
     const conditions = enc?.condition ? (Array.isArray(enc.condition) ? enc.condition : [enc.condition]) : []
     // Non-expression predicates cannot be evaluated reliably by this scope helper.
     if (!conditions.length || conditions.some(c => typeof c.test !== 'string')) return undefined
@@ -531,8 +532,8 @@ function buildDataMarkHierarchy(elementInfo, datum, spec, svgRoot) {
         const typeName = inferMarkGroupLabel(element, markGroup, siblingsInGroup)
         hierarchy.push({
           level: hierarchy.length,
-          label: `All ${typeName}s`,
-          labelEn: `All ${typeName}s`,
+          label: typeName === 'text' ? 'All Value Labels' : `All ${typeName}s`,
+          labelEn: typeName === 'text' ? 'All Value Labels' : `All ${typeName}s`,
           elements: siblingsInGroup.map(m => m.element),
           scopeType: 'same-mark-type',
           scopeData: { markType: typeName }
@@ -546,12 +547,12 @@ function buildDataMarkHierarchy(elementInfo, datum, spec, svgRoot) {
     const selectedTag = element.tagName?.toLowerCase()
     const sameType = allMarks.filter(m => m.element.tagName?.toLowerCase() === selectedTag)
     if (sameType.length > 1 && sameType.length < allMarks.length) {
-      const typeLabels = { circle: 'point', rect: 'bar', path: 'line', line: 'line' }
+      const typeLabels = { circle: 'point', rect: 'bar', path: 'line', line: 'line', text: 'text' }
       const typeName = typeLabels[selectedTag] || selectedTag
       hierarchy.push({
         level: hierarchy.length,
-        label: `All ${typeName}s`,
-        labelEn: `All ${typeName}s`,
+        label: typeName === 'text' ? 'All Value Labels' : `All ${typeName}s`,
+        labelEn: typeName === 'text' ? 'All Value Labels' : `All ${typeName}s`,
         elements: sameType.map(m => m.element),
         scopeType: 'same-mark-type',
         scopeData: { markType: selectedTag }
@@ -1097,8 +1098,8 @@ function buildMultiSelectionHierarchy(selectedElements, spec, svgRoot) {
           const typeName = inferMarkGroupLabel(selectedElements[0].element, markGroup, siblingsInGroup)
           hierarchy.push({
             level: hierarchy.length,
-            label: `All ${typeName}s`,
-            labelEn: `All ${typeName}s`,
+            label: typeName === 'text' ? 'All Value Labels' : `All ${typeName}s`,
+            labelEn: typeName === 'text' ? 'All Value Labels' : `All ${typeName}s`,
             elements: withOriginals(siblingsInGroup.map(m => m.element)),
             scopeType: 'same-mark-type',
             scopeData: { markType: typeName }
@@ -1112,12 +1113,12 @@ function buildMultiSelectionHierarchy(selectedElements, spec, svgRoot) {
           const selectedTag = uniqueTags[0]
           const sameType = allMarks.filter(m => m.element.tagName?.toLowerCase() === selectedTag)
           if (sameType.length > count && sameType.length < allMarks.length) {
-            const typeLabels = { circle: 'point', rect: 'bar', path: 'line', line: 'line' }
+            const typeLabels = { circle: 'point', rect: 'bar', path: 'line', line: 'line', text: 'text' }
             const typeName = typeLabels[selectedTag] || selectedTag
             hierarchy.push({
               level: hierarchy.length,
-              label: `All ${typeName}s`,
-              labelEn: `All ${typeName}s`,
+              label: typeName === 'text' ? 'All Value Labels' : `All ${typeName}s`,
+              labelEn: typeName === 'text' ? 'All Value Labels' : `All ${typeName}s`,
               elements: withOriginals(sameType.map(m => m.element)),
               scopeType: 'same-mark-type',
               scopeData: { markType: selectedTag }

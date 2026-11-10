@@ -789,14 +789,18 @@ export function detectElementType(element, spec, svgElement) {
     semanticRole = 'data-mark'
   }
 
-  // Text element → always show text properties
+  // Data-bound text participates in mark scopes; axis/legend/title text keeps
+  // its own semantic role and must never be collected as value labels.
   if (tagName === 'text') {
+    const markGroupInfo = semanticRole === 'data-mark' ? getMarkGroup(element, svgElement) : null
     return {
       type: 'text',
       elementPath: 'text',
       element,
       selector,
       semanticRole,
+      markGroup: markGroupInfo?.markGroup || null,
+      groupSelector: markGroupInfo?.groupSelector || null,
       axisChannel,
       axisSubType,
       legendField,
@@ -906,7 +910,7 @@ export function detectElementType(element, spec, svgElement) {
  * @param {SVGElement} svgRoot - The root <svg> of the Vega chart
  * @returns {number|null} - The layer index (0-based), or null if undetermined
  */
-export function getLayerIndex(element, svgRoot) {
+export function getLayerIndex(element, svgRoot, spec) {
   if (!element || !svgRoot) return null
 
   // Vega generates group class names like:
@@ -917,12 +921,35 @@ export function getLayerIndex(element, svgRoot) {
   // whitespace/underscore so class lists and the "child_" facet prefix both match.
   const layerPattern = /(?:^|[\s_])layer_(\d+)[\w]*_marks\b/
 
+  // A named Vega-Lite layer replaces `layer_N` in generated mark names.
+  // Resolve those names against the actual spec before trying generated indexes.
+  // Nested names still identify the outer layer, matching the existing contract.
+  let inner = spec
+  while (inner?.facet && inner.spec) inner = inner.spec
+  const namedLayers = []
+  const collectNames = (layers, outerIndex) => {
+    for (const [index, layer] of (layers || []).entries()) {
+      const rootIndex = outerIndex ?? index
+      if (layer.name) {
+        const name = String(layer.name).replace(/\W/g, '_').replace(/^(?=\d)/, '_')
+        namedLayers.push({ index: rootIndex, name, pattern: new RegExp(`(?:^|_)${name}(?:_\\w+)?_marks$`) })
+      }
+      if (layer.layer) collectNames(layer.layer, rootIndex)
+    }
+  }
+  collectNames(inner?.layer)
+  namedLayers.sort((a, b) => b.name.length - a.name.length)
+
   // Strategy 1: Walk up from element, look for ancestor <g> with Vega's layer class pattern
   let el = element
   const ancestorClasses = []
   while (el && el !== svgRoot) {
     const cls = typeof el.className === 'string' ? el.className : el.className?.baseVal || ''
     if (cls) ancestorClasses.push(cls)
+    for (const token of cls.split(/\s+/)) {
+      const named = namedLayers.find(layer => layer.pattern.test(token))
+      if (named) return named.index
+    }
     const layerMatch = cls.match(layerPattern)
     if (layerMatch) {
       const idx = parseInt(layerMatch[1], 10)
