@@ -172,7 +172,12 @@ function Canvas({ guidedDemo = false,
         const { animate = false, duration = 600 } = options || {}
         if (!animate || !svgRef.current) {
           transformRef.current = newTransform
+          if (svgRef.current) {
+            d3.select(svgRef.current).select('.main-group')
+              .attr('transform', `translate(${newTransform.x},${newTransform.y}) scale(${newTransform.k})`)
+          }
           setTransform(newTransform)
+          onTransformChange?.(newTransform)
           return
         }
         // Smooth animated pan using d3 transition on the main <g>
@@ -2833,7 +2838,7 @@ function Canvas({ guidedDemo = false,
               conversationHistory={widget.conversationHistory}
               changeType={widget.changeType}
               chartSpec={widget.chartSpec}
-              onContinueChatApply={onWidgetContinueChat}
+              onContinueChatApply={readOnly ? undefined : onWidgetContinueChat}
               onPreviewChange={onWidgetPreviewChange}
             />
           </div>

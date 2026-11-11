@@ -122,7 +122,7 @@ export default function Gallery() {
     <div className="gallery-root">
       <div className="gallery-grid-view">
         <nav className="project-nav" aria-label="Main navigation">
-          <a className="project-wordmark" href="?gallery">TailVis</a>
+          <a className="project-wordmark" href={import.meta.env.BASE_URL}>TailVis</a>
           <div><a href="#overview">Overview</a><a href="#examples">Gallery</a><a href="?demo">Try demo <span aria-hidden="true">↗</span></a></div>
         </nav>
         <section className="project-hero" aria-labelledby="project-title">
@@ -155,7 +155,7 @@ export default function Gallery() {
         </section>
         <section id="examples" className="project-gallery-intro" aria-labelledby="gallery-title">
           <h2 id="gallery-title">Gallery</h2>
-          <p>Browse finished examples and follow their refinement histories.<br />Select a chart below to explore it in a read-only view.</p>
+          <p>Browse finished examples and follow their refinement histories.<br />Select a chart to explore its history and try its widgets.</p>
         </section>
         {total === 0 ? (
           <div className="gallery-empty big">

@@ -479,8 +479,6 @@ body {
 .readonly-mode .right-panel-content input,
 .readonly-mode .right-panel-content select,
 .readonly-mode .right-panel-content textarea,
-.readonly-mode .ancestor-widget-panel input,
-.readonly-mode .ancestor-widget-panel select,
 .readonly-mode .scope-dropdown,
 .readonly-mode .mod-inline-input,
 .readonly-mode .mod-inline-color,
@@ -978,3 +976,9 @@ body {
 }
 
 .editor-home { color: #2b414c; text-decoration: none; font-size: 22px; font-weight: 700; margin-right: 16px; }
+
+/* Gallery widgets update only the in-memory preview. */
+.readonly-mode .right-panel-content .ancestor-widget-panel input,
+.readonly-mode .right-panel-content .ancestor-widget-panel select { pointer-events: auto !important; opacity: 1; }
+
+.readonly-mode .readonly-header { flex: 1; }

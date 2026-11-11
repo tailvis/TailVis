@@ -500,8 +500,8 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
   const [nextChartId, setNextChartId] = useState((readOnly ? galleryInit?.nextChartId : savedState?.nextChartId) || 1)
 
   // Undo/Redo history
-  const historyRef = useRef([])
-  const historyIndexRef = useRef(-1)
+  const historyRef = useRef(readOnly ? [{ chartObjects: galleryInit?.chartObjects || [], dataSources: null }] : [])
+  const historyIndexRef = useRef(readOnly ? 0 : -1)
   const isUndoRedoRef = useRef(false)
   const historyTimerRef = useRef(null)
 
@@ -509,6 +509,23 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
   const setDataSourcesRef = useRef(null)
 
   const saveToHistory = useCallback((charts) => {
+    // Gallery widget updates are immutable and stay in memory. Record immediately
+    // so even a quick Cmd+Z can restore the initial example, including inline data.
+    if (readOnly) {
+      const current = historyRef.current[historyIndexRef.current]
+      const widgetState = items => JSON.stringify(items.map(chart => [chart.id, chart.widgetOptions]))
+      // Rendering may update chart dimensions. Refresh that snapshot without
+      // creating extra undo steps for the same widget values.
+      if (current && widgetState(current.chartObjects) === widgetState(charts)) {
+        current.chartObjects = charts
+        return
+      }
+      historyRef.current = historyRef.current.slice(0, historyIndexRef.current + 1)
+      historyRef.current.push({ chartObjects: charts, dataSources: null })
+      if (historyRef.current.length > 50) historyRef.current.shift()
+      historyIndexRef.current = historyRef.current.length - 1
+      return
+    }
     if (isUndoRedoRef.current) return
 
     if (historyTimerRef.current) {
@@ -538,7 +555,7 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
         historyIndexRef.current = historyRef.current.length - 1
       }
     }, 500)
-  }, [])
+  }, [readOnly])
 
   // Restore data.values from dataSources after undo/redo (snapshots strip data to save memory)
   const restoreSnapshotData = useCallback((chartObjs, ds) => {
@@ -555,7 +572,13 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
   }, [])
 
   const undo = useCallback(() => {
-    if (readOnly) return
+    if (readOnly) {
+      if (historyIndexRef.current > 0) {
+        historyIndexRef.current -= 1
+        setChartObjects(historyRef.current[historyIndexRef.current].chartObjects)
+      }
+      return
+    }
     const index = historyIndexRef.current
     if (index > 0) {
       isUndoRedoRef.current = true
@@ -570,10 +593,16 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
       }
       setTimeout(() => { isUndoRedoRef.current = false }, 0)
     }
-  }, [restoreSnapshotData])
+  }, [restoreSnapshotData, readOnly])
 
   const redo = useCallback(() => {
-    if (readOnly) return
+    if (readOnly) {
+      if (historyIndexRef.current < historyRef.current.length - 1) {
+        historyIndexRef.current += 1
+        setChartObjects(historyRef.current[historyIndexRef.current].chartObjects)
+      }
+      return
+    }
     const index = historyIndexRef.current
     if (index < historyRef.current.length - 1) {
       isUndoRedoRef.current = true
@@ -588,13 +617,13 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
       }
       setTimeout(() => { isUndoRedoRef.current = false }, 0)
     }
-  }, [restoreSnapshotData])
+  }, [restoreSnapshotData, readOnly])
 
   useEffect(() => {
     const handleKeyDown = (e) => {
       // Don't intercept Cmd+Z when the spec code editor (CodeMirror) is focused
       if (document.activeElement?.closest?.('.cm-editor')) return
-      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
         e.preventDefault()
         if (e.shiftKey) {
           redo()
@@ -836,17 +865,42 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
   const didRestoreView = useRef(false)
   useEffect(() => {
     if (didRestoreView.current) return
-    didRestoreView.current = true
-    // Read-only gallery: fit the whole frozen tree into view.
+    // Fit gallery charts and their widgets once the lazy canvas has mounted.
     if (readOnly) {
       if (!chartObjects.length) return
-      const minX = Math.min(...chartObjects.map(c => c.x))
-      const minY = Math.min(...chartObjects.map(c => c.y))
-      const maxX = Math.max(...chartObjects.map(c => c.x + (c.width || 480)))
-      const maxY = Math.max(...chartObjects.map(c => c.y + (c.height || 350)))
-      setTimeout(() => panToChart(minX, minY, maxX - minX, maxY - minY), 250)
-      return
+      let frame
+      const fitGallery = () => {
+        const wrapper = canvasWrapperRef.current
+        if (!wrapper || !canvasPanToRef.current || !wrapper.querySelector('.chart-group')) {
+          frame = requestAnimationFrame(fitGallery)
+          return
+        }
+        const bounds = wrapper.getBoundingClientRect()
+        let minX = Math.min(...chartObjects.map(c => c.x))
+        let minY = Math.min(...chartObjects.map(c => c.y))
+        let maxX = Math.max(...chartObjects.map(c => c.x + (c.width || 480)))
+        let maxY = Math.max(...chartObjects.map(c => c.y + (c.height || 350)))
+        for (const overlay of wrapper.querySelectorAll('.widget-position, .mod-panel-position')) {
+          const rect = overlay.getBoundingClientRect()
+          minX = Math.min(minX, rect.left - bounds.left)
+          minY = Math.min(minY, rect.top - bounds.top)
+          maxX = Math.max(maxX, rect.right - bounds.left)
+          maxY = Math.max(maxY, rect.bottom - bounds.top)
+        }
+        const k = Math.max(0.01, Math.min(0.85,
+          (wrapper.clientWidth - 96) / (maxX - minX),
+          (wrapper.clientHeight - 96) / (maxY - minY)))
+        canvasPanToRef.current({
+          x: wrapper.clientWidth / 2 - (minX + maxX) / 2 * k,
+          y: wrapper.clientHeight / 2 - (minY + maxY) / 2 * k,
+          k,
+        })
+        didRestoreView.current = true
+      }
+      frame = requestAnimationFrame(fitGallery)
+      return () => cancelAnimationFrame(frame)
     }
+    didRestoreView.current = true
     const lastId = savedState?.lastSelectedChartId
     if (lastId == null) return
     const chart = chartObjects.find(c => c.id === lastId)
@@ -1311,9 +1365,8 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
     return newObj
   }
 
-  // Handle widget option change - directly modify spec using path (no API call)
+  // Widget changes also work in gallery previews; readOnly persistence guards keep saved examples intact.
   const handleWidgetOptionChange = useCallback((chartId, optionId, newValue) => {
-    if (readOnly) return   // read-only gallery: widgets are display-only
     setChartObjects(prev => {
       const sourceChart = prev.find(c => c.id === chartId)
       const option = sourceChart?.widgetOptions?.find(opt => opt.id === optionId)
@@ -1322,12 +1375,13 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
         return prev
       }
 
-      // Determine the actual value to write into the spec
-      const computeSpecValue = (currentSpec) => {
+      const optionPaths = option.paths?.length ? option.paths : [option.path]
+      // Determine the actual value to write into each targeted layer.
+      const computeSpecValue = (currentSpec, path) => {
         if (option.valueTemplate) {
           return option.valueTemplate.replace(/\{value\}/g, newValue)
         }
-        const currentSpecValue = getValueAtPath(currentSpec, option.path)
+        const currentSpecValue = getValueAtPath(currentSpec, path)
         if (typeof currentSpecValue === 'string' && option.value != null) {
           const oldStr = String(option.value)
           // Special case: spec has rgba(...) and new value is a hex color → preserve alpha
@@ -1356,11 +1410,12 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
         const updatedOptions = chart.widgetOptions.map(opt =>
           opt.id === optionId ? { ...opt, value: newValue } : opt
         )
-        const specVal = computeSpecValue(chart.spec)
-        const updatedSpec = setValueAtPath(chart.spec, option.path, specVal)
+        const updatedSpec = optionPaths.reduce((spec, path) =>
+          setValueAtPath(spec, path, computeSpecValue(chart.spec, path)), chart.spec)
         // Keep baseSpec in sync so a later modification-replay doesn't revert this widget
         // change (baseSpec is what applyModificationsToSpec replays over).
-        const updatedBase = chart.baseSpec ? setValueAtPath(chart.baseSpec, option.path, specVal) : chart.baseSpec
+        const updatedBase = chart.baseSpec ? optionPaths.reduce((spec, path) =>
+          setValueAtPath(spec, path, computeSpecValue(chart.spec, path)), chart.baseSpec) : chart.baseSpec
         return { ...chart, spec: updatedSpec, baseSpec: updatedBase, widgetOptions: updatedOptions }
       })
 
@@ -1395,26 +1450,31 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
           // First path that actually resolves in this spec wins; else fall back to source path
           // (setValueAtPath then no-ops, as before).
           const ownWidget = chart.widgetOptions?.find(w => w.id === optionId)
-          const candidates = [option.path]
-          // A facet composition moves its original unit under `spec`. Keep
-          // ancestor widgets connected to that same unit after faceting.
-          if (chart.spec.facet && chart.spec.spec) candidates.push(`spec.${option.path}`)
-          if (ownWidget?.path && ownWidget.path !== option.path) candidates.push(ownWidget.path)
-          if (/^(encoding|mark)\./.test(option.path)) {
-            for (const [prefix, host] of [['', chart.spec], ['spec.', chart.spec.spec]]) {
-              if (Array.isArray(host?.layer)) {
-                for (let i = 0; i < host.layer.length; i++) candidates.push(`${prefix}layer[${i}].${option.path}`)
+          let newSpec = chart.spec
+          let newBase = chart.baseSpec
+          for (const sourcePath of optionPaths) {
+            const candidates = [sourcePath]
+            // A facet composition moves its original unit under `spec`. Keep
+            // ancestor widgets connected to that same unit after faceting.
+            if (chart.spec.facet && chart.spec.spec) candidates.push(`spec.${sourcePath}`)
+            if (ownWidget?.path && ownWidget.path !== sourcePath) candidates.push(ownWidget.path)
+            if (/^(encoding|mark)\./.test(sourcePath)) {
+              for (const [prefix, host] of [['', chart.spec], ['spec.', chart.spec.spec]]) {
+                if (Array.isArray(host?.layer)) {
+                  for (let i = 0; i < host.layer.length; i++) candidates.push(`${prefix}layer[${i}].${sourcePath}`)
+                }
               }
             }
-          }
-          const applyPath = candidates.find(p => getValueAtPath(chart.spec, p) !== undefined) || option.path
+            const applyPath = candidates.find(p => getValueAtPath(chart.spec, p) !== undefined) || sourcePath
 
-          const newSpec = setValueAtPath(chart.spec, applyPath, descValue)
-          const newBase = chart.baseSpec ? setValueAtPath(chart.baseSpec, applyPath, descValue) : chart.baseSpec
+            newSpec = setValueAtPath(newSpec, applyPath, descValue)
+            if (newBase) newBase = setValueAtPath(newBase, applyPath, descValue)
+
+          }
 
           // Sync descendant's own widget value (match by id or path)
           const newWidgets = chart.widgetOptions?.map(w =>
-            (w.id === optionId || w.path === option.path) ? { ...w, value: newValue } : w
+            (w.id === optionId || optionPaths.includes(w.path)) ? { ...w, value: newValue } : w
           )
 
           return { ...chart, spec: newSpec, baseSpec: newBase, widgetOptions: newWidgets || chart.widgetOptions }
@@ -1598,7 +1658,7 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
   // Right panel split handlers removed — now using tab view
 
   // Horizontal panel resize handlers
-  const ICON_SIDEBAR_WIDTH = SHOW_LAYER_PANEL ? 48 : 0
+  const ICON_SIDEBAR_WIDTH = (SHOW_LAYER_PANEL || readOnly) ? 48 : 0
 
   const handleRightResizeMouseDown = useCallback((e) => {
     e.preventDefault()
@@ -3055,7 +3115,7 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
       <header className="app-header">
         {readOnly ? (
           <div className="readonly-header">
-            <a className="readonly-back-link" href="?gallery"><span aria-hidden="true">←</span> Gallery</a>
+            <a className="readonly-back-link" href={import.meta.env.BASE_URL}><span aria-hidden="true">←</span> Gallery</a>
             <span className="readonly-header-divider" aria-hidden="true" />
             <div className="readonly-title-wrap">
               <h1 className="readonly-title">{galleryExample?.name || 'Example'}</h1>
@@ -3063,7 +3123,7 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
           </div>
         ) : (
           <>
-          <a className="editor-home" href="?">TailVis</a>
+          <a className="editor-home" href={import.meta.env.BASE_URL}>TailVis</a>
 
           <div className="header-btns">
             {guidedDemo && <>
@@ -3087,7 +3147,7 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
               }}>Reset demo</button>
               <a className="header-btn guided-system" href="?system">System ↗</a>
             </>}
-            <button className="header-btn" title="Open the example gallery" onClick={() => { window.location.search = '?gallery' }}>
+            <button className="header-btn" title="Open the example gallery" onClick={() => { window.location.href = import.meta.env.BASE_URL }}>
               Gallery
             </button>
             {IS_STATIC_DEMO && !guidedDemo && (
@@ -3116,8 +3176,21 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
           handlePanelResizeMouseUp()
         }}
       >
-        {/* Only show the sidebar when layer browsing is enabled. */}
-        {SHOW_LAYER_PANEL && <div className="icon-sidebar">
+        {/* Gallery data toggle shares the editor's left sidebar. */}
+        {(SHOW_LAYER_PANEL || readOnly) && <div className="icon-sidebar">
+          {readOnly && <button
+            className={`sidebar-icon-btn ${dataTableOpen ? 'active' : ''}`}
+            onClick={() => setDataTableOpen(open => !open)}
+            aria-label="Toggle data panel"
+            aria-expanded={dataTableOpen}
+            title={dataTableOpen ? 'Hide data' : 'Show data'}
+          >
+            <svg className="sidebar-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+              <rect x="2" y="2" width="14" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
+              <path d="M2 7h14M2 11.5h14M7 7v9" stroke="currentColor" strokeWidth="1.3" />
+            </svg>
+            <span className="sidebar-label">Data</span>
+          </button>}
           {SHOW_LAYER_PANEL && <button
             className={`sidebar-icon-btn ${layerPanelOpen ? 'active' : ''}`}
             onClick={() => setLayerPanelOpen(prev => !prev)}
@@ -3166,6 +3239,7 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
             }}
           >
             <DataTable
+                onClose={readOnly ? () => setDataTableOpen(false) : undefined}
                 chartDataOnly={!!guidedDemo}
                 readOnly={readOnly || !!guidedDemo}
                 data={tableEffectiveData}

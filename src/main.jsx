@@ -43,7 +43,7 @@ function GalleryExampleView({ id }) {
   if (state.status === 'notfound') {
     return (
       <div style={{ padding: 40 }}>
-        Example not found. <a href="?gallery">← Back to gallery</a>
+        Example not found. <a href={import.meta.env.BASE_URL}>← Back to gallery</a>
       </div>
     )
   }

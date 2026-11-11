@@ -813,3 +813,7 @@
   background: #e8f4ff;
   color: #4a9eff;
 }
+
+.data-panel-close { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; margin-left: auto; flex-shrink: 0; border: none; border-radius: 4px; background: transparent; color: #718093; font: inherit; font-size: 19px; cursor: pointer; }
+.data-panel-close:hover { background: #e6ecf3; color: #27313d; }
+.data-panel-close:focus-visible { outline: 2px solid #346da8; outline-offset: 2px; }

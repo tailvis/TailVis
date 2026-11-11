@@ -18,7 +18,7 @@ const INITIAL_VISIBLE_ROWS = 200 // initial rows rendered; "More" loads more, "S
 
 
 function DataTable({ data, columnInfos, onSelectionChange, onColumnInfoChange, onDataLoad, dataSourceName,
-  dataSources, activeDataSourceId, onSelectDataSource, selectedChartDataSourceId, onCellEdit, onRowAdd, onRowDelete, onColumnAdd, onColumnDelete, onColumnRename, highlightDatum, encodedFields, onDataSourceCreate, readOnly = false, chartDataOnly = false }) {
+  dataSources, activeDataSourceId, onSelectDataSource, selectedChartDataSourceId, onCellEdit, onRowAdd, onRowDelete, onColumnAdd, onColumnDelete, onColumnRename, highlightDatum, encodedFields, onDataSourceCreate, readOnly = false, chartDataOnly = false, onClose }) {
   const fileInputRef = useRef(null)
   const panelRef = useRef(null)
 
@@ -767,6 +767,10 @@ function DataTable({ data, columnInfos, onSelectionChange, onColumnInfoChange, o
     setSelectedCells(new Set())
   }, [effectiveDataSourceId, onColumnDelete, selectedCells, columns])
 
+  const closeButton = onClose && (
+    <button className="data-panel-close" type="button" onClick={onClose} aria-label="Close data panel" title="Close data panel">×</button>
+  )
+
   // ─── Render ─────────────────
 
   // No active data: show data source list
@@ -780,6 +784,7 @@ function DataTable({ data, columnInfos, onSelectionChange, onColumnInfoChange, o
         <div className="data-table-header">
           <span className="data-table-title">Data</span>
           <span className="data-source-name">Select a dataset</span>
+          {closeButton}
         </div>
         <div className="dataset-selector">
           {dsList.map(([id, ds]) => (
@@ -805,6 +810,7 @@ function DataTable({ data, columnInfos, onSelectionChange, onColumnInfoChange, o
       <div className="data-table-panel" ref={panelRef} tabIndex={-1}>
         <div className="data-table-header">
           <span className="data-table-title">Data</span>
+          {closeButton}
         </div>
         <div className="data-table-empty"><p>No data loaded</p></div>
       </div>
@@ -852,6 +858,7 @@ function DataTable({ data, columnInfos, onSelectionChange, onColumnInfoChange, o
         </span>
         {/* <button className="data-upload-btn" onClick={() => fileInputRef.current?.click()} title="Upload data file">Upload</button> */}
         {hasActiveFilters && <span className="filter-active-badge" title="Filters active">F</span>}
+        {closeButton}
       </div>
 
       <div className="data-table-scroll" ref={tableRef}>

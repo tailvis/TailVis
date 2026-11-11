@@ -4,10 +4,8 @@ TailVis is an AI-assisted tool for refining Vega-Lite charts through direct elem
 selection, natural-language requests, and on-demand widgets. It maintains a
 modification history and supports branching to explore alternative refinements.
 
-[Try demo](https://tailvis.github.io/TailVis/?demo) ·
 [Project page](https://tailvis.github.io/TailVis/) ·
-[Paper](https://arxiv.org/abs/2607.25386) ·
-[Source code](https://github.com/tailvis/TailVis)
+[Paper](https://arxiv.org/abs/2607.25386)
 
 ## Project page and editor views
 
@@ -21,7 +19,7 @@ and GitHub Pages:
 | Home / Gallery | `/` or `?gallery` | Introduces TailVis and lists saved examples. |
 | Guided demo | `?demo` | Offers prepared refinements for three example charts. |
 | Full system | `?system` | Opens the editor for your own data and free-form requests. AI features require a backend. |
-| Gallery example | `?gallery&example=<id>` | Opens one saved chart history in the editor as a read-only example. |
+| Gallery example | `?gallery&example=<id>` | Opens a saved history with adjustable widgets; changes are temporary. |
 
 ### Guided demo
 
@@ -42,9 +40,12 @@ clears only the guided demo state. **System ↗** opens the full editor.
 
 ### Gallery
 
-Gallery cards open frozen examples and their refinement histories. You can pan and
-zoom, select chart elements, expand selection scopes, and inspect widgets,
-modifications, and data in a read-only view. Examples come from the bundled gallery
+Gallery cards open saved examples and their refinement histories. You can pan and
+zoom, select chart elements, expand selection scopes, inspect modifications and data,
+and adjust widgets to preview chart changes. Widget changes propagate along the
+example’s chart history, but are not saved: reopening or reloading the example
+restores it. Use **Cmd/Ctrl+Z** to undo a widget change and **Cmd/Ctrl+Shift+Z**
+to redo it. Free-form AI requests and other editing controls remain disabled. Examples come from the bundled gallery
 and any previously saved examples in the same browser. The current editor UI
 hides the **Save to Gallery** button.
 
