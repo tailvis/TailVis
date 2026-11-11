@@ -126,7 +126,7 @@ export default function Gallery() {
           <div><a href="#overview">Overview</a><a href="#examples">Gallery</a><a href="?demo">Try demo <span aria-hidden="true">↗</span></a></div>
         </nav>
         <section className="project-hero" aria-labelledby="project-title">
-          <h1 id="project-title">TailVis: Expressive Chart Refinement<br /><span>Preserving Data-Binding Integrity</span></h1>
+          <h1 id="project-title"><b>TailVis</b>: Expressive Chart Refinement<br /><span>Preserving Data-Binding Integrity</span></h1>
           <div className="project-intro">
             <p>Refine charts through direct selection, natural-language requests, and reusable widgets while preserving their connection to the data.</p>
             <div className="project-actions">

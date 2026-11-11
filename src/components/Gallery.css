@@ -234,7 +234,7 @@
 .project-system-link { padding: 8px 13px; border: 1px solid #cbd7e4; border-radius: 5px; }
 .project-hero { padding: 55px 0 54px; text-align: center; }
 .project-hero h1 {
-  font-family: inherit; font-size: clamp(30px, 3.25vw, 45px); line-height: 1.24;
+  font-family: Avenir, 'Avenir Next', Helvetica, Arial, sans-serif; font-size: clamp(30px, 3.25vw, 45px); line-height: 1.24;
   letter-spacing: -1px; font-weight: 500; color: #202833;
 }
 .project-hero h1 span { color: inherit; }
