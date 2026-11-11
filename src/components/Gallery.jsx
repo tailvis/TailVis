@@ -135,6 +135,10 @@ export default function Gallery() {
                 <p>Try hands-on refinement with prepared requests.</p>
               </div>
             </div>
+            <div className="project-resource-links" aria-label="Project resources">
+              <a href="https://arxiv.org/abs/2607.25386" target="_blank" rel="noreferrer">Paper <span aria-hidden="true">↗</span></a>
+              <a href="https://github.com/tailvis/TailVis" target="_blank" rel="noreferrer">Source code <span aria-hidden="true">↗</span></a>
+            </div>
           </div>
         </section>
         <section id="overview" className="project-overview" aria-labelledby="overview-title">
@@ -186,8 +190,7 @@ export default function Gallery() {
           <a href="?system">Open full system <span aria-hidden="true">↗</span></a>
         </section>
         <footer className="project-footer">
-          <div><span>TailVis</span><p className="project-paper"><a href="https://arxiv.org/abs/2607.25386" target="_blank" rel="noreferrer">Paper ↗</a> · Expressive Chart Refinement Preserving Data-Binding Integrity</p></div>
-          <a href="https://github.com/tailvis/TailVis" target="_blank" rel="noreferrer">Source code ↗</a>
+          <span>TailVis · Expressive Chart Refinement Preserving Data-Binding Integrity</span>
         </footer>
       </div>
     </div>
