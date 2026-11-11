@@ -1,72 +1,6 @@
+import { getOriginalModificationValues } from '../utils/modificationValues'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { generateScopeOptions, getScopeBindingTag } from '../utils/scopeUtils'
 import './ModificationPanel.css'
-
-function ScopeDropdown({ value, options, optionValue, onChange }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef(null)
-  const menuRef = useRef(null)
-
-  useEffect(() => {
-    if (!open) return
-
-    const handleOutsideClick = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) {
-        setOpen(false)
-      }
-    }
-
-    const handleEscape = (e) => {
-      if (e.key === 'Escape') setOpen(false)
-    }
-
-    setTimeout(() => {
-      document.addEventListener('mousedown', handleOutsideClick)
-      document.addEventListener('keydown', handleEscape)
-    }, 0)
-
-    return () => {
-      document.removeEventListener('mousedown', handleOutsideClick)
-      document.removeEventListener('keydown', handleEscape)
-    }
-  }, [open])
-
-  const currentOpt = options.find(opt => optionValue(opt) === value)
-
-  return (
-    <div className="scope-dropdown" ref={ref} onClick={(e) => e.stopPropagation()}>
-      <button
-        className={`scope-dropdown-trigger${open ? ' scope-dropdown-trigger-open' : ''}`}
-        onClick={(e) => { e.stopPropagation(); setOpen(v => !v) }}
-        type="button"
-      >
-        <span className="scope-dropdown-label">{currentOpt?.label ?? value}</span>
-        <svg className="scope-dropdown-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none">
-          <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </button>
-      {open && (
-        <div className="scope-dropdown-menu" ref={menuRef} onClick={(e) => e.stopPropagation()}>
-          {options.map((opt, i) => {
-            const val = optionValue(opt)
-            const isActive = val === value
-            return (
-              <button
-                key={`${val}-${i}`}
-                className={`scope-dropdown-item${isActive ? ' scope-dropdown-item-active' : ''}`}
-                onClick={(e) => { e.stopPropagation(); onChange(val); setOpen(false) }}
-                type="button"
-              >
-                {isActive && <span className="scope-dropdown-check">✓</span>}
-                {opt.label}
-              </button>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
-}
 
 // SVG overlay rect highlight (same approach as Canvas.jsx)
 function createModOverlay(el, color) {
@@ -204,7 +138,7 @@ function applyGroupHoverHighlight(chartId, mods, apply) {
   highlightElements(svg, [...new Set(elements)])
 }
 
-function ModificationPanel({ chartId, spec, modifications, onScopeChange, onDelete, onModificationClick, onValueChange, activeModificationId }) {
+function ModificationPanel({ chartId, spec, modifications, onDelete, onModificationClick, onValueChange, activeModificationId }) {
   const [collapsed, setCollapsed] = useState(false)
   const rebindNotice = null
   const panelRef = useRef(null)
@@ -274,94 +208,6 @@ function ModificationPanel({ chartId, spec, modifications, onScopeChange, onDele
 
   if (!modifications || modifications.length === 0) return null
 
-  const getScopeSelectValue = (scope) => {
-    if (scope.type === 'this-only') return 'this-only'
-    if (scope.type === 'by-field') return `by-field:${scope.field}`
-    if (scope.type === 'composite-sub-all') return 'composite-sub-all'
-    if (scope.type === 'same-type-in-axis') return `same-type-in-axis:${scope.axisChannel}:${scope.axisSubType}`
-    if (scope.type === 'same-type-all-axes') return `same-type-all-axes:${scope.axisSubType}`
-    if (scope.type === 'all-in-axis') return `all-in-axis:${scope.axisChannel}`
-    if (scope.type === 'all-axes') return 'all-axes'
-    if (scope.type === 'legend-with-data') return 'legend-with-data'
-    if (scope.type === 'legend-item-only') return 'legend-item-only'
-    if (scope.type === 'all-legend-symbols') return 'all-legend-symbols'
-    if (scope.type === 'all-legend-labels') return 'all-legend-labels'
-    if (scope.type === 'legend-title') return 'legend-title'
-    if (scope.type === 'all-in-legend') return 'all-in-legend'
-    if (scope.type === 'all-text') return 'all-text'
-    if (scope.type === 'scale-modify') return `scale-modify:${scope.channel}`
-    if (scope.type === 'condition-match') return `condition-match:${scope.channel}:${scope.conditionIndex}`
-    if (scope.type === 'condition-default') return `condition-default:${scope.channel}`
-    if (scope.type === 'all' || scope.type === 'all-marks') return 'all-marks'
-    if (scope.type === 'annotation-direct' || scope.type === 'annotation-layer') return 'annotation-direct'
-    if (scope.type === 'all-in-layer') return 'all-in-layer'
-    if (scope.type === 'this-element') return 'this-element'
-    return 'all-marks'
-  }
-
-  const handleScopeSelectChange = (modId, selectValue, mod) => {
-    // If switching to this-only from a bound scope, show confirmation
-    applyScopeChange(modId, selectValue, mod)
-  }
-
-  const applyScopeChange = (modId, selectValue, mod) => {
-    // (rebind notice removed — was more distracting than helpful)
-
-    let newScope
-    if (selectValue === 'this-only') {
-      newScope = { type: 'this-only' }
-    } else if (selectValue === 'all-marks') {
-      newScope = { type: 'all-marks' }
-    } else if (selectValue.startsWith('by-field:')) {
-      const field = selectValue.slice('by-field:'.length)
-      const fieldValue = mod.datum ? mod.datum[field] ?? null : null
-      newScope = { type: 'by-field', field, fieldValue }
-    } else if (selectValue === 'composite-sub-all') {
-      newScope = { type: 'composite-sub-all', compositeMarkType: mod.compositeMarkType, compositeSubPart: mod.compositeSubPart }
-    } else if (selectValue.startsWith('same-type-in-axis:')) {
-      const parts = selectValue.split(':')
-      newScope = { type: 'same-type-in-axis', axisChannel: parts[1], axisSubType: parts[2] }
-    } else if (selectValue.startsWith('same-type-all-axes:')) {
-      const axisSubType = selectValue.split(':')[1]
-      newScope = { type: 'same-type-all-axes', axisSubType }
-    } else if (selectValue.startsWith('all-in-axis:')) {
-      newScope = { type: 'all-in-axis', axisChannel: selectValue.split(':')[1] }
-    } else if (selectValue === 'all-axes') {
-      newScope = { type: 'all-axes' }
-    } else if (selectValue === 'legend-with-data') {
-      newScope = { type: 'legend-with-data', legendField: mod.legendField, legendValue: mod.legendValue }
-    } else if (selectValue === 'legend-item-only') {
-      newScope = { type: 'legend-item-only' }
-    } else if (selectValue === 'all-legend-symbols') {
-      newScope = { type: 'all-legend-symbols' }
-    } else if (selectValue === 'all-legend-labels') {
-      newScope = { type: 'all-legend-labels' }
-    } else if (selectValue === 'legend-title') {
-      newScope = { type: 'legend-title' }
-    } else if (selectValue === 'all-in-legend') {
-      newScope = { type: 'all-in-legend' }
-    } else if (selectValue === 'all-text') {
-      newScope = { type: 'all-text' }
-    } else if (selectValue.startsWith('scale-modify:')) {
-      const channel = selectValue.slice('scale-modify:'.length)
-      newScope = { type: 'scale-modify', channel, field: mod.datum ? Object.keys(mod.datum)[0] : null }
-    } else if (selectValue.startsWith('condition-match:')) {
-      const parts = selectValue.split(':')
-      newScope = { type: 'condition-match', channel: parts[1], conditionIndex: parseInt(parts[2]) }
-    } else if (selectValue.startsWith('condition-default:')) {
-      const channel = selectValue.slice('condition-default:'.length)
-      newScope = { type: 'condition-default', channel }
-    } else if (selectValue === 'annotation-direct') {
-      newScope = { type: 'annotation-direct', layerIndex: mod.layerIndex }
-    } else if (selectValue === 'all-in-layer') {
-      newScope = { type: 'all-in-layer', layerIndex: mod.layerIndex }
-    } else if (selectValue === 'this-element') {
-      newScope = { type: 'this-element', layerIndex: mod.layerIndex }
-    } else {
-      newScope = { type: selectValue }
-    }
-    onScopeChange(chartId, modId, newScope)
-  }
 
   return (
     <div className="mod-panel" ref={panelRef}>
@@ -381,10 +227,8 @@ function ModificationPanel({ chartId, spec, modifications, onScopeChange, onDele
           spec={spec}
           activeModificationId={activeModificationId}
           onModificationClick={onModificationClick}
-          onScopeChange={handleScopeSelectChange}
           onDelete={onDelete}
           onValueChange={onValueChange}
-          getScopeSelectValue={getScopeSelectValue}
           rebindNotice={rebindNotice}
         />
       ))}
@@ -394,7 +238,7 @@ function ModificationPanel({ chartId, spec, modifications, onScopeChange, onDele
   )
 }
 
-function ModificationGroup({ group, chartId, spec, activeModificationId, onModificationClick, onScopeChange, onDelete, onValueChange, getScopeSelectValue, rebindNotice }) {
+function ModificationGroup({ group, chartId, spec, activeModificationId, onModificationClick, onDelete, onValueChange, rebindNotice }) {
   const [groupCollapsed, setGroupCollapsed] = useState(true)
   const hasMultiple = group.mods.length > 1
 
@@ -433,52 +277,26 @@ function ModificationGroup({ group, chartId, spec, activeModificationId, onModif
           compact={hasMultiple}
           activeModificationId={activeModificationId}
           onModificationClick={onModificationClick}
-          onScopeChange={onScopeChange}
           onDelete={onDelete}
           rebindNotice={rebindNotice}
           onValueChange={onValueChange}
-          getScopeSelectValue={getScopeSelectValue}
         />
       ))}
     </div>
   )
 }
 
-function ModificationRow({ mod, chartId, spec, compact, activeModificationId, onModificationClick, onScopeChange, onDelete, onValueChange, getScopeSelectValue, rebindNotice }) {
+function ModificationRow({ mod, chartId, spec, compact, activeModificationId, onModificationClick, onDelete, onValueChange, rebindNotice }) {
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(mod.value)
 
-  const scopeOptions = useMemo(() => {
-    const elementInfo = {
-      semanticRole: mod.semanticRole || 'data-mark',
-      markGroup: mod.markGroup,
-      axisChannel: mod.axisChannel,
-      axisSubType: mod.axisSubType,
-      legendField: mod.legendField,
-      legendValue: mod.legendValue,
-      legendSubType: mod.legendSubType || null,
-      compositeMarkType: mod.compositeMarkType || null,
-      compositeSubPart: mod.compositeSubPart || null,
-      layerContext: mod.layerContext || null,
-      layerClassification: mod.layerClassification || null,
-      layerIndex: mod.layerIndex ?? null,
-    }
-    return generateScopeOptions(spec, mod.datum, elementInfo, mod.property)
-  }, [spec, mod.datum, mod.semanticRole, mod.markGroup, mod.axisChannel, mod.axisSubType, mod.legendField, mod.legendValue, mod.legendSubType, mod.compositeMarkType, mod.compositeSubPart, mod.layerContext, mod.layerClassification, mod.layerIndex])
-
-  const bindingTag = getScopeBindingTag(mod.scope)
   const isColor = ['fill', 'stroke', 'color'].includes(mod.property)
   const isNumber = typeof mod.value === 'number'
   const isDelete = mod.property === '__delete__'
+  const originalValues = getOriginalModificationValues(mod)
+  const hasMixedOriginals = originalValues.length > 1
+  const originalValue = originalValues[0]
 
-  // Scope-locked mods: the change is inherently not re-scopable, so show a static label
-  // instead of the scope dropdown. Text content (one string, one element) and legend
-  // config (orient/direction/… apply to the whole legend regardless of scope).
-  const LEGEND_CONFIG_PROPS = new Set(['orient', 'direction', 'title', 'padding', 'offset', 'labelFontSize', 'symbolSize', 'fillColor', 'strokeColor'])
-  const lockedScopeLabel =
-    mod.property === 'text' ? 'this element'
-    : (mod.semanticRole === 'legend' && LEGEND_CONFIG_PROPS.has(mod.property)) ? 'legend'
-    : null
 
   // Delete mods get a simplified row: a "Deleted" label + a restore (×) button.
   // Removing the mod re-adds the filtered-out data.
@@ -498,24 +316,6 @@ function ModificationRow({ mod, chartId, spec, compact, activeModificationId, on
   const handleInputKeyDown = (e) => {
     if (e.key === 'Enter' && mod.property !== 'text') e.target.blur()
     if (e.key === 'Escape') setIsEditing(false)
-  }
-
-  const optionValue = (opt) => {
-    const t = opt.value.type
-    if (t === 'this-only') return 'this-only'
-    if (t === 'all' || t === 'all-marks') return 'all-marks'
-    if (t === 'composite-sub-all') return 'composite-sub-all'
-    if (t === 'by-field') return `by-field:${opt.value.field}`
-    if (t === 'same-type-in-axis') return `same-type-in-axis:${opt.value.axisChannel}:${opt.value.axisSubType}`
-    if (t === 'same-type-all-axes') return `same-type-all-axes:${opt.value.axisSubType}`
-    if (t === 'all-in-axis') return `all-in-axis:${opt.value.axisChannel}`
-    if (t === 'scale-modify') return `scale-modify:${opt.value.channel}`
-    if (t === 'condition-match') return `condition-match:${opt.value.channel}:${opt.value.conditionIndex}`
-    if (t === 'condition-default') return `condition-default:${opt.value.channel}`
-    if (t === 'annotation-direct') return 'annotation-direct'
-    if (t === 'all-in-layer') return 'all-in-layer'
-    if (t === 'this-element') return 'this-element'
-    return t
   }
 
   if (isDelete) {
@@ -558,11 +358,14 @@ function ModificationRow({ mod, chartId, spec, compact, activeModificationId, on
 
       {/* Col 3: [orig] → [new] */}
       <span className="mod-change">
-        {isColor && mod.originalValue && (
-          <span className="mod-swatch mod-swatch-orig" style={{ background: mod.originalValue }} title={mod.originalValue} />
-        )}
-        {!isColor && mod.originalValue != null && (
-          <span className="mod-orig-val">{typeof mod.originalValue === 'number' ? mod.originalValue : String(mod.originalValue)}</span>
+        {hasMixedOriginals ? (
+          <span className="mod-orig-val" title={originalValues.map(value => value == null ? 'Unavailable' : String(value)).join(', ')}>Mixed</span>
+        ) : originalValue == null ? (
+          <span className="mod-orig-val" title="Original value was not saved">—</span>
+        ) : isColor ? (
+          <span className="mod-swatch mod-swatch-orig" style={{ background: originalValue }} title={String(originalValue)} />
+        ) : (
+          <span className="mod-orig-val">{String(originalValue)}</span>
         )}
         <span className="mod-arrow">&rarr;</span>
         {isEditing ? (
@@ -616,33 +419,6 @@ function ModificationRow({ mod, chartId, spec, compact, activeModificationId, on
           </span>
         )}
       </span>
-
-      {/* Col 5: scope select (1fr) — for grouped mods show count label instead */}
-      {mod.group ? (
-        <span className="mod-group-scope-label" title={`Applied to ${mod.selectedCount ?? mod.group.length} elements`}>
-          {mod.selectedCount ?? mod.group.length} elements
-        </span>
-      ) : lockedScopeLabel ? (
-        // Not re-scopable (text content / legend config) — static label, no scope dropdown.
-        <span className="mod-group-scope-label" title="This modification is not re-scopable">
-          {lockedScopeLabel}
-        </span>
-      ) : mod.fromScopeSelection ? (
-        <span className="mod-group-scope-label" title="Scope selection">
-          {mod.scope?.type === 'all-marks' ? 'All Marks' :
-           mod.scope?.type === 'by-field' ? `${mod.scope.field}: ${mod.scope.fieldValue}` :
-           'Scope'}
-        </span>
-      ) : (
-        <ScopeDropdown
-          value={getScopeSelectValue(mod.scope)}
-          options={scopeOptions}
-          optionValue={optionValue}
-          onChange={(val) => onScopeChange(mod.id, val, mod)}
-        />
-      )}
-
-      {/* Col 6: binding/analysis tags (data-bound / conditional / annotation / intact \u2026) removed */}
 
       {/* Col 7: delete */}
       <button

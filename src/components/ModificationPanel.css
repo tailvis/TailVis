@@ -73,10 +73,10 @@
   line-height: 1.4;
 }
 
-/* Row: CSS Grid — prop-name | change (orig→new) | scope | tag | delete */
+/* Row: property | value change | delete */
 .mod-row {
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr) minmax(0, 1fr) max-content 24px;
+  grid-template-columns: 64px minmax(0, 1fr) 24px;
   align-items: center;
   gap: 6px;
   padding: 6px 8px;
@@ -429,7 +429,7 @@
 
 /* Compact rows inside groups: no target type column, same prop-name fixed width */
 .mod-row-compact {
-  grid-template-columns: 64px minmax(0, 1fr) minmax(0, 1fr) max-content 24px;
+  grid-template-columns: 64px minmax(0, 1fr) 24px;
   border-radius: 0;
   margin-left: 8px;
   border-left: 2px solid #e0dac0;

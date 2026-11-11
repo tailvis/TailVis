@@ -929,6 +929,7 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
 
   // Select single chart (normal click)
   const handleSelectChart = useCallback((id) => {
+    if (guidedDemo) setDataTableOpen(!!id)
     setSelectedChartIds(prev => {
       // Skip update if already the sole selection — prevents unnecessary Canvas re-render
       // that would destroy element overlays
@@ -937,21 +938,23 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
     })
     clearElementSelection()
     if (!id) setActiveDataSourceId(null)
-  }, [])
+  }, [guidedDemo])
 
   // Toggle chart in/out of selection (shift-click)
   const handleToggleChartSelection = useCallback((id) => {
+    if (guidedDemo) setDataTableOpen(true)
     setSelectedChartIds(prev =>
       prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
     )
     clearElementSelection()
-  }, [])
+  }, [guidedDemo])
 
   // Set multiple charts (rubber-band result)
   const handleSelectCharts = useCallback((ids) => {
+    if (guidedDemo) setDataTableOpen(ids.length > 0)
     setSelectedChartIds(ids)
     clearElementSelection()
-  }, [])
+  }, [guidedDemo])
 
   // Find non-overlapping position for a new chart
   const findNonOverlappingPosition = (targetX, targetY, targetW, targetH, existingCharts) => {
@@ -1458,6 +1461,7 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
   // Handle element selection from Canvas (single or multi)
   // skipLog: true when called from scope confirm or Vega re-render recovery (already logged elsewhere)
   const handleElementSelect = useCallback((chartId, elementInfo, allSelectedSelectors, allElementInfos, { skipLog } = {}) => {
+    setDataTableOpen(true)
     const allInfos = allElementInfos || [elementInfo]
     // console.log('[SELECT]', skipLog ? '(skipLog)' : '', {
     //   chartId,
@@ -1990,13 +1994,15 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
 
       if (existingIdx >= 0) {
         const [existing] = modifications.splice(existingIdx, 1)
-        modifications.push({ ...existing, value, group, selectedCount: groupElements.length, selectedSelectors: groupElements.map(el => el.selector).filter(Boolean), timestamp: Date.now() })
+        modifications.push({ ...existing, value, group: existing.group, selectedCount: groupElements.length, selectedSelectors: groupElements.map(el => el.selector).filter(Boolean), timestamp: Date.now() })
       } else {
+        const originalValues = [...new Set(groupElements.map(el => el.properties?.[propName] ?? null))]
         const newMod = {
           id: `mod-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
           property: propName,
           value,
-          originalValue: null,
+          originalValue: originalValues.length === 1 ? originalValues[0] : null,
+          originalValues,
           scope: { type: 'group' },
           selectionKey: targetKey,
           selectedCount: groupElements.length,
@@ -3147,7 +3153,7 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
         )}
 
         {/* DataTable Overlay Panel */}
-        {dataTableOpen && (
+        {dataTableOpen && (!guidedDemo || selectedChart) && (
           <div
             className={`datatable-overlay-panel ${isDraggingDataTableResize ? 'resizing' : ''}`}
             style={{ width: dataTableWidth }}
@@ -3160,7 +3166,8 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
             }}
           >
             <DataTable
-                readOnly={readOnly}
+                chartDataOnly={!!guidedDemo}
+                readOnly={readOnly || !!guidedDemo}
                 data={tableEffectiveData}
                 columnInfos={tableEffectiveColumnInfos}
                 onSelectionChange={handleSelectionChange}

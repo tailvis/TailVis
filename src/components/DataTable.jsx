@@ -18,7 +18,7 @@ const INITIAL_VISIBLE_ROWS = 200 // initial rows rendered; "More" loads more, "S
 
 
 function DataTable({ data, columnInfos, onSelectionChange, onColumnInfoChange, onDataLoad, dataSourceName,
-  dataSources, activeDataSourceId, onSelectDataSource, selectedChartDataSourceId, onCellEdit, onRowAdd, onRowDelete, onColumnAdd, onColumnDelete, onColumnRename, highlightDatum, encodedFields, onDataSourceCreate, readOnly = false }) {
+  dataSources, activeDataSourceId, onSelectDataSource, selectedChartDataSourceId, onCellEdit, onRowAdd, onRowDelete, onColumnAdd, onColumnDelete, onColumnRename, highlightDatum, encodedFields, onDataSourceCreate, readOnly = false, chartDataOnly = false }) {
   const fileInputRef = useRef(null)
   const panelRef = useRef(null)
 
@@ -241,6 +241,7 @@ function DataTable({ data, columnInfos, onSelectionChange, onColumnInfoChange, o
 
   // ─── Cell editing ─────────────────
   const startEditExisting = useCallback((rowIdx, colIdx) => {
+    if (chartDataOnly) return
     if (!effectiveDataSourceId) return
     const originalIndex = originalDataIndices[rowIdx]
     const col = columns[colIdx]
@@ -248,15 +249,16 @@ function DataTable({ data, columnInfos, onSelectionChange, onColumnInfoChange, o
     setEditingCell({ rowIdx, colIdx, originalDataIndex: originalIndex })
     setEditValue(value != null ? String(value) : '')
     setFocusedCell({ rowIdx, colIdx })
-  }, [effectiveDataSourceId, originalDataIndices, columns, displayData])
+  }, [chartDataOnly, effectiveDataSourceId, originalDataIndices, columns, displayData])
 
   const startEditByTyping = useCallback((rowIdx, colIdx, char) => {
+    if (chartDataOnly) return
     if (!effectiveDataSourceId) return
     const originalIndex = originalDataIndices[rowIdx]
     setEditingCell({ rowIdx, colIdx, originalDataIndex: originalIndex })
     setEditValue(char)
     setFocusedCell({ rowIdx, colIdx })
-  }, [effectiveDataSourceId, originalDataIndices])
+  }, [chartDataOnly, effectiveDataSourceId, originalDataIndices])
 
   const commitCellEdit = useCallback((moveDirection = null) => {
     if (!editingCell || !effectiveDataSourceId) {
@@ -383,14 +385,16 @@ function DataTable({ data, columnInfos, onSelectionChange, onColumnInfoChange, o
   }, [effectiveDataSourceId, maxRow, maxCol, originalDataIndices, columns, onCellEdit])
 
   const handlePaste = useCallback(async () => {
+    if (chartDataOnly) return
     if (!effectiveDataSourceId || !focusedCell) return
     try {
       const text = await navigator.clipboard.readText()
       distributePastedText(text, focusedCell.rowIdx, focusedCell.colIdx)
     } catch { /* clipboard access denied */ }
-  }, [effectiveDataSourceId, focusedCell, distributePastedText])
+  }, [chartDataOnly, effectiveDataSourceId, focusedCell, distributePastedText])
 
   const handleDeleteSelectedCells = useCallback(() => {
+    if (chartDataOnly) return
     if (!effectiveDataSourceId || selectedCells.size === 0) return
     selectedCells.forEach(key => {
       const [r, c] = key.split(',').map(Number)
@@ -402,7 +406,7 @@ function DataTable({ data, columnInfos, onSelectionChange, onColumnInfoChange, o
         }
       }
     })
-  }, [effectiveDataSourceId, selectedCells, displayData, columns, originalDataIndices, onCellEdit])
+  }, [chartDataOnly, effectiveDataSourceId, selectedCells, displayData, columns, originalDataIndices, onCellEdit])
 
   // ─── Global keyboard handler ─────────────────
   useEffect(() => {
@@ -766,7 +770,7 @@ function DataTable({ data, columnInfos, onSelectionChange, onColumnInfoChange, o
   // ─── Render ─────────────────
 
   // No active data: show data source list
-  if (!selectedChartDataSourceId && !activeDataSourceId) {
+  if (!chartDataOnly && !selectedChartDataSourceId && !activeDataSourceId) {
     const dsList = Object.entries(dataSources || {}).filter(([id]) =>
       readOnly || !Object.hasOwn(SAMPLE_DATASETS, id) || DEFAULT_SAMPLE_DATASET_IDS.has(id)
     )
@@ -837,7 +841,7 @@ function DataTable({ data, columnInfos, onSelectionChange, onColumnInfoChange, o
     <div className="data-table-panel" ref={panelRef} tabIndex={-1}>
       <input type="file" accept=".csv,.json,.tsv" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileUpload} />
       <div className="data-table-header">
-        {!selectedChartDataSourceId && (
+        {!chartDataOnly && !selectedChartDataSourceId && (
           <button className="data-back-btn" onClick={() => onSelectDataSource?.(null)} title="Back to datasets">←</button>
         )}
         <span className="data-table-title">Data</span>
@@ -996,7 +1000,7 @@ function DataTable({ data, columnInfos, onSelectionChange, onColumnInfoChange, o
             )}
           </span>
         )}
-        {effectiveDataSourceId && selectedRowCount > 0 && (() => {
+        {!readOnly && effectiveDataSourceId && selectedRowCount > 0 && (() => {
           const rCount = Math.min(displayData.length, visibleRows)
           const fullCols = localSelectedCols.filter((_, i) => {
             const colIdx = columns.indexOf(localSelectedCols[i])
