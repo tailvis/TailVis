@@ -3154,7 +3154,7 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
                 setChatScopeInfo(null)
                 setChatReferences([])
                 setPreviewChart(null)
-                const position = { x: chart.x + chart.width + 70, y: chart.y + chart.height / 2 - 200 }
+                const position = { x: chart.x + chart.width + 70, y: chart.y }
                 setChatCanvasPos(position)
                 setActiveChatId(chart.id)
                 revealChat(position)
@@ -3855,7 +3855,7 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
               const chatChart = chartObjects.find(c => c.id === activeChatId)
               if (chatChart) {
                 const chatAgentX = chatChart.x + chatChart.width + 70
-                const chatAgentY = chatChart.y + chatChart.height / 2 - 200
+                const chatAgentY = chatChart.y
                 setTimeout(() => {
                   guidedDemo
                     ? panToChart(sourceChart.x, sourceChart.y, previewX + 560 - sourceChart.x, Math.max(sourceChart.height, 500))

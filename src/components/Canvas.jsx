@@ -2827,7 +2827,7 @@ function Canvas({ guidedDemo = false,
               guidedDemo={guidedDemo}
               onGuidedRequest={() => {
                 const chart = chartObjects.find(c => c.id === widget.chartId)
-                if (chart) onOpenChat?.(chart.id, { x: chart.x + chart.width + 70, y: chart.y + chart.height / 2 - 200 })
+                if (chart) onOpenChat?.(chart.id, { x: chart.x + chart.width + 70, y: chart.y })
               }}
               chartId={widget.chartId}
               command={widget.command}
@@ -2890,7 +2890,7 @@ function Canvas({ guidedDemo = false,
                   logEvent('chat_open', { chartId: chartObj.id })
                   onOpenChat(chartObj.id, {
                     x: chartObj.x + chartObj.width + 70,
-                    y: chartObj.y + chartObj.height / 2 - 200
+                    y: chartObj.y
                   })
                 }
               }}
