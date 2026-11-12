@@ -732,6 +732,25 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
     }
   }, [canvasTransform.k, guidedDemo])
 
+  // Keep chart-attached chat windows inside the canvas in every editor mode.
+  const revealChat = useCallback((position) => {
+    const wrapper = canvasWrapperRef.current
+    if (wrapper) {
+      const k = canvasTransform.k || 1
+      const chatRight = position.x * k + canvasTransform.x + (wrapper.getBoundingClientRect()?.left || 0) + 340
+      const viewRight = wrapper.getBoundingClientRect().right
+      if (chatRight > viewRight) {
+        const shiftX = canvasTransform.x - (chatRight - viewRight) - 20
+        const newTransform = { ...canvasTransform, x: shiftX }
+        if (canvasPanToRef.current) {
+          canvasPanToRef.current(newTransform, { animate: true, duration: 300 })
+        } else {
+          setCanvasTransform(newTransform)
+        }
+      }
+    }
+  }, [canvasTransform])
+
   const [previewChart, setPreviewChart] = useState(null)
 
   // Reset confirm dialog
@@ -3135,9 +3154,10 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
                 setChatScopeInfo(null)
                 setChatReferences([])
                 setPreviewChart(null)
-                setChatCanvasPos({ x: chart.x + chart.width + 70, y: chart.y + chart.height / 2 - 200 })
+                const position = { x: chart.x + chart.width + 70, y: chart.y + chart.height / 2 - 200 }
+                setChatCanvasPos(position)
                 setActiveChatId(chart.id)
-                setTimeout(() => panToChart(chart.x, chart.y, chart.width, chart.height), 50)
+                revealChat(position)
               }}>Try a request</button>
               <button className="header-btn guided-reset" onClick={() => {
                 latestStateForSave.current = null
@@ -3465,27 +3485,7 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
               setActiveChatId(chartId)
               setChatCanvasPos(position)
               setChatInitialMessages(initialMessages || null)
-              if (guidedDemo) {
-                const chart = chartObjects.find(c => c.id === chartId)
-                if (chart) setTimeout(() => panToChart(chart.x, chart.y, chart.width, chart.height), 50)
-                return
-              }
-              // Ensure ChatAgent doesn't overflow right edge — pan just enough
-              const wrapper = canvasWrapperRef.current
-              if (wrapper) {
-                const k = canvasTransform.k || 1
-                const chatRight = position.x * k + canvasTransform.x + (wrapper.getBoundingClientRect()?.left || 0) + 340
-                const viewRight = wrapper.getBoundingClientRect().right
-                if (chatRight > viewRight) {
-                  const shiftX = canvasTransform.x - (chatRight - viewRight) - 20
-                  const newTransform = { ...canvasTransform, x: shiftX }
-                  if (canvasPanToRef.current) {
-                    canvasPanToRef.current(newTransform, { animate: true, duration: 300 })
-                  } else {
-                    setCanvasTransform(newTransform)
-                  }
-                }
-              }
+              revealChat(position)
               setTimeout(() => chatAgentFocusRef.current?.focus(), 100)
               // Snapshot selected elements at chat open time (use refs for latest values)
               if (!initialMessages) {
@@ -3791,7 +3791,7 @@ function App({ readOnly = false, galleryExample = null, guidedDemo = null, initi
         </div>
       </div>
 
-      {/* Chat Agent — fixed overlay, outside flex layout to prevent layout shifts */}
+      {/* Chat Agent — portaled into the canvas without affecting its layout */}
       {activeChatId && (
         <ChatAgent
           key={activeChatId}

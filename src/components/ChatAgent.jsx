@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { logEvent } from '../utils/experimentLogger'
 import { withApiKey, IS_STATIC_DEMO, hasApiBase, apiUrl } from '../utils/apiKey'
 import './ChatAgent.css'
@@ -171,12 +172,9 @@ function ChatAgent({ requestProvider, presetRequests, chartId, chartSpec, canvas
   const resizeStart = useRef({ x: 0, y: 0, width: 0, height: 0 })
 
   const t = canvasTransform || { x: 0, y: 0, k: 1 }
-  const wrapperRect = canvasWrapperRef?.current?.getBoundingClientRect()
-  const wrapperOffsetX = wrapperRect?.left || 0
-  const wrapperOffsetY = wrapperRect?.top || 0
-  const screenX = requestProvider ? Math.max(12, window.innerWidth - size.width - 16) : canvasXY.x * t.k + t.x + wrapperOffsetX
-  const screenY = requestProvider ? 80 : canvasXY.y * t.k + t.y + wrapperOffsetY
-  const screenScale = requestProvider ? 1 : t.k
+  const screenX = canvasXY.x * t.k + t.x
+  const screenY = canvasXY.y * t.k + t.y
+  const screenScale = t.k
 
   // Auto scroll to bottom
   useEffect(() => {
@@ -829,7 +827,11 @@ function ChatAgent({ requestProvider, presetRequests, chartId, chartSpec, canvas
     )
   }
 
-  return (
+  // Keep chat above charts, clipped beneath the surrounding editor panels.
+  const canvasWrapper = canvasWrapperRef?.current
+  if (!canvasWrapper) return null
+
+  return createPortal(
     <div
       ref={chatRef}
       className={`chat-agent ${isDragging ? 'dragging' : ''}`}
@@ -933,7 +935,8 @@ function ChatAgent({ requestProvider, presetRequests, chartId, chartSpec, canvas
         className="resize-handle"
         onMouseDown={handleResizeStart}
       />
-    </div>
+    </div>,
+    canvasWrapper
   )
 }
 

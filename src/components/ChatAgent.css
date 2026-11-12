@@ -1,13 +1,13 @@
 .chat-agent {
-  position: fixed;
+  position: absolute;
   min-width: 280px;
   min-height: 300px;
   background: #ffffff;
-  border: 1px solid #4a9eff;
-  border-radius: 12px;
+  border: 1px solid #b9cee5;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(45, 67, 92, 0.08);
   z-index: 1000;
   overflow: hidden;
   user-select: none;
@@ -15,7 +15,7 @@
 
 .chat-agent.dragging {
   opacity: 0.9;
-  box-shadow: 0 12px 48px rgba(74, 158, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(45, 67, 92, 0.12);
 }
 
 /* Resize handle */
@@ -26,12 +26,12 @@
   width: 16px;
   height: 16px;
   cursor: nwse-resize;
-  background: linear-gradient(135deg, transparent 50%, #4a9eff 50%);
-  border-radius: 0 0 12px 0;
+  background: linear-gradient(135deg, transparent 50%, #b9cee5 50%);
+  border-radius: 0 0 8px 0;
 }
 
 .chat-agent .resize-handle:hover {
-  background: linear-gradient(135deg, transparent 50%, #6ab0ff 50%);
+  background: linear-gradient(135deg, transparent 50%, #8eafd2 50%);
 }
 
 .chat-header {
@@ -39,8 +39,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: linear-gradient(135deg, #4a9eff 0%, #3d8bdb 100%);
-  color: white;
+  background: #e6eff9;
+  color: #365b83;
   font-weight: 600;
   font-size: 14px;
 }
@@ -48,7 +48,7 @@
 .chat-header .close-btn {
   background: none;
   border: none;
-  color: white;
+  color: #52769c;
   font-size: 20px;
   cursor: pointer;
   padding: 0;
@@ -68,7 +68,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: #fafafa;
+  background: #fcfdfe;
   /* Allow selecting/copying message text (the widget itself is user-select:none for dragging) */
   user-select: text;
   -webkit-user-select: text;
@@ -94,14 +94,14 @@
 
 .message-content {
   padding: 10px 14px;
-  border-radius: 12px;
+  border-radius: 6px;
   font-size: 13px;
   line-height: 1.5;
 }
 
 .chat-message.user .message-content {
-  background: #4a9eff;
-  color: white;
+  background: #e9f1fa;
+  color: #365b83;
   border-bottom-right-radius: 4px;
 }
 
@@ -157,7 +157,7 @@
 }
 
 .widget-type {
-  color: #4a9eff;
+  color: #52769c;
   font-size: 11px;
 }
 
@@ -259,7 +259,7 @@
 
 .preview-widget-interactive .number-control .number-input:focus {
   outline: none;
-  border-color: #4a9eff;
+  border-color: #8eafd2;
 }
 
 .preview-widget-interactive .number-control .number-input::-webkit-inner-spin-button,
@@ -272,7 +272,7 @@
   flex: 1;
   min-width: 0;
   height: 4px;
-  accent-color: #4a9eff;
+  accent-color: #8eafd2;
   cursor: pointer;
 }
 
@@ -291,7 +291,7 @@
   width: 14px;
   height: 14px;
   cursor: pointer;
-  accent-color: #4a9eff;
+  accent-color: #8eafd2;
 }
 
 /* Action Buttons */
@@ -319,13 +319,13 @@
 }
 
 .action-btn.primary {
-  background: linear-gradient(135deg, #4a9eff 0%, #3d8bdb 100%);
-  border-color: #4a9eff;
-  color: white;
+  background: #e6eff9;
+  border-color: #c8d9eb;
+  color: #365b83;
 }
 
 .action-btn.primary:hover {
-  box-shadow: 0 2px 8px rgba(74, 158, 255, 0.3);
+  background: #d6e5f5;
 }
 
 /* Input Area */
@@ -503,7 +503,7 @@
 
 .chat-input-area textarea:focus {
   outline: none;
-  border-color: #4a9eff;
+  border-color: #8eafd2;
 }
 
 .chat-input-area textarea::placeholder {
@@ -512,10 +512,10 @@
 
 .send-btn {
   padding: 10px 16px;
-  background: linear-gradient(135deg, #4a9eff 0%, #3d8bdb 100%);
-  border: none;
-  border-radius: 8px;
-  color: white;
+  background: #e6eff9;
+  border: 1px solid #c8d9eb;
+  border-radius: 6px;
+  color: #365b83;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -523,7 +523,7 @@
 }
 
 .send-btn:hover:not(:disabled) {
-  box-shadow: 0 2px 8px rgba(74, 158, 255, 0.3);
+  background: #d6e5f5;
 }
 
 .send-btn:disabled {
